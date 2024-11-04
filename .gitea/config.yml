@@ -1,0 +1,51 @@
+name: zarply
+run-name: ${{ gitea.actor }} has pushed
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # - name: Build project
+      #   run: npm run build
+
+      # - name: Unit Tests
+      #   run: |
+      #     cd src/
+      #     dotnet test
+
+      # - name: Start API
+      #   run: |
+      #     sudo lsof -t -i tcp:8080 -s tcp:listen | sudo xargs kill
+      #     nohup dotnet run --launch-profile http --project src/WebService &> nohup.out &
+      #     sleep 10  # Adjust sleep duration as necessary
+
+      # - name: Check API Logs
+      #   run: cat nohup.out
+
+      # - name: Wait for API
+      #   run: |
+      #     retry_limit=10
+      #     retry_count=0
+
+      #     # Loop with retries
+      #     until curl --output /dev/null --fail http://localhost:8080/info || [ $retry_count -eq $retry_limit ]; do
+      #         echo "Waiting for API..."
+      #         ((retry_count++))
+      #         sleep 5
+      #     done
+      #     echo "API is up and running!"
+
+      # - name: Run Postman Tests
+      #   id: run-newman
+      #   uses: anthonyvscode/newman-action@v1
+      #   with:
+      #     collection: tests/RMS-API.postman_collection.json
+      #     environment: tests/RMS-API.postman_environment.json
+      #     args:
+      #       --reporter-cli-no-summary
+
+      #     reporters: cli
