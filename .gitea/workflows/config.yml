@@ -17,7 +17,7 @@ jobs:
     
   build:
     name: Build and analyze
-    runs-on: ubuntu-latest
+    runs-on: workstation.ubuntu.lts
     container:
       image: gitea.cyber-mint.com/pumppay/pp-flutter:latest
     steps:
