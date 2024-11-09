@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zarply/components/custom_bottom_navigation_bar.dart';
-import 'package:zarply/components/navigator_drawer.dart';
+import 'package:zarply/shared/auth_layout.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -10,8 +9,8 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  bool isLamport = true; // Toggle state
-  double walletAmount = 12345.67; // Example wallet amount
+  bool isLamport = true;
+  double walletAmount = 12345.67;
   List<Map<String, dynamic>> transactions = [
     {"date": "2024-11-01", "description": "Coffee Shop", "amount": -50.75},
     {"date": "2024-11-01", "description": "Grocery Store", "amount": -200.00},
@@ -21,51 +20,47 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      bool isDesktop = constraints.maxWidth >= 600;
-
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Wallet'),
-          actions: [
-            Switch(
-              value: isLamport,
-              onChanged: (value) {
-                setState(() {
-                  isLamport = value;
-                });
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Center(child: Text(isLamport ? "Lamport" : "Rand")),
-            ),
-          ],
+    return AuthLayout(
+      title: const Text("Wallet"),
+      actions: [
+        Switch(
+          value: isLamport,
+          onChanged: (value) {
+            setState(() {
+              isLamport = value;
+            });
+          },
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Amount in Wallet',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isLamport
-                    ? '${walletAmount.toStringAsFixed(2)} LAM'
-                    : 'R ${(walletAmount * 1.5).toStringAsFixed(2)}', // Example conversion rate
-                style:
-                    const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Recent Transactions',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: Center(child: Text(isLamport ? "Lamport" : "Rand")),
+        ),
+      ],
+      body: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Amount in Wallet',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isLamport
+                  ? '${walletAmount.toStringAsFixed(2)} LAM'
+                  : 'R ${(walletAmount * 1.5).toStringAsFixed(2)}', // Example conversion rate
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Recent Transactions',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: SizedBox(
+                width: 600,
+                height: 600,
                 child: ListView.builder(
                   itemCount: transactions.length,
                   itemBuilder: (context, index) {
@@ -86,13 +81,10 @@ class _WalletScreenState extends State<WalletScreen> {
                   },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        drawer: isDesktop ? const NavigatorDrawer() : null,
-        bottomNavigationBar:
-            isDesktop ? null : const CustomBottomNavigationBar(),
-      );
-    });
+      ),
+    );
   }
 }
