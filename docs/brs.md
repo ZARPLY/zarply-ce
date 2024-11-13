@@ -7,7 +7,6 @@ The application provides the following screens:
 
 * Screen 1: login (light theme)
             ZARPLY logo
-            mobile:
             password:
             
             [login]
