@@ -7,7 +7,6 @@ The application provides the following screens:
 
 * Screen 1: login (light theme)
             ZARPLY logo
-            mobile:
             password:
             
             [login]
@@ -39,7 +38,7 @@ The application provides the following screens:
 * screen 4: request to pay
           amount: amount to be requested (or no amount for any amount)
           description: <optional>
-          [[[2D BARCODE with logo]] <- encodes your ZARP account & amount requested + tiny hash
+          [[[2D BARCODE with logo]]] <- encodes your ZARP account & amount requested + tiny hash
             - must saveable/printable/sendable
           
 * screen 5: pay & beneficiaries
