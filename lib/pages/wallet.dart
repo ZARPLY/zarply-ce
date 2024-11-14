@@ -62,8 +62,8 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               BalanceAmount(isLamport: isLamport, walletAmount: walletAmount),
               const SizedBox(height: 24),
-              RecentTransactions(
-                  transactions: transactions, isLamport: isLamport),
+              // RecentTransactions(
+              //     transactions: transactions, isLamport: isLamport),
             ],
           ),
         ),

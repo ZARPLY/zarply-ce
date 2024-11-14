@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:zarply/components/desktop_drawer.dart';
 import 'package:zarply/components/mobile_drawer.dart';
 import 'package:zarply/components/tablet_drawer.dart';
+import 'package:zarply/pages/about.dart';
+import 'package:zarply/pages/beneficiaries.dart';
+import 'package:zarply/pages/settings.dart';
+import 'package:zarply/pages/wallet.dart';
 
 bool _isLargeScreen(BuildContext context) {
   return MediaQuery.of(context).size.width > 960.0;
@@ -95,6 +99,35 @@ class _AuthLayoutState extends State<AuthLayout> {
       setState(() {
         currentIndex = idx;
       });
+
+      _navigateToScreen(idx);
     }
+  }
+
+  void _navigateToScreen(int index) {
+    Widget screen;
+
+    switch (index) {
+      case 0:
+        screen = const WalletScreen();
+        break;
+      case 1:
+        screen = const BeneficiariesScreen();
+        break;
+      case 2:
+        screen = const SettingsScreen();
+        break;
+      case 3:
+        screen = const AboutScreen();
+        break;
+      default:
+        screen = const WalletScreen();
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => screen,
+      ),
+    );
   }
 }
