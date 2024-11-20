@@ -3,17 +3,15 @@ import 'package:zarply/shared/auth_layout.dart';
 
 class TabletDrawer extends StatelessWidget {
   final List<AdaptiveScaffoldDestination> destinations;
-  final Widget? title;
-  final int currentIndex;
   final Widget main;
-  final ValueChanged<AdaptiveScaffoldDestination> onNavigationIndexChange;
+  final ValueChanged<String> onNavigationChange;
+  final String selectedRoute;
 
   const TabletDrawer(
       {required this.destinations,
-      required this.title,
-      required this.currentIndex,
       required this.main,
-      required this.onNavigationIndexChange,
+      required this.selectedRoute,
+      required this.onNavigationChange,
       super.key});
 
   @override
@@ -30,9 +28,10 @@ class TabletDrawer extends StatelessWidget {
                 ),
               ),
             ],
-            selectedIndex: currentIndex,
+            selectedIndex:
+                destinations.indexWhere((d) => d.title == selectedRoute),
             onDestinationSelected: (index) =>
-                onNavigationIndexChange(destinations[index]),
+                onNavigationChange(destinations[index].title.toLowerCase()),
           ),
           VerticalDivider(
             width: 1,

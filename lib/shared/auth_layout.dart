@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:zarply/components/desktop_drawer.dart';
 import 'package:zarply/components/mobile_drawer.dart';
@@ -15,7 +17,6 @@ bool _isMediumScreen(BuildContext context) {
   return MediaQuery.of(context).size.width > 640.0;
 }
 
-/// See bottomNavigationBarItem or NavigationRailDestination
 class AdaptiveScaffoldDestination {
   final String title;
   final IconData icon;
@@ -30,14 +31,12 @@ class AuthLayout extends StatefulWidget {
   final Widget? title;
   final List<Widget> actions;
   final Widget? body;
-  final ValueChanged<int>? onNavigationIndexChange;
   final FloatingActionButton? floatingActionButton;
 
   const AuthLayout({
     this.title,
     this.body,
     this.actions = const [],
-    this.onNavigationIndexChange,
     this.floatingActionButton,
     super.key,
   });
@@ -54,20 +53,48 @@ class _AuthLayoutState extends State<AuthLayout> {
     const AdaptiveScaffoldDestination(title: 'Settings', icon: Icons.settings),
     const AdaptiveScaffoldDestination(title: 'About', icon: Icons.info),
   ];
-  int currentIndex = 0;
+  final GlobalKey<NavigatorState> contentNavigatorKey =
+      GlobalKey<NavigatorState>();
+  String _selectedRoute = 'Wallet';
 
   @override
   Widget build(BuildContext context) {
     if (_isLargeScreen(context)) {
       return DesktopDrawer(
         destinations: destinations,
-        title: widget.title,
-        currentIndex: currentIndex,
-        onNavigationIndexChange: _destinationTapped,
+        selectedRoute: _selectedRoute,
+        onNavigationChange: (route) {
+          setState(() {
+            _selectedRoute = route[0].toUpperCase() + route.substring(1);
+          });
+          contentNavigatorKey.currentState?.pushReplacementNamed('/$route');
+        },
         main: Expanded(
-          child: Scaffold(
-            body: widget.body,
-            floatingActionButton: widget.floatingActionButton,
+          child: Navigator(
+            key: contentNavigatorKey,
+            onGenerateRoute: (RouteSettings settings) {
+              WidgetBuilder builder;
+              switch (settings.name) {
+                case '/wallet':
+                  builder = (BuildContext _) => const WalletScreen();
+                  break;
+                case '/beneficiaries':
+                  builder = (BuildContext _) => const BeneficiariesScreen();
+                  break;
+                case '/settings':
+                  builder = (BuildContext _) => const SettingsScreen();
+                  break;
+                case '/about':
+                  builder = (BuildContext _) => const AboutScreen();
+                  break;
+                default:
+                  builder = (BuildContext _) => const WalletScreen();
+                  break;
+              }
+
+              return MaterialPageRoute(builder: builder, settings: settings);
+            },
+            initialRoute: '/wallet',
           ),
         ),
       );
@@ -75,59 +102,71 @@ class _AuthLayoutState extends State<AuthLayout> {
 
     if (_isMediumScreen(context)) {
       return TabletDrawer(
-          destinations: destinations,
-          title: widget.title,
-          currentIndex: currentIndex,
-          onNavigationIndexChange: _destinationTapped,
-          main: Expanded(
-            child: widget.body!,
-          ));
+        destinations: destinations,
+        selectedRoute: _selectedRoute,
+        onNavigationChange: (route) {
+          setState(() {
+            _selectedRoute = route[0].toUpperCase() + route.substring(1);
+          });
+          contentNavigatorKey.currentState?.pushReplacementNamed('/$route');
+        },
+        main: Expanded(
+          child: Navigator(
+            key: contentNavigatorKey,
+            onGenerateRoute: (RouteSettings settings) {
+              log(settings.name ?? 'fffff');
+              return _navigateToScreen(settings);
+            },
+            initialRoute: '/wallet',
+          ),
+        ),
+      );
     }
 
     return MobileDrawer(
-        destinations: destinations,
-        currentIndex: currentIndex,
-        main: widget.body,
-        onNavigationIndexChange: _destinationTapped,
-        actions: widget.actions,
-        title: widget.title);
-  }
-
-  void _destinationTapped(AdaptiveScaffoldDestination destination) {
-    var idx = destinations.indexOf(destination);
-    if (idx != currentIndex) {
-      setState(() {
-        currentIndex = idx;
-      });
-
-      _navigateToScreen(idx);
-    }
-  }
-
-  void _navigateToScreen(int index) {
-    Widget screen;
-
-    switch (index) {
-      case 0:
-        screen = const WalletScreen();
-        break;
-      case 1:
-        screen = const BeneficiariesScreen();
-        break;
-      case 2:
-        screen = const SettingsScreen();
-        break;
-      case 3:
-        screen = const AboutScreen();
-        break;
-      default:
-        screen = const WalletScreen();
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => screen,
+      destinations: destinations,
+      selectedRoute: _selectedRoute,
+      onNavigationChange: (route) {
+        setState(() {
+          _selectedRoute = route[0].toUpperCase() + route.substring(1);
+        });
+        contentNavigatorKey.currentState?.pushReplacementNamed('/$route');
+      },
+      actions: widget.actions,
+      title: widget.title,
+      main: Navigator(
+        key: contentNavigatorKey,
+        onGenerateRoute: (RouteSettings settings) {
+          return _navigateToScreen(settings);
+        },
+        initialRoute: '/wallet',
       ),
     );
+  }
+
+  MaterialPageRoute _navigateToScreen(RouteSettings settings) {
+    log(settings.name ?? '');
+    switch (settings.name) {
+      case '/wallet':
+        return MaterialPageRoute(
+          builder: (context) => const WalletScreen(),
+        );
+      case '/beneficiaries':
+        return MaterialPageRoute(
+          builder: (context) => const BeneficiariesScreen(),
+        );
+      case '/settings':
+        return MaterialPageRoute(
+          builder: (context) => const SettingsScreen(),
+        );
+      case '/about':
+        return MaterialPageRoute(
+          builder: (context) => const AboutScreen(),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (context) => const WalletScreen(),
+        );
+    }
   }
 }

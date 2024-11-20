@@ -1,8 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:zarply/pages/registration.dart';
-import 'package:zarply/pages/wallet.dart';
+import 'package:zarply/provider/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,16 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () {
-                  // if (_formKey.currentState!.validate()) {
-                  //   _formKey.currentState!.save();
-                  // TODO: add login logic here
-                  // }
                   log('Mobile Number: $_phoneNumber');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const WalletScreen()),
-                  );
+                  Provider.of<AuthProvider>(context, listen: false).login();
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //       builder: (context) => const WalletScreen()),
+                  // );
                 },
                 child: const Text('Login'),
               ),
