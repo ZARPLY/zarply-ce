@@ -6,6 +6,7 @@ The initial BRS is available [here](docs/brs.md)
 
 ## How to build
 
+Please refer to the setup doc in the docs directory. [here](docs/setup.md)
 
 ## How to contribute
 
