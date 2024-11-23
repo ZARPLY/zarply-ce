@@ -1,33 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zarply/pages/login.dart';
 import 'package:zarply/provider/auth_provider.dart';
-import 'package:zarply/shared/auth_layout.dart';
+import 'package:zarply/router/app_router.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
-      child: const MyApp(),
-    ),
-  );
+  usePathUrlStrategy();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AuthProvider authProvider = AuthProvider();
+
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login & Registration Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return ChangeNotifierProvider(
+      create: (context) => authProvider,
+      child: Builder(
+        builder: (context) {
+          final authProvider = Provider.of<AuthProvider>(context);
+          final router = createRouter(authProvider);
+
+          return MaterialApp.router(
+            title: 'ZARPLY',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+            ),
+            routerConfig: router,
+          );
+        },
       ),
-      home: Consumer<AuthProvider>(builder: (context, authProvider, child) {
-        return authProvider.isAuthenticated
-            ? const AuthLayout()
-            : const LoginScreen();
-      }),
     );
   }
 }
