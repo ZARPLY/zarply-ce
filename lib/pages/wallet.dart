@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:zarply/components/balance_amount.dart';
-import 'package:zarply/components/recent_transactions.dart';
-import 'package:zarply/shared/auth_layout.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -22,50 +20,33 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthLayout(
-      title: const Text("Wallet"),
-      actions: [
-        Switch(
-          value: isLamport,
-          onChanged: (value) {
-            setState(() {
-              isLamport = value;
-            });
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Center(child: Text(isLamport ? "Lamport" : "Rand")),
-        ),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Switch(
-                    value: isLamport,
-                    onChanged: (value) {
-                      setState(() {
-                        isLamport = value;
-                      });
-                    },
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: Center(child: Text(isLamport ? "Lamport" : "Rand")),
-                  ),
-                ],
-              ),
-              BalanceAmount(isLamport: isLamport, walletAmount: walletAmount),
-              const SizedBox(height: 24),
-              RecentTransactions(
-                  transactions: transactions, isLamport: isLamport),
-            ],
-          ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Switch(
+                  value: isLamport,
+                  onChanged: (value) {
+                    setState(() {
+                      isLamport = value;
+                    });
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Center(child: Text(isLamport ? "Lamport" : "Rand")),
+                ),
+              ],
+            ),
+            BalanceAmount(isLamport: isLamport, walletAmount: walletAmount),
+            const SizedBox(height: 24),
+            // RecentTransactions(
+            //     transactions: transactions, isLamport: isLamport),
+          ],
         ),
       ),
     );

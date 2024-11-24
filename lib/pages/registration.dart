@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:zarply/provider/auth_provider.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -58,13 +60,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () {
-                  // if (_formKey.currentState!.validate()) {
-                  //   _formKey.currentState!.save();
-                  // TODO: Handle registration logic here
-                  // }
                   log('Email: $_username');
                   log('Password: $_phoneNumber');
-                  Navigator.pop(context);
+                  Provider.of<AuthProvider>(context, listen: false).login();
+                  // Navigator.pop(context);
                 },
                 child: const Text('Register'),
               ),

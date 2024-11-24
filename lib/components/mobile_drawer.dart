@@ -3,19 +3,19 @@ import 'package:zarply/shared/auth_layout.dart';
 
 class MobileDrawer extends StatelessWidget {
   final List<AdaptiveScaffoldDestination> destinations;
-  final int currentIndex;
-  final ValueChanged<AdaptiveScaffoldDestination> onNavigationIndexChange;
+  final ValueChanged<String> onNavigationChange;
   final Widget? main;
   final List<Widget>? actions;
   final Widget? title;
+  final String selectedRoute;
 
   const MobileDrawer(
       {required this.destinations,
-      required this.currentIndex,
       required this.main,
       required this.actions,
       required this.title,
-      required this.onNavigationIndexChange,
+      required this.selectedRoute,
+      required this.onNavigationChange,
       super.key});
 
   @override
@@ -23,7 +23,7 @@ class MobileDrawer extends StatelessWidget {
     return Scaffold(
       body: main,
       appBar: AppBar(
-        title: title,
+        title: Text(selectedRoute),
         actions: actions,
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -35,10 +35,11 @@ class MobileDrawer extends StatelessWidget {
             ),
           ),
         ],
-        currentIndex: currentIndex,
+        currentIndex: destinations.indexWhere((d) => d.title == selectedRoute),
         selectedItemColor: Colors.red,
         unselectedItemColor: Colors.black,
-        onTap: (index) => onNavigationIndexChange(destinations[index]),
+        onTap: (index) =>
+            onNavigationChange(destinations[index].title.toLowerCase()),
       ),
     );
   }

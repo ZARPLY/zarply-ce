@@ -3,37 +3,36 @@ import 'package:zarply/shared/auth_layout.dart';
 
 class DesktopDrawer extends StatelessWidget {
   final List<AdaptiveScaffoldDestination> destinations;
-  final Widget? title;
-  final int currentIndex;
   final Widget main;
-  final ValueChanged<AdaptiveScaffoldDestination> onNavigationIndexChange;
+  final String selectedRoute;
+  final ValueChanged<String> onNavigationChange;
 
   const DesktopDrawer(
       {required this.destinations,
-      required this.title,
-      required this.currentIndex,
       required this.main,
-      required this.onNavigationIndexChange,
+      required this.selectedRoute,
+      required this.onNavigationChange,
       super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Scaffold(
+        body: Row(
       children: [
         Drawer(
           child: Column(
             children: [
               DrawerHeader(
                 child: Center(
-                  child: title,
+                  child: Text(selectedRoute),
                 ),
               ),
               for (var d in destinations)
                 ListTile(
                   leading: Icon(d.icon),
                   title: Text(d.title),
-                  selected: destinations.indexOf(d) == currentIndex,
-                  onTap: () => onNavigationIndexChange(d),
+                  selected: d.title == selectedRoute,
+                  onTap: () => onNavigationChange(d.title.toLowerCase()),
                 ),
             ],
           ),
@@ -45,6 +44,6 @@ class DesktopDrawer extends StatelessWidget {
         ),
         main,
       ],
-    );
+    ));
   }
 }
