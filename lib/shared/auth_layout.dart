@@ -76,7 +76,7 @@ class _AuthLayoutState extends State<AuthLayout> {
       onNavigationChange: _handleOnNavigationChange,
       actions: widget.actions,
       title: widget.title,
-      main: Expanded(child: widget.body),
+      main: widget.body,
     );
   }
 
