@@ -21,8 +21,8 @@ class _WalletScreenState extends State<WalletScreen> {
 
   // data storing variables
   Wallet? _wallet;
-  double walletAmount = 0;
-  Iterable<TransactionDetails> transactions = const Iterable.empty();
+  double _walletAmount = 0;
+  Iterable<TransactionDetails> _transactions = const Iterable.empty();
   bool isLamport = true;
 
   @override
@@ -32,31 +32,54 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Future<void> _getWallet() async {
-    Wallet wallet = await walletStorageService.retrieveWallet();
-    setState(() {
-      _wallet = wallet;
-    });
+    Wallet? wallet = await walletStorageService.retrieveWallet();
+    if (wallet != null) {
+      final walletAmount =
+          await walletSolanaService.getAccountBalance(wallet.address);
+      // final transactions =
+      //     await walletSolanaService.getAccountTransactions(wallet.address);
+      setState(() {
+        _wallet = wallet;
+        _walletAmount = walletAmount;
+        // _transactions = transactions;
+      });
+    }
   }
 
   void _createWallet() async {
     var wallet = await walletSolanaService.createWallet();
     if (wallet.address.isNotEmpty) {
-      setState(() async {
-        walletAmount =
-            await walletSolanaService.getAccountBalance(wallet.address);
-        transactions =
-            await walletSolanaService.getAccountTransactions(wallet.address);
+      final walletAmount =
+          await walletSolanaService.getAccountBalance(wallet.address);
+      final transactions =
+          await walletSolanaService.getAccountTransactions(wallet.address);
+
+      setState(() {
         _wallet = wallet;
+        _walletAmount = walletAmount;
+        _transactions = transactions;
       });
       walletStorageService.saveWallet(wallet);
     }
   }
 
   void _makeTransaction() async {
-    await walletSolanaService.requestAirdrop(_wallet!.address, 1000000000);
-    await walletSolanaService.sendTransaction(
-        senderWallet: _wallet!, recipientAddress: "", lamports: 500000000);
-    await walletSolanaService.getAccountTransactions(_wallet!.address);
+    await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
+    final transaction = await walletSolanaService.sendTransaction(
+        senderWallet: _wallet!,
+        recipientAddress: "5cwnBsrohuK84gbTig8sZgN4ALF4M3MBaRZasB5r3Moy",
+        lamports: 500000000);
+
+    if (transaction.isNotEmpty) {
+      final walletAmount =
+          await walletSolanaService.getAccountBalance(_wallet!.address);
+      final transactions =
+          await walletSolanaService.getAccountTransactions(_wallet!.address);
+      setState(() async {
+        _walletAmount = walletAmount;
+        _transactions = transactions;
+      });
+    }
   }
 
   @override
@@ -95,7 +118,8 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                   ],
                 ),
-                BalanceAmount(isLamport: isLamport, walletAmount: walletAmount),
+                BalanceAmount(
+                    isLamport: isLamport, walletAmount: _walletAmount),
                 ElevatedButton.icon(
                   onPressed: _makeTransaction,
                   style: ElevatedButton.styleFrom(
@@ -145,11 +169,11 @@ class _WalletScreenState extends State<WalletScreen> {
                 Flexible(
                   flex: 1,
                   child: ListView.builder(
-                      itemCount: transactions.length,
+                      itemCount: _transactions.length,
                       itemBuilder: (context, index) {
                         final transaction =
-                            transactions.elementAt(index).transaction.toJson();
-                        final meta = transactions.elementAt(index).meta;
+                            _transactions.elementAt(index).transaction.toJson();
+                        final meta = _transactions.elementAt(index).meta;
                         return ListTile(
                           title: Text(transaction["messsage"]),
                           subtitle: Text(meta!.returnData!.data),
