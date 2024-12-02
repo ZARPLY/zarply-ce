@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -70,7 +68,7 @@ class WalletSolanaService {
       String publicKey) async {
     try {
       final transactions = await _client.rpcClient.getTransactionsList(
-          Ed25519HDPublicKey(base64Decode(publicKey)),
+          Ed25519HDPublicKey(base58decode(publicKey)),
           limit: 10);
       return transactions;
     } catch (e) {
