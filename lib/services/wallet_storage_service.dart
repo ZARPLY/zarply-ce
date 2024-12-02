@@ -28,11 +28,11 @@ class WalletStorageService {
     }
   }
 
-  Future<Wallet> retrieveWallet() async {
+  Future<Wallet?> retrieveWallet() async {
     try {
       final walletKey = await _secureStorage.read(key: _walletKey);
       if (walletKey == null) {
-        throw WalletStorageException('Could not get wallet key');
+        return null;
       }
 
       final restoredWallet =
