@@ -1,8 +1,6 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:zarply/pages/registration.dart';
 import 'package:zarply/provider/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,8 +11,32 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // instantiate keys
   final _formKey = GlobalKey<FormState>();
-  String _phoneNumber = '';
+
+  // instantiate form controllers
+  final TextEditingController _pinFieldController = TextEditingController();
+
+  // data storing variables
+  String _pinCode = '';
+
+  void _saveForm() {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _pinCode = _pinFieldController.text;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Form saved successfully!')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pinFieldController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,40 +52,30 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Mobile Number'),
+                controller: _pinFieldController,
+                decoration: const InputDecoration(labelText: 'Pin Code'),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your mobile number';
+                    return 'Please enter a 5 digit pin.';
                   }
                   return null;
-                },
-                onSaved: (value) {
-                  _phoneNumber = value ?? '';
                 },
               ),
               const SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () {
-                  log('Mobile Number: $_phoneNumber');
-                  Provider.of<AuthProvider>(context, listen: false).login();
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //       builder: (context) => const WalletScreen()),
-                  // );
+                  _saveForm();
+                  Provider.of<AuthProvider>(context, listen: false)
+                      .login(_pinCode);
                 },
                 child: const Text('Login'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const RegistrationScreen()),
-                  );
+                  context.go('/createAccount');
                 },
-                child: const Text('Don\'t have an account? Register'),
+                child: const Text('Don\'t have an account?'),
               ),
             ],
           ),

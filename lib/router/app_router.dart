@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zarply/pages/about.dart';
 import 'package:zarply/pages/beneficiaries.dart';
+import 'package:zarply/pages/create_account_screen.dart';
 import 'package:zarply/pages/login.dart';
-import 'package:zarply/pages/registration.dart';
 import 'package:zarply/pages/settings.dart';
 import 'package:zarply/pages/wallet.dart';
 import 'package:zarply/provider/auth_provider.dart';
@@ -17,12 +17,10 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
-        routes: [
-          GoRoute(
-            path: '/registration',
-            builder: (context, state) => const RegistrationScreen(),
-          ),
-        ],
+      ),
+      GoRoute(
+        path: '/createAccount',
+        builder: (context, state) => const CreateAccountScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {
