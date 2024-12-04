@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
+import 'package:intl/intl.dart';
 import 'package:zarply/components/balance_amount.dart';
+import 'package:zarply/services/transaction_parser_service.dart';
 import 'package:zarply/services/wallet_solana_service.dart';
 import 'package:zarply/services/wallet_storage_service.dart';
 
@@ -22,26 +24,27 @@ class _WalletScreenState extends State<WalletScreen> {
   // data storing variables
   Wallet? _wallet;
   double _walletAmount = 0;
-  Iterable<TransactionDetails> _transactions = const Iterable.empty();
+  final List<TransactionDetails?> _transactions = [];
   bool isLamport = true;
 
   @override
   void initState() {
     super.initState();
-    _getWallet();
+    _fetchWallet();
   }
 
-  Future<void> _getWallet() async {
+  Future<void> _fetchWallet() async {
     Wallet? wallet = await walletStorageService.retrieveWallet();
     if (wallet != null) {
       final walletAmount =
           await walletSolanaService.getAccountBalance(wallet.address);
-      // final transactions =
-      //     await walletSolanaService.getAccountTransactions(wallet.address);
+      final transactions = await walletSolanaService.getAccountTransactions(
+          walletAddress: wallet.address);
+
       setState(() {
         _wallet = wallet;
         _walletAmount = walletAmount;
-        // _transactions = transactions;
+        _transactions.addAll(transactions);
       });
     }
   }
@@ -51,35 +54,53 @@ class _WalletScreenState extends State<WalletScreen> {
     if (wallet.address.isNotEmpty) {
       final walletAmount =
           await walletSolanaService.getAccountBalance(wallet.address);
-      final transactions =
-          await walletSolanaService.getAccountTransactions(wallet.address);
+      final transactions = await walletSolanaService.getAccountTransactions(
+          walletAddress: wallet.address);
 
       setState(() {
         _wallet = wallet;
         _walletAmount = walletAmount;
-        _transactions = transactions;
+        _transactions.addAll(transactions);
       });
       walletStorageService.saveWallet(wallet);
     }
   }
 
   void _makeTransaction() async {
-    await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
+    // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
     final transaction = await walletSolanaService.sendTransaction(
         senderWallet: _wallet!,
         recipientAddress: "5cwnBsrohuK84gbTig8sZgN4ALF4M3MBaRZasB5r3Moy",
-        lamports: 500000000);
+        lamports: 500000);
 
     if (transaction.isNotEmpty) {
-      final walletAmount =
-          await walletSolanaService.getAccountBalance(_wallet!.address);
-      final transactions =
-          await walletSolanaService.getAccountTransactions(_wallet!.address);
-      setState(() async {
+      _refreshWallet();
+    }
+  }
+
+  void _refreshWallet() async {
+    final walletAmount =
+        await walletSolanaService.getAccountBalance(_wallet!.address);
+    final transactions = await walletSolanaService.getAccountTransactions(
+        walletAddress: _wallet!.address);
+
+    if (transactions.isNotEmpty) {
+      setState(() {
         _walletAmount = walletAmount;
-        _transactions = transactions;
+        _transactions.addAll(transactions);
       });
     }
+  }
+
+  // Utility method to shorten wallet addresses
+  String _shortenAddress(String address) {
+    if (address.length <= 10) return address;
+    return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
+  }
+
+  // Utility method to format datetime
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('MMM dd, yyyy HH:mm').format(dateTime);
   }
 
   @override
@@ -171,12 +192,33 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: ListView.builder(
                       itemCount: _transactions.length,
                       itemBuilder: (context, index) {
-                        final transaction =
-                            _transactions.elementAt(index).transaction.toJson();
-                        final meta = _transactions.elementAt(index).meta;
+                        final transaction = _transactions.elementAt(index);
+                        final transferInfo =
+                            TransactionDetailsParser.parseTransferDetails(
+                                transaction!);
+
+                        if (transferInfo == null) {
+                          return ListTile(
+                            title: const Text('Non-transfer Transaction'),
+                            subtitle: Text(transaction.transaction
+                                .toJson()["signatures"]!
+                                .first),
+                          );
+                        }
+
                         return ListTile(
-                          title: Text(transaction["messsage"]),
-                          subtitle: Text(meta!.returnData!.data),
+                          title:
+                              Text('Transfer: ${transferInfo.formattedAmount}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'To: ${_shortenAddress(transferInfo.recipient)}'),
+                              if (transferInfo.timestamp != null)
+                                Text(
+                                    'Date: ${_formatDateTime(transferInfo.timestamp!)}'),
+                            ],
+                          ),
                         );
                       }),
                 )

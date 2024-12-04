@@ -41,6 +41,7 @@ dependencies:
   go_router: ^14.6.1
   flutter_secure_storage: ^9.2.2
   solana: ^0.31.0
+  intl: ^0.20.1
 
 dev_dependencies:
   flutter_test:

@@ -64,16 +64,30 @@ class WalletSolanaService {
     }
   }
 
-  Future<Iterable<TransactionDetails>> getAccountTransactions(
-      String publicKey) async {
+  Future<List<TransactionDetails?>> getAccountTransactions({
+    required String walletAddress,
+    int limit = 10,
+    String? before,
+  }) async {
     try {
-      final transactions = await _client.rpcClient.getTransactionsList(
-          Ed25519HDPublicKey(base58decode(publicKey)),
-          limit: 10);
+      final signatures = await _client.rpcClient.getSignaturesForAddress(
+        walletAddress,
+        limit: limit,
+        before: before,
+      );
+
+      final transactions = await Future.wait(
+        signatures.map((sig) async {
+          return await _client.rpcClient.getTransaction(
+            sig.signature,
+          );
+        }),
+      );
+
       return transactions;
     } catch (e) {
       throw WalletSolanaServiceException(
-          'Could not retrieve account transactions from Solana:: $e');
+          'Error fetching transactions by signatures: $e');
     }
   }
 }
