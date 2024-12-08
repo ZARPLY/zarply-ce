@@ -1,46 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:zarply/shared/auth_layout.dart';
+import 'package:solana/solana.dart';
+import 'package:zarply/services/wallet_solana_service.dart';
+import 'package:zarply/services/wallet_storage_service.dart';
 
 class MobileDrawer extends StatelessWidget {
-  final List<AdaptiveScaffoldDestination> destinations;
-  final ValueChanged<String> onNavigationChange;
   final Widget? main;
   final List<Widget>? actions;
   final Widget? title;
-  final String selectedRoute;
+  final walletSolanaService = WalletSolanaService(
+      rpcUrl: 'https://api.devnet.solana.com',
+      websocketUrl: 'wss://api.devnet.solana.com');
+  final walletStorageService = WalletStorageService();
 
-  const MobileDrawer(
-      {required this.destinations,
-      required this.main,
+  MobileDrawer(
+      {required this.main,
       required this.actions,
       required this.title,
-      required this.selectedRoute,
-      required this.onNavigationChange,
       super.key});
+
+  void _makeTransaction() async {
+    // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
+    Wallet? wallet = await walletStorageService.retrieveWallet();
+    await walletSolanaService.sendTransaction(
+        senderWallet: wallet!,
+        recipientAddress: "5cwnBsrohuK84gbTig8sZgN4ALF4M3MBaRZasB5r3Moy",
+        lamports: 500000);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: main,
+      backgroundColor: Colors.blue[700],
       appBar: AppBar(
-        title: Text(selectedRoute),
+        title: title,
         actions: actions,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          ...destinations.map(
-            (d) => BottomNavigationBarItem(
-              icon: Icon(d.icon),
-              label: d.title,
-            ),
-          ),
-        ],
-        currentIndex: destinations.indexWhere((d) => d.title == selectedRoute),
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.black,
-        onTap: (index) =>
-            onNavigationChange(destinations[index].title.toLowerCase()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _makeTransaction();
+        },
+        shape: const CircleBorder(),
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.sync_alt, color: Colors.white),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

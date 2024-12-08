@@ -64,7 +64,7 @@ class WalletSolanaService {
     }
   }
 
-  Future<List<TransactionDetails?>> getAccountTransactions({
+  Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
     int limit = 10,
     String? before,
@@ -84,7 +84,27 @@ class WalletSolanaService {
         }),
       );
 
-      return transactions;
+      // Group transactions by month
+      final groupedTransactions = <String, List<TransactionDetails?>>{};
+
+      for (var transaction in transactions) {
+        if (transaction == null) continue;
+
+        final transactionDate = transaction.blockTime != null
+            ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
+            : DateTime.now();
+
+        // Format month as 'YYYY-MM'
+        final monthKey =
+            '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
+
+        if (!groupedTransactions.containsKey(monthKey)) {
+          groupedTransactions[monthKey] = [];
+        }
+        groupedTransactions[monthKey]!.add(transaction);
+      }
+
+      return groupedTransactions;
     } catch (e) {
       throw WalletSolanaServiceException(
           'Error fetching transactions by signatures: $e');
