@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import 'package:zarply/components/activity_item.dart';
@@ -19,9 +20,10 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   // services
   final walletStorageService = WalletStorageService();
+
   final walletSolanaService = WalletSolanaService(
-      rpcUrl: 'https://api.devnet.solana.com',
-      websocketUrl: 'wss://api.devnet.solana.com');
+      rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+      websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '');
 
   // data storing variables
   Wallet? _wallet;
