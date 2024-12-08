@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/solana.dart';
 import 'package:zarply/services/wallet_solana_service.dart';
 import 'package:zarply/services/wallet_storage_service.dart';
@@ -19,12 +20,22 @@ class MobileDrawer extends StatelessWidget {
       super.key});
 
   void _makeTransaction() async {
+    String recipientAddress =
+        dotenv.env['solana_wallet_devnet_public_key'] ?? '';
+
+    // make airdrop here if you need to fund your devnet wallet.
     // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
+
     Wallet? wallet = await walletStorageService.retrieveWallet();
-    await walletSolanaService.sendTransaction(
-        senderWallet: wallet!,
-        recipientAddress: "5cwnBsrohuK84gbTig8sZgN4ALF4M3MBaRZasB5r3Moy",
-        lamports: 500000);
+
+    if (wallet != null && recipientAddress != '') {
+      await walletSolanaService.sendTransaction(
+          senderWallet: wallet,
+          recipientAddress: recipientAddress,
+          lamports: 500000);
+    } else {
+      throw Exception('Wallet or recipient address not found');
+    }
   }
 
   @override
