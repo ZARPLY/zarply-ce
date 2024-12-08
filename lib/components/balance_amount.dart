@@ -17,14 +17,16 @@ class BalanceAmount extends StatelessWidget {
         children: [
           const Text(
             'Amount in Wallet',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             isLamport
                 ? '${walletAmount.toStringAsFixed(2)} LAM'
                 : 'R ${(walletAmount * 1.5).toStringAsFixed(2)}', // Example conversion rate
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ],
       ),

@@ -64,16 +64,50 @@ class WalletSolanaService {
     }
   }
 
-  Future<Iterable<TransactionDetails>> getAccountTransactions(
-      String publicKey) async {
+  Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
+    required String walletAddress,
+    int limit = 10,
+    String? before,
+  }) async {
     try {
-      final transactions = await _client.rpcClient.getTransactionsList(
-          Ed25519HDPublicKey(base58decode(publicKey)),
-          limit: 10);
-      return transactions;
+      final signatures = await _client.rpcClient.getSignaturesForAddress(
+        walletAddress,
+        limit: limit,
+        before: before,
+      );
+
+      final transactions = await Future.wait(
+        signatures.map((sig) async {
+          return await _client.rpcClient.getTransaction(
+            sig.signature,
+          );
+        }),
+      );
+
+      // Group transactions by month
+      final groupedTransactions = <String, List<TransactionDetails?>>{};
+
+      for (var transaction in transactions) {
+        if (transaction == null) continue;
+
+        final transactionDate = transaction.blockTime != null
+            ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
+            : DateTime.now();
+
+        // Format month as 'YYYY-MM'
+        final monthKey =
+            '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
+
+        if (!groupedTransactions.containsKey(monthKey)) {
+          groupedTransactions[monthKey] = [];
+        }
+        groupedTransactions[monthKey]!.add(transaction);
+      }
+
+      return groupedTransactions;
     } catch (e) {
       throw WalletSolanaServiceException(
-          'Could not retrieve account transactions from Solana:: $e');
+          'Error fetching transactions by signatures: $e');
     }
   }
 }

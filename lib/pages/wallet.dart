@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
+import 'package:zarply/components/activity_item.dart';
 import 'package:zarply/components/balance_amount.dart';
+import 'package:zarply/components/quick_actions.dart';
+import 'package:zarply/components/toggle_bar.dart';
+import 'package:zarply/services/transaction_parser_service.dart';
 import 'package:zarply/services/wallet_solana_service.dart';
 import 'package:zarply/services/wallet_storage_service.dart';
 
@@ -22,63 +26,50 @@ class _WalletScreenState extends State<WalletScreen> {
   // data storing variables
   Wallet? _wallet;
   double _walletAmount = 0;
-  Iterable<TransactionDetails> _transactions = const Iterable.empty();
+  final Map<String, List<TransactionDetails?>> _transactions = {};
   bool isLamport = true;
 
   @override
   void initState() {
     super.initState();
-    _getWallet();
+    _fetchWallet();
   }
 
-  Future<void> _getWallet() async {
-    Wallet? wallet = await walletStorageService.retrieveWallet();
-    if (wallet != null) {
-      final walletAmount =
-          await walletSolanaService.getAccountBalance(wallet.address);
-      // final transactions =
-      //     await walletSolanaService.getAccountTransactions(wallet.address);
-      setState(() {
-        _wallet = wallet;
-        _walletAmount = walletAmount;
-        // _transactions = transactions;
-      });
+  Future<void> _fetchWallet() async {
+    await _loadWalletFromStorage();
+    if (_wallet != null) {
+      await _loadWalletData();
     }
+  }
+
+  Future<void> _loadWalletFromStorage() async {
+    Wallet? wallet = await walletStorageService.retrieveWallet();
+    setState(() {
+      _wallet = wallet;
+    });
+  }
+
+  Future<void> _loadWalletData() async {
+    final walletAmount =
+        await walletSolanaService.getAccountBalance(_wallet!.address);
+    final transactions = await walletSolanaService.getAccountTransactions(
+        walletAddress: _wallet!.address);
+
+    setState(() {
+      _walletAmount = walletAmount;
+      _transactions.addAll(transactions);
+    });
   }
 
   void _createWallet() async {
     var wallet = await walletSolanaService.createWallet();
     if (wallet.address.isNotEmpty) {
-      final walletAmount =
-          await walletSolanaService.getAccountBalance(wallet.address);
-      final transactions =
-          await walletSolanaService.getAccountTransactions(wallet.address);
-
+      walletStorageService.saveWallet(wallet);
       setState(() {
         _wallet = wallet;
-        _walletAmount = walletAmount;
-        _transactions = transactions;
       });
-      walletStorageService.saveWallet(wallet);
-    }
-  }
 
-  void _makeTransaction() async {
-    await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
-    final transaction = await walletSolanaService.sendTransaction(
-        senderWallet: _wallet!,
-        recipientAddress: "5cwnBsrohuK84gbTig8sZgN4ALF4M3MBaRZasB5r3Moy",
-        lamports: 500000000);
-
-    if (transaction.isNotEmpty) {
-      final walletAmount =
-          await walletSolanaService.getAccountBalance(_wallet!.address);
-      final transactions =
-          await walletSolanaService.getAccountTransactions(_wallet!.address);
-      setState(() async {
-        _walletAmount = walletAmount;
-        _transactions = transactions;
-      });
+      await _loadWalletData();
     }
   }
 
@@ -93,98 +84,185 @@ class _WalletScreenState extends State<WalletScreen> {
           ));
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Flexible(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Column(
-              children: [
-                Row(
-                  children: [
-                    Switch(
-                      value: isLamport,
-                      onChanged: (value) {
-                        setState(() {
-                          isLamport = value;
-                        });
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child:
-                          Center(child: Text(isLamport ? "Lamport" : "Rand")),
-                    ),
-                  ],
-                ),
-                BalanceAmount(
-                    isLamport: isLamport, walletAmount: _walletAmount),
-                ElevatedButton.icon(
-                  onPressed: _makeTransaction,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[100],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25), // Rounded shape
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 15),
-                  ),
-                  icon: const Icon(Icons.more_horiz, color: Colors.black),
-                  label: const Text(
-                    "Make transaction",
-                    style: TextStyle(color: Colors.black),
-                  ),
-                ),
-                // const QuickActions(),
-              ],
-            ),
-          ),
-          Flexible(
-            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[100],
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(25), // Rounded shape
+                    const ToggleBar(),
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: Image(image: AssetImage('images/saflag.png')),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 15),
-                      ),
-                      icon: const Icon(Icons.expand, color: Colors.black),
-                      label: const Text(
-                        "Contact",
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                    const Text("History")
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                            color: Colors.white30,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "JT",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    )
                   ],
                 ),
-                Flexible(
-                  flex: 1,
-                  child: ListView.builder(
-                      itemCount: _transactions.length,
-                      itemBuilder: (context, index) {
-                        final transaction =
-                            _transactions.elementAt(index).transaction.toJson();
-                        final meta = _transactions.elementAt(index).meta;
-                        return ListTile(
-                          title: Text(transaction["messsage"]),
-                          subtitle: Text(meta!.returnData!.data),
-                        );
-                      }),
-                )
+                BalanceAmount(
+                    isLamport: isLamport, walletAmount: _walletAmount),
+                const QuickActions(),
               ],
             ),
-          )
-        ],
-      ),
+          ),
+        ),
+        Flexible(
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            print('Circular button clicked');
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color.fromRGBO(235, 236, 239, 1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.keyboard_arrow_up,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        "Activity",
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Flexible(
+                    flex: 1,
+                    child: buildTransactionsList(_transactions),
+                  )
+                ],
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
+}
+
+Widget buildTransactionsList(
+    Map<String, List<TransactionDetails?>> groupedTransactions) {
+  final transactionItems = <dynamic>[];
+
+  final sortedMonths = groupedTransactions.keys.toList()
+    ..sort((a, b) => b.compareTo(a));
+
+  for (final monthKey in sortedMonths) {
+    transactionItems
+        .add({'type': 'header', 'month': _formatMonthHeader(monthKey)});
+    transactionItems.addAll(groupedTransactions[monthKey]!);
+  }
+
+  return ListView.builder(
+    itemCount: transactionItems.length,
+    itemBuilder: (context, index) {
+      final item = transactionItems[index];
+
+      if (item is Map && item['type'] == 'header') {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            item['month'],
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
+          ),
+        );
+      }
+
+      return _buildTransactionTile(item);
+    },
+  );
+}
+
+String _formatMonthHeader(String monthKey) {
+  final parts = monthKey.split('-');
+  final year = parts[0];
+  final month = int.parse(parts[1]);
+
+  final monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+
+  return '${monthNames[month - 1]} $year';
+}
+
+Widget _buildTransactionTile(TransactionDetails? transaction) {
+  if (transaction == null) return const SizedBox.shrink();
+  final transferInfo =
+      TransactionDetailsParser.parseTransferDetails(transaction);
+
+  if (transferInfo == null) {
+    return const SizedBox.shrink();
+  }
+
+  return ActivityItem(
+    transferInfo: transferInfo,
+  );
 }

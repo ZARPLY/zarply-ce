@@ -71,9 +71,6 @@ class _AuthLayoutState extends State<AuthLayout> {
     }
 
     return MobileDrawer(
-      destinations: destinations,
-      selectedRoute: _selectedRoute,
-      onNavigationChange: _handleOnNavigationChange,
       actions: widget.actions,
       title: widget.title,
       main: widget.body,

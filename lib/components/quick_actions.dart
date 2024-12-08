@@ -8,50 +8,89 @@ class QuickActions extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ElevatedButton.icon(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green[100],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25), // Rounded shape
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                // Add contact-related functionality here
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.white30,
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
+              ),
+              child: const Icon(
+                Icons.account_circle_outlined,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          ),
-          icon: const Icon(Icons.person, color: Colors.black),
-          label: const Text(
-            "Contact",
-            style: TextStyle(color: Colors.black),
-          ),
+            const SizedBox(height: 16),
+            const Text(
+              'Contact',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-        ElevatedButton.icon(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green[100],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25), // Rounded shape
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                // Add contact-related functionality here
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.white30,
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
+              ),
+              child: const Icon(
+                Icons.qr_code_scanner,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          ),
-          icon: const Icon(Icons.qr_code_scanner, color: Colors.black),
-          label: const Text(
-            "Scan QR",
-            style: TextStyle(color: Colors.black),
-          ),
+            const SizedBox(height: 16),
+            const Text(
+              'Scan QR',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-        ElevatedButton.icon(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green[100],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25), // Rounded shape
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                // Add contact-related functionality here
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.white30,
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
+              ),
+              child: const Icon(
+                Icons.more_horiz,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          ),
-          icon: const Icon(Icons.more_horiz, color: Colors.black),
-          label: const Text(
-            "More",
-            style: TextStyle(color: Colors.black),
-          ),
+            const SizedBox(height: 16),
+            const Text(
+              'More',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ],
     );
