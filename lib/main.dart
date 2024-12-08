@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:zarply/provider/auth_provider.dart';
 import 'package:zarply/router/app_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env");
   usePathUrlStrategy();
   runApp(MyApp());
 }
