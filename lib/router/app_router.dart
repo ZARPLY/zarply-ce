@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../pages/about.dart';
-import '../pages/beneficiaries.dart';
 import '../pages/create_account_screen.dart';
 import '../pages/login.dart';
-import '../pages/settings.dart';
+import '../pages/pay_request.dart';
 import '../pages/wallet.dart';
 import '../provider/auth_provider.dart';
 import '../shared/auth_layout.dart';
@@ -35,19 +33,9 @@ GoRouter createRouter(AuthProvider authProvider) {
                 const WalletScreen(),
           ),
           GoRoute(
-            path: '/settings',
+            path: '/pay-request',
             builder: (BuildContext context, GoRouterState state) =>
-                const SettingsScreen(),
-          ),
-          GoRoute(
-            path: '/beneficiaries',
-            builder: (BuildContext context, GoRouterState state) =>
-                const BeneficiariesScreen(),
-          ),
-          GoRoute(
-            path: '/about',
-            builder: (BuildContext context, GoRouterState state) =>
-                const AboutScreen(),
+                PayRequest(),
           ),
         ],
         redirect: (BuildContext context, GoRouterState state) {

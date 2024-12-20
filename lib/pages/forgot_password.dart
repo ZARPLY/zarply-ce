@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'restore_wallet.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -19,15 +18,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               'For you to reset you password we recommend to click on the restore button below.',
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) =>
-                        const RestoreWalletScreen(),
-                  ),
-                );
-              },
+              onPressed: () {},
               child: const Text('Restore Wallet'),
             ),
           ],
