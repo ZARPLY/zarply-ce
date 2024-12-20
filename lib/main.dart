@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    return ChangeNotifierProvider<AuthProvider>(
       create: (BuildContext context) => authProvider,
       child: Builder(
         builder: (BuildContext context) {

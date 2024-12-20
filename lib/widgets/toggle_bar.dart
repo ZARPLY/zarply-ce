@@ -4,10 +4,10 @@ class ToggleBar extends StatefulWidget {
   const ToggleBar({super.key});
 
   @override
-  _ToggleBarState createState() => _ToggleBarState();
+  ToggleBarState createState() => ToggleBarState();
 }
 
-class _ToggleBarState extends State<ToggleBar> {
+class ToggleBarState extends State<ToggleBar> {
   bool isZarpSelected = true;
 
   @override

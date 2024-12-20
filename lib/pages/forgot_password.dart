@@ -22,7 +22,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (BuildContext context) =>
                         const RestoreWalletScreen(),
                   ),
