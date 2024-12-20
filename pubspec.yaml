@@ -8,13 +8,10 @@ environment:
   sdk: ^3.5.4
 
 dependencies:
-  # TODO: we are not using cupertino_icons rn in the project, so this dep can be removed
-  cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^9.2.2
-  # TODO: are we going to use zarply as a web portal? can flutter_web_plugins be removed from deps?
   flutter_web_plugins:
     sdk: flutter
   go_router: ^14.6.1
