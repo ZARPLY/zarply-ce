@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:zarply/components/desktop_drawer.dart';
-import 'package:zarply/components/mobile_drawer.dart';
-import 'package:zarply/components/tablet_drawer.dart';
+import '../widgets/desktop_drawer.dart';
+import '../widgets/mobile_drawer.dart';
+import '../widgets/tablet_drawer.dart';
 
 bool _isLargeScreen(BuildContext context) {
   return MediaQuery.of(context).size.width > 960.0;
@@ -13,38 +13,39 @@ bool _isMediumScreen(BuildContext context) {
 }
 
 class AdaptiveScaffoldDestination {
-  final String title;
-  final IconData icon;
-
   const AdaptiveScaffoldDestination({
     required this.title,
     required this.icon,
   });
+  final String title;
+  final IconData icon;
 }
 
 class AuthLayout extends StatefulWidget {
+  const AuthLayout({
+    required this.body,
+    this.title,
+    this.actions = const <Widget>[],
+    this.floatingActionButton,
+    super.key,
+  });
   final List<Widget> actions;
   final Widget body;
   final Widget? title;
   final FloatingActionButton? floatingActionButton;
-
-  const AuthLayout({
-    required this.body,
-    this.title,
-    this.actions = const [],
-    this.floatingActionButton,
-    super.key,
-  });
 
   @override
   State<AuthLayout> createState() => _AuthLayoutState();
 }
 
 class _AuthLayoutState extends State<AuthLayout> {
-  final List<AdaptiveScaffoldDestination> destinations = [
+  final List<AdaptiveScaffoldDestination> destinations =
+      <AdaptiveScaffoldDestination>[
     const AdaptiveScaffoldDestination(title: 'Wallet', icon: Icons.wallet),
     const AdaptiveScaffoldDestination(
-        title: 'Beneficiaries', icon: Icons.people),
+      title: 'Beneficiaries',
+      icon: Icons.people,
+    ),
     const AdaptiveScaffoldDestination(title: 'Settings', icon: Icons.settings),
     const AdaptiveScaffoldDestination(title: 'About', icon: Icons.info),
   ];
@@ -77,7 +78,7 @@ class _AuthLayoutState extends State<AuthLayout> {
     );
   }
 
-  void _handleOnNavigationChange(route) {
+  void _handleOnNavigationChange(String route) {
     setState(() {
       _selectedRoute = route[0].toUpperCase() + route.substring(1);
     });

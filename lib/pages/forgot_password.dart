@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zarply/pages/restore_wallet.dart';
+import 'restore_wallet.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,21 +11,25 @@ class ForgotPasswordScreen extends StatelessWidget {
         title: const Text('Forgot Your Password?'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          children: <Widget>[
             const Text(
-                'For you to reset you password we recommend to click on the restore button below.'),
+              'For you to reset you password we recommend to click on the restore button below.',
+            ),
             ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const RestoreWalletScreen()),
-                  );
-                },
-                child: const Text('Restore Wallet'))
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) =>
+                        const RestoreWalletScreen(),
+                  ),
+                );
+              },
+              child: const Text('Restore Wallet'),
+            ),
           ],
         ),
       ),

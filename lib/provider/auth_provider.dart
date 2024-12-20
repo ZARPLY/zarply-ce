@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zarply/services/secure_storage_service.dart';
+import '../services/secure_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final SecureStorageService _secureStorageService = SecureStorageService();
@@ -8,7 +8,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
 
   Future<void> login(String pinCode) async {
-    var savedPinCode = await _secureStorageService.getPin();
+    final String savedPinCode = await _secureStorageService.getPin();
 
     if (savedPinCode == pinCode) {
       _isAuthenticated = true;

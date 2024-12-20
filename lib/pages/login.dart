@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:zarply/provider/auth_provider.dart';
+import '../provider/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  // instantiate keys
-  final _formKey = GlobalKey<FormState>();
+class LoginScreenState extends State<LoginScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // instantiate form controllers
   final TextEditingController _pinFieldController = TextEditingController();
 
-  // data storing variables
   String _pinCode = '';
 
   void _saveForm() {
@@ -45,24 +42,24 @@ class _LoginScreenState extends State<LoginScreen> {
         title: const Text('Login'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            children: <Widget>[
               TextFormField(
                 controller: _pinFieldController,
                 decoration: const InputDecoration(labelText: 'Pin Code'),
                 keyboardType: TextInputType.phone,
-                validator: (value) {
+                validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a 5 digit pin.';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 20.0),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   _saveForm();
