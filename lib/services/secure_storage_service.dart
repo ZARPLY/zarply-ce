@@ -1,8 +1,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageException implements Exception {
-  final String message;
   SecureStorageException(this.message);
+  final String message;
 
   @override
   String toString() => 'SecureStorageException: $message';
@@ -24,7 +24,7 @@ class SecureStorageService {
 
   Future<String> getPin() async {
     try {
-      final pin = await _secureStorage.read(key: 'user_pin');
+      final String? pin = await _secureStorage.read(key: 'user_pin');
       if (pin == null) {
         throw SecureStorageException('No PIN found.');
       }
@@ -36,7 +36,7 @@ class SecureStorageService {
 
   Future<void> deletePin() async {
     try {
-      final exists = await _secureStorage.containsKey(key: 'user_pin');
+      final bool exists = await _secureStorage.containsKey(key: 'user_pin');
       if (!exists) {
         throw SecureStorageException('No PIN to delete.');
       }

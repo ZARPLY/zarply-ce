@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../utils/formatters.dart';
+
 class RecentTransactions extends StatelessWidget {
   const RecentTransactions({
-    super.key,
     required this.transactions,
     required this.isLamport,
+    super.key,
   });
 
   final List<Map<String, dynamic>> transactions;
@@ -13,7 +15,7 @@ class RecentTransactions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
+      children: <Widget>[
         const Text(
           'Recent Transactions',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -25,14 +27,16 @@ class RecentTransactions extends StatelessWidget {
             height: 600,
             child: ListView.builder(
               itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                final transaction = transactions[index];
+              itemBuilder: (BuildContext context, int index) {
+                final Map<String, dynamic> transaction = transactions[index];
                 return ListTile(
                   title: Text(transaction['description']),
                   subtitle: Text(transaction['date']),
                   trailing: Text(
-                    // TODO: refactor for clarity and maintainability
-                    '${transaction['amount'] < 0 ? '-' : '+'}${isLamport ? transaction['amount'].abs().toStringAsFixed(2) + ' LAM' : 'R ' + (transaction['amount'] * 1.5).abs().toStringAsFixed(2)}',
+                    Formatters.formatAmountWithSign(
+                      transaction['amount'].abs(),
+                      isLamport: isLamport,
+                    ),
                     style: TextStyle(
                       color:
                           transaction['amount'] < 0 ? Colors.red : Colors.green,

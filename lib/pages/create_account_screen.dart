@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:zarply/services/secure_storage_service.dart';
+import '../services/secure_storage_service.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -10,17 +10,12 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  // TODO: get rid of useless comments
-  // instantiate keys
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // instantiate form controllers
   final TextEditingController _pinFieldController = TextEditingController();
 
-  // instantiate services
   final SecureStorageService _secureStorageService = SecureStorageService();
 
-  // data storing variables
   String _pinCode = '';
 
   void _saveForm() {
@@ -44,51 +39,53 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Create Account'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _pinFieldController,
-                    decoration: const InputDecoration(labelText: 'Pin Code'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a pin code';
-                      }
-                      return null;
+      appBar: AppBar(
+        title: const Text('Create Account'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              TextFormField(
+                controller: _pinFieldController,
+                decoration: const InputDecoration(labelText: 'Pin Code'),
+                keyboardType: TextInputType.phone,
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a pin code';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      _saveForm();
+                      _secureStorageService.savePin(_pinCode);
+                      context.go('/login');
                     },
+                    child: const Text('Create Account'),
                   ),
-                  const SizedBox(height: 20.0),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _saveForm();
-                          _secureStorageService.savePin(_pinCode);
-                          context.go('/login');
-                        },
-                        child: const Text('Create Account'),
-                      ),
-                      const SizedBox(
-                        width: 20,
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.go('/login');
-                        },
-                        child: const Text('Back'),
-                      ),
-                    ],
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.go('/login');
+                    },
+                    child: const Text('Back'),
                   ),
                 ],
-              )),
-        ));
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

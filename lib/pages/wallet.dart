@@ -1,14 +1,17 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
-import 'package:zarply/components/activity_item.dart';
-import 'package:zarply/components/balance_amount.dart';
-import 'package:zarply/components/quick_actions.dart';
-import 'package:zarply/components/toggle_bar.dart';
-import 'package:zarply/services/transaction_parser_service.dart';
-import 'package:zarply/services/wallet_solana_service.dart';
-import 'package:zarply/services/wallet_storage_service.dart';
+
+import '../services/transaction_parser_service.dart';
+import '../services/wallet_solana_service.dart';
+import '../services/wallet_storage_service.dart';
+import '../widgets/activity_item.dart';
+import '../widgets/balance_amount.dart';
+import '../widgets/quick_actions.dart';
+import '../widgets/toggle_bar.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -19,16 +22,18 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   // services
-  final walletStorageService = WalletStorageService();
+  final WalletStorageService walletStorageService = WalletStorageService();
 
-  final walletSolanaService = WalletSolanaService(
-      rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-      websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '');
+  final WalletSolanaService walletSolanaService = WalletSolanaService(
+    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+  );
 
   // data storing variables
   Wallet? _wallet;
   double _walletAmount = 0;
-  final Map<String, List<TransactionDetails?>> _transactions = {};
+  final Map<String, List<TransactionDetails?>> _transactions =
+      <String, List<TransactionDetails?>>{};
   bool isLamport = true;
 
   @override
@@ -45,17 +50,19 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Future<void> _loadWalletFromStorage() async {
-    Wallet? wallet = await walletStorageService.retrieveWallet();
+    final Wallet? wallet = await walletStorageService.retrieveWallet();
     setState(() {
       _wallet = wallet;
     });
   }
 
   Future<void> _loadWalletData() async {
-    final walletAmount =
+    final double walletAmount =
         await walletSolanaService.getAccountBalance(_wallet!.address);
-    final transactions = await walletSolanaService.getAccountTransactions(
-        walletAddress: _wallet!.address);
+    final Map<String, List<TransactionDetails?>> transactions =
+        await walletSolanaService.getAccountTransactions(
+      walletAddress: _wallet!.address,
+    );
 
     setState(() {
       _walletAmount = walletAmount;
@@ -63,10 +70,10 @@ class _WalletScreenState extends State<WalletScreen> {
     });
   }
 
-  void _createWallet() async {
-    var wallet = await walletSolanaService.createWallet();
+  Future<void> _createWallet() async {
+    final Wallet wallet = await walletSolanaService.createWallet();
     if (wallet.address.isNotEmpty) {
-      walletStorageService.saveWallet(wallet);
+      await walletStorageService.saveWallet(wallet);
       setState(() {
         _wallet = wallet;
       });
@@ -79,28 +86,31 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget build(BuildContext context) {
     if (_wallet == null) {
       return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: ElevatedButton(
-                onPressed: _createWallet, child: const Text('Create Wallet')),
-          ));
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ElevatedButton(
+            onPressed: _createWallet,
+            child: const Text('Create Wallet'),
+          ),
+        ),
+      );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Flexible(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+              children: <Widget>[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  children: <Widget>[
                     const ToggleBar(),
                     Row(
-                      children: [
+                      children: <Widget>[
                         const SizedBox(
                           width: 30,
                           height: 30,
@@ -115,27 +125,29 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                           child: const Center(
                             child: Text(
-                              "JT",
+                              'JT',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             ),
                           ),
-                        )
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
                 BalanceAmount(
-                    isLamport: isLamport, walletAmount: _walletAmount),
+                  isLamport: isLamport,
+                  walletAmount: _walletAmount,
+                ),
                 const QuickActions(),
               ],
             ),
           ),
         ),
         Flexible(
-          child: Container(
+          child: DecoratedBox(
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -144,17 +156,17 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8),
               child: Column(
-                children: [
+                children: <Widget>[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(8),
                         child: GestureDetector(
                           onTap: () {
-                            print('Circular button clicked');
+                            log('Circular button clicked');
                           },
                           child: Container(
                             width: 40,
@@ -172,7 +184,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ),
                       const Text(
-                        "Activity",
+                        'Activity',
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.blue,
@@ -184,38 +196,41 @@ class _WalletScreenState extends State<WalletScreen> {
                   Flexible(
                     flex: 1,
                     child: buildTransactionsList(_transactions),
-                  )
+                  ),
                 ],
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }
 }
 
 Widget buildTransactionsList(
-    Map<String, List<TransactionDetails?>> groupedTransactions) {
-  final transactionItems = <dynamic>[];
+  Map<String, List<TransactionDetails?>> groupedTransactions,
+) {
+  final List<dynamic> transactionItems = <dynamic>[];
 
-  final sortedMonths = groupedTransactions.keys.toList()
-    ..sort((a, b) => b.compareTo(a));
+  final List<String> sortedMonths = groupedTransactions.keys.toList()
+    ..sort((String a, String b) => b.compareTo(a));
 
-  for (final monthKey in sortedMonths) {
-    transactionItems
-        .add({'type': 'header', 'month': _formatMonthHeader(monthKey)});
+  for (final String monthKey in sortedMonths) {
+    transactionItems.add(<String, String>{
+      'type': 'header',
+      'month': _formatMonthHeader(monthKey),
+    });
     transactionItems.addAll(groupedTransactions[monthKey]!);
   }
 
   return ListView.builder(
     itemCount: transactionItems.length,
-    itemBuilder: (context, index) {
-      final item = transactionItems[index];
+    itemBuilder: (BuildContext context, int index) {
+      final dynamic item = transactionItems[index];
 
       if (item is Map && item['type'] == 'header') {
         return Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8),
           child: Text(
             item['month'],
             style: const TextStyle(
@@ -233,11 +248,11 @@ Widget buildTransactionsList(
 }
 
 String _formatMonthHeader(String monthKey) {
-  final parts = monthKey.split('-');
-  final year = parts[0];
-  final month = int.parse(parts[1]);
+  final List<String> parts = monthKey.split('-');
+  final String year = parts[0];
+  final int month = int.parse(parts[1]);
 
-  final monthNames = [
+  final List<String> monthNames = <String>[
     'January',
     'February',
     'March',
@@ -249,7 +264,7 @@ String _formatMonthHeader(String monthKey) {
     'September',
     'October',
     'November',
-    'December'
+    'December',
   ];
 
   return '${monthNames[month - 1]} $year';
@@ -257,7 +272,7 @@ String _formatMonthHeader(String monthKey) {
 
 Widget _buildTransactionTile(TransactionDetails? transaction) {
   if (transaction == null) return const SizedBox.shrink();
-  final transferInfo =
+  final TransactionTransferInfo? transferInfo =
       TransactionDetailsParser.parseTransferDetails(transaction);
 
   if (transferInfo == null) {

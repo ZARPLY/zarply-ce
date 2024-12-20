@@ -1,56 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:zarply/pages/about.dart';
-import 'package:zarply/pages/beneficiaries.dart';
-import 'package:zarply/pages/create_account_screen.dart';
-import 'package:zarply/pages/login.dart';
-import 'package:zarply/pages/settings.dart';
-import 'package:zarply/pages/wallet.dart';
-import 'package:zarply/provider/auth_provider.dart';
-import 'package:zarply/shared/auth_layout.dart';
+import '../pages/about.dart';
+import '../pages/beneficiaries.dart';
+import '../pages/create_account_screen.dart';
+import '../pages/login.dart';
+import '../pages/settings.dart';
+import '../pages/wallet.dart';
+import '../provider/auth_provider.dart';
+import '../shared/auth_layout.dart';
 
 GoRouter createRouter(AuthProvider authProvider) {
   return GoRouter(
     initialLocation: '/wallet',
     refreshListenable: authProvider,
-    routes: [
+    routes: <RouteBase>[
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const LoginScreen(),
       ),
       GoRoute(
         path: '/createAccount',
-        builder: (context, state) => const CreateAccountScreen(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const CreateAccountScreen(),
       ),
       ShellRoute(
-        builder: (context, state, child) {
+        builder: (BuildContext context, GoRouterState state, Widget child) {
           return AuthLayout(body: child);
         },
-        routes: [
+        routes: <RouteBase>[
           GoRoute(
             path: '/wallet',
-            builder: (context, state) => const WalletScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const WalletScreen(),
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const SettingsScreen(),
           ),
           GoRoute(
             path: '/beneficiaries',
-            builder: (context, state) => const BeneficiariesScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const BeneficiariesScreen(),
           ),
           GoRoute(
             path: '/about',
-            builder: (context, state) => const AboutScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const AboutScreen(),
           ),
         ],
-        redirect: (context, state) {
-          final isAuthenticated = authProvider.isAuthenticated;
+        redirect: (BuildContext context, GoRouterState state) {
+          final bool isAuthenticated = authProvider.isAuthenticated;
           return isAuthenticated ? null : '/login';
         },
       ),
     ],
-    errorBuilder: (context, state) {
+    errorBuilder: (BuildContext context, GoRouterState state) {
       return Scaffold(
         body: Center(
           child: Text('Page not found: ${state.uri.toString()}'),

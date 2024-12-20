@@ -13,14 +13,14 @@ class _ToggleBarState extends State<ToggleBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(2.0),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
+        children: <Widget>[
           GestureDetector(
             onTap: () {
               setState(() {
@@ -29,29 +29,28 @@ class _ToggleBarState extends State<ToggleBar> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isZarpSelected ? Colors.white30 : Colors.transparent,
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
-                children: [
+                children: <Widget>[
                   const Image(image: AssetImage('images/zarp.jpeg')),
-                  if (isZarpSelected) ...[
-                    const SizedBox(width: 8.0),
+                  if (isZarpSelected) ...<Widget>[
+                    const SizedBox(width: 8),
                     const Text(
-                      "ZARP",
+                      'ZARP',
                       style: TextStyle(
                         color: Colors.white,
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 8.0),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
               setState(() {
@@ -60,24 +59,23 @@ class _ToggleBarState extends State<ToggleBar> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: !isZarpSelected ? Colors.white30 : Colors.transparent,
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
-                children: [
+                children: <Widget>[
                   const Image(image: AssetImage('images/solana.png')),
-                  if (!isZarpSelected) ...[
-                    const SizedBox(width: 8.0),
+                  if (!isZarpSelected) ...<Widget>[
+                    const SizedBox(width: 8),
                     const Text(
-                      "SOL",
+                      'SOL',
                       style: TextStyle(
                         color: Colors.white,
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),

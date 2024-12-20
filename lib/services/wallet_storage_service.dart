@@ -4,8 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:solana/solana.dart';
 
 class WalletStorageException implements Exception {
-  final String message;
   WalletStorageException(this.message);
+  final String message;
 
   @override
   String toString() => 'WalletStorageException: $message';
@@ -30,12 +30,12 @@ class WalletStorageService {
 
   Future<Wallet?> retrieveWallet() async {
     try {
-      final walletKey = await _secureStorage.read(key: _walletKey);
+      final String? walletKey = await _secureStorage.read(key: _walletKey);
       if (walletKey == null) {
         return null;
       }
 
-      final restoredWallet =
+      final Ed25519HDKeyPair restoredWallet =
           await Wallet.fromPrivateKeyBytes(privateKey: base64Decode(walletKey));
       return restoredWallet;
     } catch (e) {
@@ -45,7 +45,7 @@ class WalletStorageService {
 
   Future<void> deletePrivateKey() async {
     try {
-      final exists = await _secureStorage.containsKey(key: _walletKey);
+      final bool exists = await _secureStorage.containsKey(key: _walletKey);
       // TODO: destroy wallet
       if (!exists) {
         throw WalletStorageException('No wallet key to delete.');

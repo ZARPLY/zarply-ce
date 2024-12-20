@@ -1,24 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:zarply/services/transaction_parser_service.dart';
+import '../services/transaction_parser_service.dart';
+import '../utils/formatters.dart';
 
 class ActivityItem extends StatelessWidget {
-  final TransactionTransferInfo transferInfo;
-
   const ActivityItem({required this.transferInfo, super.key});
-
-  // TODO: we can create a separate file for all utility methods and use it across the project
-  // TODO: get rid of useless comments
-  // Utility method to shorten wallet addresses
-  String _shortenAddress(String address) {
-    if (address.length <= 10) return address;
-    return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
-  }
-
-  // Utility method to format datetime
-  String _formatDateTime(DateTime dateTime) {
-    return DateFormat('dd').format(dateTime);
-  }
+  final TransactionTransferInfo transferInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +19,9 @@ class ActivityItem extends StatelessWidget {
       height: 100,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+        children: <Widget>[
           Row(
-            children: [
+            children: <Widget>[
               Container(
                 width: 50,
                 height: 50,
@@ -45,7 +31,7 @@ class ActivityItem extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    _formatDateTime(transferInfo.timestamp!),
+                    Formatters.formatDateTime(transferInfo.timestamp!),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -58,7 +44,7 @@ class ActivityItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: <Widget>[
                   Text(
                     transferInfo.formattedAmount,
                     style: const TextStyle(
@@ -68,7 +54,7 @@ class ActivityItem extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _shortenAddress(transferInfo.recipient),
+                    Formatters.shortenAddress(transferInfo.recipient),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color.fromARGB(255, 99, 110, 128),
@@ -80,7 +66,7 @@ class ActivityItem extends StatelessWidget {
           ),
           const Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+            children: <Widget>[
               Icon(
                 Icons.send,
                 color: Color.fromARGB(255, 99, 110, 128),

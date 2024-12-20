@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../utils/formatters.dart';
+
 class BalanceAmount extends StatelessWidget {
   const BalanceAmount({
-    super.key,
     required this.isLamport,
     required this.walletAmount,
+    super.key,
   });
 
   final bool isLamport;
@@ -14,21 +16,23 @@ class BalanceAmount extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        children: [
+        children: <Widget>[
           const Text(
             'Amount in Wallet',
             style: TextStyle(
-                fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
-          // TODO: we can simplify code by creating formatter util methods
-          // TODO: get rid of useless comments
           Text(
-            isLamport
-                ? '${walletAmount.toStringAsFixed(2)} LAM'
-                : 'R ${(walletAmount * 1.5).toStringAsFixed(2)}', // Example conversion rate
+            Formatters.formatAmount(walletAmount, isLamport: isLamport),
             style: const TextStyle(
-                fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+              fontSize: 32,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

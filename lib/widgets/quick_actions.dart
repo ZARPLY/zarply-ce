@@ -7,10 +7,10 @@ class QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
+      children: <Widget>[
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             ElevatedButton(
               onPressed: () {
                 // Add contact-related functionality here
@@ -38,7 +38,7 @@ class QuickActions extends StatelessWidget {
         ),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             ElevatedButton(
               onPressed: () {
                 // Add contact-related functionality here
@@ -66,7 +66,7 @@ class QuickActions extends StatelessWidget {
         ),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             ElevatedButton(
               onPressed: () {
                 // Add contact-related functionality here
