@@ -8,6 +8,7 @@ class MobileDrawer extends StatelessWidget {
   final Widget? main;
   final List<Widget>? actions;
   final Widget? title;
+  // TODO: move such data into env files
   final walletSolanaService = WalletSolanaService(
       rpcUrl: 'https://api.devnet.solana.com',
       websocketUrl: 'wss://api.devnet.solana.com');

@@ -31,6 +31,7 @@ class RecentTransactions extends StatelessWidget {
                   title: Text(transaction['description']),
                   subtitle: Text(transaction['date']),
                   trailing: Text(
+                    // TODO: refactor for clarity and maintainability
                     '${transaction['amount'] < 0 ? '-' : '+'}${isLamport ? transaction['amount'].abs().toStringAsFixed(2) + ' LAM' : 'R ' + (transaction['amount'] * 1.5).abs().toStringAsFixed(2)}',
                     style: TextStyle(
                       color:

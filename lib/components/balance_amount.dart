@@ -21,6 +21,8 @@ class BalanceAmount extends StatelessWidget {
                 fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
+          // TODO: we can simplify code by creating formatter util methods
+          // TODO: get rid of useless comments
           Text(
             isLamport
                 ? '${walletAmount.toStringAsFixed(2)} LAM'

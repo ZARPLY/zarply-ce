@@ -7,6 +7,8 @@ class ActivityItem extends StatelessWidget {
 
   const ActivityItem({required this.transferInfo, super.key});
 
+  // TODO: we can create a separate file for all utility methods and use it across the project
+  // TODO: get rid of useless comments
   // Utility method to shorten wallet addresses
   String _shortenAddress(String address) {
     if (address.length <= 10) return address;

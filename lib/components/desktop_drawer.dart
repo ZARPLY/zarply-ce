@@ -27,6 +27,8 @@ class DesktopDrawer extends StatelessWidget {
                   child: Text(selectedRoute),
                 ),
               ),
+              // TODO: if possible, do not use `var`
+              // TODO: use more descriptive variable names
               for (var d in destinations)
                 ListTile(
                   leading: Icon(d.icon),

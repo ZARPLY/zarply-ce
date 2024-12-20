@@ -10,6 +10,7 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  // TODO: get rid of useless comments
   // instantiate keys
   final _formKey = GlobalKey<FormState>();
 
