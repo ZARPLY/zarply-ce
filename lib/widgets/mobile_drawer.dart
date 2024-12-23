@@ -24,12 +24,11 @@ class MobileDrawer extends StatelessWidget {
     final String recipientAddress =
         dotenv.env['solana_wallet_devnet_public_key'] ?? '';
 
-    // make airdrop here if you need to fund your devnet wallet.
-    // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
-
     final Wallet? wallet = await walletStorageService.retrieveWallet();
 
     if (wallet != null && recipientAddress != '') {
+      // make airdrop here if you need to fund your devnet wallet.
+      // await walletSolanaService.requestAirdrop(wallet.address, 100000000);
       await walletSolanaService.sendTransaction(
         senderWallet: wallet,
         recipientAddress: recipientAddress,
