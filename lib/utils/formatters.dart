@@ -2,8 +2,8 @@ import 'package:intl/intl.dart';
 
 class Formatters {
   static String shortenAddress(String address) {
-    if (address.length <= 10) return address;
-    return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
+    if (address.length <= 20) return address;
+    return '${address.substring(0, 20)}...';
   }
 
   static String formatDateTime(DateTime dateTime) {

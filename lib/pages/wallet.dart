@@ -8,10 +8,9 @@ import 'package:solana/solana.dart';
 import '../services/transaction_parser_service.dart';
 import '../services/wallet_solana_service.dart';
 import '../services/wallet_storage_service.dart';
-import '../widgets/activity_item.dart';
-import '../widgets/balance_amount.dart';
-import '../widgets/quick_actions.dart';
-import '../widgets/toggle_bar.dart';
+import '../widgets/wallet/activity_item.dart';
+import '../widgets/wallet/balance_amount.dart';
+import '../widgets/wallet/quick_actions.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -101,46 +100,16 @@ class WalletScreenState extends State<WalletScreen> {
       children: <Widget>[
         Flexible(
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    const ToggleBar(),
-                    Row(
-                      children: <Widget>[
-                        const SizedBox(
-                          width: 30,
-                          height: 30,
-                          child: Image(image: AssetImage('images/saflag.png')),
-                        ),
-                        Container(
-                          width: 30,
-                          height: 30,
-                          decoration: const BoxDecoration(
-                            color: Colors.white30,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'JT',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                const Spacer(),
                 BalanceAmount(
                   isLamport: isLamport,
                   walletAmount: _walletAmount,
                 ),
+                const Spacer(),
                 const QuickActions(),
               ],
             ),
@@ -156,40 +125,35 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 children: <Widget>[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: GestureDetector(
-                          onTap: () {
-                            log('Circular button clicked');
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Color.fromRGBO(235, 236, 239, 1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.keyboard_arrow_up,
-                              color: Colors.black,
-                              size: 20,
-                            ),
+                      GestureDetector(
+                        onTap: () {
+                          log('Circular button clicked');
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEBECEF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_up,
+                            color: Colors.black,
+                            size: 20,
                           ),
                         ),
                       ),
-                      const Text(
-                        'Activity',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Text(
+                        'History',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Colors.blue,
+                            ),
                       ),
                     ],
                   ),
@@ -233,11 +197,7 @@ Widget buildTransactionsList(
           padding: const EdgeInsets.all(8),
           child: Text(
             item['month'],
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black54,
-            ),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
         );
       }

@@ -13,15 +13,15 @@ Please refer to the setup doc in the docs directory. [here](docs/setup.md)
 
 
 ## ToDo List
-- [ ] Fix Android Build
-- [ ] Fix Linter warnings
+- [x] Fix Android Build
+- [x] Fix Linter warnings
 - [ ] Add run scripts (.run/.svcode)
 - [ ] Add launcher icons (flutter_launcher_icons)
 - [ ] Move all text resources in a separate file/class
 - [ ] Move all used icons in a separate file/class
 - [ ] Move all used colors in a separate file/class
 - [ ] Move all assets in a separate file/class
-- [ ] Components -> Widgets
+- [x] Components -> Widgets
 
 
 ---

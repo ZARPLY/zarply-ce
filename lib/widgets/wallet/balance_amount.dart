@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utils/formatters.dart';
+import '../../utils/formatters.dart';
 
 class BalanceAmount extends StatelessWidget {
   const BalanceAmount({
@@ -17,22 +17,12 @@ class BalanceAmount extends StatelessWidget {
     return Center(
       child: Column(
         children: <Widget>[
-          const Text(
-            'Amount in Wallet',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
           Text(
             Formatters.formatAmount(walletAmount, isLamport: isLamport),
-            style: const TextStyle(
-              fontSize: 32,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .headlineLarge
+                ?.copyWith(color: Colors.white),
           ),
         ],
       ),

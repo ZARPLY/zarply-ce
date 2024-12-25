@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/secure_storage_service.dart';
+import 'package:provider/provider.dart';
+import '../../provider/auth_provider.dart';
 
-class CreateAccountScreen extends StatefulWidget {
-  const CreateAccountScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _CreateAccountScreenState extends State<CreateAccountScreen> {
+class LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _pinFieldController = TextEditingController();
-
-  final SecureStorageService _secureStorageService = SecureStorageService();
 
   String _pinCode = '';
 
@@ -39,8 +38,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title: const Text('Login'),
+        backgroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -51,36 +52,41 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             children: <Widget>[
               TextFormField(
                 controller: _pinFieldController,
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
                 decoration: const InputDecoration(labelText: 'Pin Code'),
                 keyboardType: TextInputType.phone,
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a pin code';
+                    return 'Please enter a 5 digit pin.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 20),
-              Row(
-                children: <Widget>[
-                  ElevatedButton(
-                    onPressed: () {
-                      _saveForm();
-                      _secureStorageService.savePin(_pinCode);
-                      context.go('/login');
-                    },
-                    child: const Text('Create Account'),
+              ElevatedButton(
+                onPressed: () {
+                  _saveForm();
+                  Provider.of<AuthProvider>(context, listen: false)
+                      .login(_pinCode);
+                },
+                style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.go('/login');
-                    },
-                    child: const Text('Back'),
-                  ),
-                ],
+                ),
+                child: const Text('Login'),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.go('/createAccount');
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                ),
+                child: const Text('Don\'t have an account?'),
               ),
             ],
           ),

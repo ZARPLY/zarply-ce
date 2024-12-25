@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utils/formatters.dart';
+import '../../utils/formatters.dart';
 
 class RecentTransactions extends StatelessWidget {
   const RecentTransactions({

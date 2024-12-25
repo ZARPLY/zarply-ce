@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../pages/create_account_screen.dart';
-import '../pages/login.dart';
-import '../pages/pay_request.dart';
+import '../pages/auth/create_account_screen.dart';
+import '../pages/auth/login.dart';
+import '../pages/pay/pay_request.dart';
+import '../pages/pay/payment_amount.dart';
+import '../pages/pay/payment_details.dart';
 import '../pages/wallet.dart';
 import '../provider/auth_provider.dart';
 import '../shared/auth_layout.dart';
@@ -32,16 +34,25 @@ GoRouter createRouter(AuthProvider authProvider) {
             builder: (BuildContext context, GoRouterState state) =>
                 const WalletScreen(),
           ),
-          GoRoute(
-            path: '/pay-request',
-            builder: (BuildContext context, GoRouterState state) =>
-                PayRequest(),
-          ),
         ],
         redirect: (BuildContext context, GoRouterState state) {
           final bool isAuthenticated = authProvider.isAuthenticated;
           return isAuthenticated ? null : '/login';
         },
+      ),
+      GoRoute(
+        path: '/pay-request',
+        builder: (BuildContext context, GoRouterState state) => PayRequest(),
+      ),
+      GoRoute(
+        path: '/payment-details',
+        builder: (BuildContext context, GoRouterState state) =>
+            const PaymentDetails(),
+      ),
+      GoRoute(
+        path: '/payment-amount',
+        builder: (BuildContext context, GoRouterState state) =>
+            const PaymentAmountScreen(),
       ),
     ],
     errorBuilder: (BuildContext context, GoRouterState state) {

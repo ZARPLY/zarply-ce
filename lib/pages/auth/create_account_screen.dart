@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../provider/auth_provider.dart';
+import '../../services/secure_storage_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class CreateAccountScreen extends StatefulWidget {
+  const CreateAccountScreen({super.key});
 
   @override
-  LoginScreenState createState() => LoginScreenState();
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen> {
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _pinFieldController = TextEditingController();
+
+  final SecureStorageService _secureStorageService = SecureStorageService();
 
   String _pinCode = '';
 
@@ -39,7 +40,7 @@ class LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Create Account'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -54,25 +55,32 @@ class LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.phone,
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a 5 digit pin.';
+                    return 'Please enter a pin code';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  _saveForm();
-                  Provider.of<AuthProvider>(context, listen: false)
-                      .login(_pinCode);
-                },
-                child: const Text('Login'),
-              ),
-              TextButton(
-                onPressed: () {
-                  context.go('/createAccount');
-                },
-                child: const Text('Don\'t have an account?'),
+              Row(
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      _saveForm();
+                      _secureStorageService.savePin(_pinCode);
+                      context.go('/login');
+                    },
+                    child: const Text('Create Account'),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.go('/login');
+                    },
+                    child: const Text('Back'),
+                  ),
+                ],
               ),
             ],
           ),
