@@ -194,10 +194,10 @@ Widget buildTransactionsList(
 
       if (item is Map && item['type'] == 'header') {
         return Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
           child: Text(
             item['month'],
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         );
       }
