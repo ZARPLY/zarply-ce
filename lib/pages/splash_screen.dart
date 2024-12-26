@@ -25,11 +25,17 @@ class _SplashScreenState extends State<SplashScreen>
     // Chain four 25% rotations with pauses
     _controller
         .animateTo(0.25)
-        .then((_) => Future.delayed(const Duration(milliseconds: 500))) // pause
+        .then(
+          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
+        ) // pause
         .then((_) => _controller.animateTo(0.5))
-        .then((_) => Future.delayed(const Duration(milliseconds: 500))) // pause
+        .then(
+          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
+        ) // pause
         .then((_) => _controller.animateTo(0.75))
-        .then((_) => Future.delayed(const Duration(milliseconds: 500))) // pause
+        .then(
+          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
+        ) // pause
         .then((_) => _controller.animateTo(1));
 
     _navigateToNextScreen();
