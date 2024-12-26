@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../pages/auth/create_account_screen.dart';
 import '../pages/auth/login.dart';
 import '../pages/pay/pay_request.dart';
 import '../pages/pay/payment_amount.dart';
 import '../pages/pay/payment_details.dart';
+import '../pages/splash_screen.dart';
 import '../pages/wallet.dart';
 import '../provider/auth_provider.dart';
 import '../shared/auth_layout.dart';
 
 GoRouter createRouter(AuthProvider authProvider) {
   return GoRouter(
-    initialLocation: '/wallet',
+    initialLocation: '/',
     refreshListenable: authProvider,
     routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) =>
+            const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (BuildContext context, GoRouterState state) =>

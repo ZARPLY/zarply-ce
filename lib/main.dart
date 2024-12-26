@@ -9,6 +9,7 @@ import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   usePathUrlStrategy();
   runApp(MyApp());

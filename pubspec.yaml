@@ -35,6 +35,7 @@ flutter:
     - images/zarp.jpeg
     - images/solana.png
     - images/zarply_logo.png
+    - images/zarply_splash.png
     - .env
 
   # TODO: ask a designer to provide fonts for our project and specify them here
