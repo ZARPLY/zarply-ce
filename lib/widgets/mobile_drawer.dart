@@ -85,15 +85,25 @@ class MobileDrawer extends StatelessWidget {
         backgroundColor: Colors.blue[700],
       ),
       floatingActionButton: SizedBox(
-        width: 80,
-        height: 80,
+        width: 60,
+        height: 60,
         child: FloatingActionButton(
           onPressed: () {
             context.go('/pay-request');
           },
           shape: const CircleBorder(),
           backgroundColor: Colors.blue,
-          child: const Icon(Icons.sync_alt, color: Colors.white, size: 32),
+          child: const Padding(
+            padding: EdgeInsets.only(right: 2, top: 8),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Image(
+                image: AssetImage('images/zarply_logo.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
