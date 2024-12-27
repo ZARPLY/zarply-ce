@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../provider/auth_provider.dart';
+
+import '../provider/wallet_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,27 +19,10 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(seconds: 2),
       vsync: this,
     );
-
-    // Chain four 25% rotations with pauses
-    _controller
-        .animateTo(0.25)
-        .then(
-          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
-        ) // pause
-        .then((_) => _controller.animateTo(0.5))
-        .then(
-          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
-        ) // pause
-        .then((_) => _controller.animateTo(0.75))
-        .then(
-          (_) => Future<void>.delayed(const Duration(milliseconds: 500)),
-        ) // pause
-        .then((_) => _controller.animateTo(1));
-
-    _navigateToNextScreen();
+    _initializeAndNavigate();
   }
 
   @override
@@ -47,17 +31,41 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _navigateToNextScreen() async {
-    await Future<void>.delayed(const Duration(seconds: 4));
-    if (!mounted) return;
+  Future<void> _initializeAndNavigate() async {
+    try {
+      final WalletProvider walletProvider =
+          Provider.of<WalletProvider>(context, listen: false);
 
-    final AuthProvider authProvider =
-        Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.isAuthenticated) {
-      context.go('/wallet');
-    } else {
-      context.go('/login');
+      _playAnimation();
+
+      final bool hasWallet = await walletProvider.initializeWallet();
+      await Future<void>.delayed(const Duration(seconds: 4));
+
+      if (!mounted) return;
+
+      if (hasWallet) {
+        context.go('/wallet');
+      } else {
+        context.go('/getting_started');
+      }
+    } catch (e) {
+      if (mounted) {
+        context.go('/getting_started');
+      }
     }
+  }
+
+  void _playAnimation() {
+    const Duration stepDelay = Duration(milliseconds: 500);
+
+    _controller
+        .animateTo(0.25)
+        .then((_) => Future<void>.delayed(stepDelay))
+        .then((_) => _controller.animateTo(0.5))
+        .then((_) => Future<void>.delayed(stepDelay))
+        .then((_) => _controller.animateTo(0.75))
+        .then((_) => Future<void>.delayed(stepDelay))
+        .then((_) => _controller.animateTo(1));
   }
 
   @override

@@ -60,7 +60,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.pop(),
+            onTap: () => context.go('/pay-request'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),

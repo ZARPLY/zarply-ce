@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:solana/solana.dart';
 
+import '../../provider/wallet_provider.dart';
+import '../../services/wallet_solana_service.dart';
+import '../../services/wallet_storage_service.dart';
 import 'payment_success.dart';
 
 class PaymentReviewContent extends StatefulWidget {
@@ -16,11 +22,38 @@ class PaymentReviewContent extends StatefulWidget {
 }
 
 class _PaymentReviewContentState extends State<PaymentReviewContent> {
+  final WalletSolanaService walletSolanaService = WalletSolanaService(
+    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+  );
+  final WalletStorageService walletStorageService = WalletStorageService();
   bool hasPaymentBeenMade = false;
-  void _paymentSuccess() {
-    setState(() {
-      hasPaymentBeenMade = true;
-    });
+
+  Future<void> _makeTransaction() async {
+    final String recipientAddress =
+        dotenv.env['solana_wallet_devnet_public_key'] ?? '';
+
+    // make airdrop here if you need to fund your devnet wallet. Only do this once.
+    // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
+
+    final Wallet? wallet =
+        Provider.of<WalletProvider>(context, listen: false).wallet;
+
+    if (wallet != null && recipientAddress != '') {
+      await walletSolanaService.sendTransaction(
+        senderWallet: wallet,
+        recipientAddress: recipientAddress,
+        lamports: 500000,
+      );
+      setState(() {
+        hasPaymentBeenMade = true;
+      });
+    } else {
+      setState(() {
+        hasPaymentBeenMade = false;
+      });
+      throw Exception('Wallet or recipient address not found');
+    }
   }
 
   @override
@@ -87,7 +120,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _paymentSuccess,
+                    onPressed: _makeTransaction,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(
                         fontSize: 18,
