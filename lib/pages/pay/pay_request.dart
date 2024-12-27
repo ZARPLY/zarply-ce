@@ -87,7 +87,7 @@ class PayRequest extends StatelessWidget {
             const SizedBox(height: 12),
             InkWell(
               onTap: () {
-                // Handle request button tap
+                context.go('/request-amount');
               },
               child: Container(
                 padding:

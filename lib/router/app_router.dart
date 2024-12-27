@@ -8,6 +8,7 @@ import '../pages/onboarding/welcome_screen.dart';
 import '../pages/pay/pay_request.dart';
 import '../pages/pay/payment_amount.dart';
 import '../pages/pay/payment_details.dart';
+import '../pages/request/request_amount_screen.dart';
 import '../pages/splash_screen.dart';
 import '../pages/wallet/wallet.dart';
 import '../provider/wallet_provider.dart';
@@ -68,6 +69,11 @@ GoRouter createRouter(WalletProvider walletProvider) {
             path: '/payment-amount',
             builder: (BuildContext context, GoRouterState state) =>
                 const PaymentAmountScreen(),
+          ),
+          GoRoute(
+            path: '/request-amount',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RequestAmountScreen(),
           ),
         ],
       ),

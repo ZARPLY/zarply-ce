@@ -17,6 +17,8 @@ dependencies:
   go_router: ^14.6.1
   intl: ^0.20.1
   provider: ^6.1.2
+  qr_flutter: ^4.1.0
+  share_plus: ^7.2.1
   solana: ^0.31.0
 
 dev_dependencies:
@@ -36,6 +38,7 @@ flutter:
     - images/solana.png
     - images/zarply_logo.png
     - images/zarply_splash.png
+    - images/qr_code_zarply_logo.png
     - .env
 
   # TODO: ask a designer to provide fonts for our project and specify them here
