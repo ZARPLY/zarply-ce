@@ -86,3 +86,9 @@ below:
    ```
 
    Copy the public key and paste it in the .env file.
+
+   There is a script to do this for you.
+
+   ```bash
+   python3 scripts/setup-locally.py
+   ```

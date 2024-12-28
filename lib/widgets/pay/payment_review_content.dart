@@ -33,13 +33,20 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
   bool hasPaymentBeenMade = false;
 
   Future<void> _makeTransaction() async {
-    // make airdrop here if you need to fund your devnet wallet. Only do this once.
-    // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
-
     final Wallet? wallet =
         Provider.of<WalletProvider>(context, listen: false).wallet;
 
-    if (wallet != null && recipientAddress != '') {
+    if (wallet == null) {
+      throw Exception('Wallet not found');
+    }
+
+    final double balance =
+        await walletSolanaService.getAccountBalance(wallet.address);
+    if (balance < 500000) {
+      await walletSolanaService.requestAirdrop(wallet.address, 100000000);
+    }
+
+    if (recipientAddress != '') {
       await walletSolanaService.sendTransaction(
         senderWallet: wallet,
         recipientAddress: recipientAddress,

@@ -22,6 +22,7 @@ dependencies:
   solana: ^0.31.0
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
@@ -36,9 +37,9 @@ flutter:
     - images/saflag.png
     - images/zarp.jpeg
     - images/solana.png
-    - images/zarply_logo.png
-    - images/zarply_splash.png
-    - images/qr_code_zarply_logo.png
+    - images/logo.png
+    - images/splash.png
+    - images/qr-code-logo.png
     - .env
 
   # TODO: ask a designer to provide fonts for our project and specify them here

@@ -254,7 +254,7 @@ class WalletScreenState extends State<WalletScreen> {
               width: 40,
               height: 40,
               child: Image(
-                image: AssetImage('images/zarply_logo.png'),
+                image: AssetImage('images/logo.png'),
                 fit: BoxFit.contain,
               ),
             ),

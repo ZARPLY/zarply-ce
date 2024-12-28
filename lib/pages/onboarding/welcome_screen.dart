@@ -18,7 +18,7 @@ class WelcomeScreen extends StatelessWidget {
               width: 120,
               height: 120,
               child: Image(
-                image: AssetImage('images/zarply_logo.png'),
+                image: AssetImage('images/logo.png'),
                 fit: BoxFit.contain,
               ),
             ),

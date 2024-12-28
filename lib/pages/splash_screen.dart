@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: RotationTransition(
           turns: _controller,
           child: const Image(
-            image: AssetImage('images/zarply_splash.png'),
+            image: AssetImage('images/splash.png'),
           ),
         ),
       ),

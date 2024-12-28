@@ -5,6 +5,13 @@
 
 The initial BRS is available [here](docs/brs.md)
 
+## Developer pre-requisites
+
+- [Flutter](https://flutter.dev/docs/get-started/install)
+- [Dart](https://dart.dev/get-dart)
+- [VS Code](https://code.visualstudio.com/download)
+- [Solana CLI](https://docs.solana.com/cli/install-solana-cli)
+
 ## How to build
 
 Please refer to the setup doc in the docs directory. [here](docs/setup.md)

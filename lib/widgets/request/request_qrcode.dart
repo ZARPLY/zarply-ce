@@ -64,8 +64,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                     dataModuleShape: QrDataModuleShape.square,
                     color: Colors.blue,
                   ),
-                  embeddedImage:
-                      const AssetImage('images/qr_code_zarply_logo.png'),
+                  embeddedImage: const AssetImage('images/qr-code-logo.png'),
                   embeddedImageStyle: const QrEmbeddedImageStyle(
                     size: Size(60, 60),
                   ),
