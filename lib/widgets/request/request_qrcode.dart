@@ -19,9 +19,8 @@ class RequestQRCode extends StatefulWidget {
 class _RequestQRCodeState extends State<RequestQRCode> {
   bool isQRCodeShared = false;
 
-  void _shareQRCode() {
-    // Implement sharing functionality
-    Share.share('Payment request for R${widget.amount}');
+  Future<void> _shareQRCode() async {
+    await Share.share('Payment request for R${widget.amount}');
     setState(() {
       isQRCodeShared = true;
     });

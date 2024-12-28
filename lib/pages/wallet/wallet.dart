@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +35,7 @@ class WalletScreenState extends State<WalletScreen> {
       <String, List<TransactionDetails?>>{};
   bool isLamport = true;
   bool _isLoading = true;
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -76,85 +75,101 @@ class WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
 
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  const Spacer(),
-                  BalanceAmount(
-                    isLamport: isLamport,
-                    walletAmount: _walletAmount,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height:
+                  _isExpanded ? 0 : MediaQuery.of(context).size.height * 0.45,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: _isExpanded ? 0.0 : 1.0,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      const Spacer(),
+                      BalanceAmount(
+                        isLamport: isLamport,
+                        walletAmount: _walletAmount,
+                      ),
+                      const Spacer(),
+                      const QuickActions(),
+                    ],
                   ),
-                  const Spacer(),
-                  const QuickActions(),
-                ],
-              ),
-            ),
-          ),
-          Flexible(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        GestureDetector(
-                          onTap: () {
-                            log('Circular button clicked');
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFEBECEF),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.keyboard_arrow_up,
-                              color: Colors.black,
-                              size: 20,
+            ),
+            Expanded(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isExpanded = !_isExpanded;
+                              });
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEBECEF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _isExpanded
+                                    ? Icons.keyboard_arrow_down
+                                    : Icons.keyboard_arrow_up,
+                                color: Colors.black,
+                                size: 20,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          'History',
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.blue,
-                                  ),
-                        ),
-                      ],
-                    ),
-                    Flexible(
-                      flex: 1,
-                      child: buildTransactionsList(_transactions),
-                    ),
-                  ],
+                          Text(
+                            'History',
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Colors.blue,
+                                    ),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: buildTransactionsList(_transactions),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       backgroundColor: Colors.blue[700],
       appBar: AppBar(

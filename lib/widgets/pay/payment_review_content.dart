@@ -6,6 +6,7 @@ import 'package:solana/solana.dart';
 import '../../provider/wallet_provider.dart';
 import '../../services/wallet_solana_service.dart';
 import '../../services/wallet_storage_service.dart';
+import '../../utils/formatters.dart';
 import 'payment_success.dart';
 
 class PaymentReviewContent extends StatefulWidget {
@@ -27,12 +28,11 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletStorageService walletStorageService = WalletStorageService();
+  final String recipientAddress =
+      dotenv.env['solana_wallet_devnet_public_key'] ?? '';
   bool hasPaymentBeenMade = false;
 
   Future<void> _makeTransaction() async {
-    final String recipientAddress =
-        dotenv.env['solana_wallet_devnet_public_key'] ?? '';
-
     // make airdrop here if you need to fund your devnet wallet. Only do this once.
     // await walletSolanaService.requestAirdrop(_wallet!.address, 100000000);
 
@@ -105,9 +105,9 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     color: const Color(0xFFF6F7F8),
                     borderRadius: BorderRadius.circular(40),
                   ),
-                  child: const Text(
-                    'D1f4HnfUPGPqbatYFq8yTd6VzhMuqesT...',
-                    style: TextStyle(color: Colors.grey),
+                  child: Text(
+                    Formatters.shortenAddress(recipientAddress),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
                 const Spacer(),
