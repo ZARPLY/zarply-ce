@@ -4,10 +4,12 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'provider/auth_provider.dart';
+import 'provider/wallet_provider.dart';
 import 'router/app_router.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   usePathUrlStrategy();
   runApp(MyApp());
@@ -15,22 +17,21 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-  final AuthProvider authProvider = AuthProvider();
+  final WalletProvider walletProvider = WalletProvider();
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthProvider>(
-      create: (BuildContext context) => authProvider,
+    return ChangeNotifierProvider<WalletProvider>(
+      create: (BuildContext context) => walletProvider,
       child: Builder(
         builder: (BuildContext context) {
-          final AuthProvider authProvider = Provider.of<AuthProvider>(context);
-          final GoRouter router = createRouter(authProvider);
+          final WalletProvider walletProvider =
+              Provider.of<WalletProvider>(context, listen: false);
+          final GoRouter router = createRouter(walletProvider);
 
           return MaterialApp.router(
             title: 'ZARPLY',
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-            ),
+            theme: AppTheme.lightTheme,
             routerConfig: router,
           );
         },

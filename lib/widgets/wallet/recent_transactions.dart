@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utils/formatters.dart';
+import '../../utils/formatters.dart';
 
 class RecentTransactions extends StatelessWidget {
   const RecentTransactions({
@@ -35,7 +35,6 @@ class RecentTransactions extends StatelessWidget {
                   trailing: Text(
                     Formatters.formatAmountWithSign(
                       transaction['amount'].abs(),
-                      isLamport: isLamport,
                     ),
                     style: TextStyle(
                       color:

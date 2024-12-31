@@ -1,59 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../pages/about.dart';
-import '../pages/beneficiaries.dart';
-import '../pages/create_account_screen.dart';
-import '../pages/login.dart';
-import '../pages/settings.dart';
-import '../pages/wallet.dart';
-import '../provider/auth_provider.dart';
-import '../shared/auth_layout.dart';
 
-GoRouter createRouter(AuthProvider authProvider) {
+import '../pages/onboarding/getting_started_screen.dart';
+import '../pages/onboarding/new_wallet_screen.dart';
+import '../pages/onboarding/restore_wallet_screen.dart';
+import '../pages/onboarding/welcome_screen.dart';
+import '../pages/pay/pay_request.dart';
+import '../pages/pay/payment_amount.dart';
+import '../pages/pay/payment_details.dart';
+import '../pages/request/request_amount_screen.dart';
+import '../pages/splash_screen.dart';
+import '../pages/wallet/wallet.dart';
+import '../provider/wallet_provider.dart';
+
+GoRouter createRouter(WalletProvider walletProvider) {
   return GoRouter(
-    initialLocation: '/wallet',
-    refreshListenable: authProvider,
+    initialLocation: '/',
     routes: <RouteBase>[
       GoRoute(
-        path: '/login',
+        path: '/',
         builder: (BuildContext context, GoRouterState state) =>
-            const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/createAccount',
-        builder: (BuildContext context, GoRouterState state) =>
-            const CreateAccountScreen(),
+            const SplashScreen(),
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
-          return AuthLayout(body: child);
+          return ListenableBuilder(
+            listenable: walletProvider,
+            builder: (BuildContext context, _) => child,
+          );
         },
         routes: <RouteBase>[
+          GoRoute(
+            path: '/welcome',
+            builder: (BuildContext context, GoRouterState state) =>
+                const WelcomeScreen(),
+          ),
+          GoRoute(
+            path: '/getting_started',
+            builder: (BuildContext context, GoRouterState state) =>
+                const GettingStartedScreen(),
+          ),
+          GoRoute(
+            path: '/new_wallet',
+            builder: (BuildContext context, GoRouterState state) =>
+                const NewWalletScreen(),
+          ),
+          GoRoute(
+            path: '/restore_wallet',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RestoreWalletScreen(),
+          ),
           GoRoute(
             path: '/wallet',
             builder: (BuildContext context, GoRouterState state) =>
                 const WalletScreen(),
           ),
           GoRoute(
-            path: '/settings',
+            path: '/pay-request',
             builder: (BuildContext context, GoRouterState state) =>
-                const SettingsScreen(),
+                const PayRequest(),
           ),
           GoRoute(
-            path: '/beneficiaries',
+            path: '/payment-details',
             builder: (BuildContext context, GoRouterState state) =>
-                const BeneficiariesScreen(),
+                const PaymentDetails(),
           ),
           GoRoute(
-            path: '/about',
+            path: '/payment-amount',
             builder: (BuildContext context, GoRouterState state) =>
-                const AboutScreen(),
+                const PaymentAmountScreen(),
+          ),
+          GoRoute(
+            path: '/request-amount',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RequestAmountScreen(),
           ),
         ],
-        redirect: (BuildContext context, GoRouterState state) {
-          final bool isAuthenticated = authProvider.isAuthenticated;
-          return isAuthenticated ? null : '/login';
-        },
       ),
     ],
     errorBuilder: (BuildContext context, GoRouterState state) {

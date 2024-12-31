@@ -60,3 +60,35 @@ below:
     ```
 
     NOTE: look at the connected devices and specify the names you see in that list to run your flutter app on the device you need.
+
+5. **How to test app locally**
+
+   Configure the .env file with the correct solana_wallet_devnet_public_key value. Create a new wallet on your terminal.
+
+   ```bash
+   # install solana cli
+   sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+
+   # confirm solana cli is installed
+   solana --version
+
+   # set network to devnet
+   solana config set --url https://api.devnet.solana.com
+
+   # create a new wallet
+   solana-keygen new --no-bip39-passphrase
+
+   # get the public key
+   solana-keygen pubkey
+
+   # check the balance
+   solana balance
+   ```
+
+   Copy the public key and paste it in the .env file.
+
+   There is a script to do this for you.
+
+   ```bash
+   python3 scripts/setup-locally.py
+   ```
