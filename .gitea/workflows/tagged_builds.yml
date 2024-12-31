@@ -1,0 +1,49 @@
+name: Android Build and Upload
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+android_apk_build:
+    runs-on: workstation.ubuntu.lts
+
+    env:
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+      GITEA_USERNAME: ${{ secrets.USERNAME }}
+      GITEA_PASSWORD: ${{ secrets.PASSWORD }}
+      GITEA_SERVER: ${{ secrets.SERVER }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 
+
+      - name: Decode Android key store
+        run: |
+          echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null          
+
+      - name: Create key.properties
+        run: |
+          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+
+      - name: Build Android
+        run: flutter build apk --release
+
+      - name: Upload APK to Gitea
+        run: |
+          REPO_VERSION=steps.meta.outputs.REPO_VERSION
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
+          echo $REPO_VERSION
+          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
+               --upload-file build/app/outputs/flutter-apk/app-release.apk \
+               $GITEA_SERVER/zarply/zarply_apk/$REPO_VERSION/app-release.apk          
+
+      - name: Create a zip file with correct timestamps
+        run: |
+          cd build/app/outputs/flutter-apk
+          zip -r artifact.zip app-release.apk
