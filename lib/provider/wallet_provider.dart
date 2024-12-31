@@ -14,6 +14,9 @@ class WalletProvider extends ChangeNotifier {
     try {
       _wallet = await _walletStorageService.retrieveWallet();
       notifyListeners();
+      if (_wallet == null) {
+        return false;
+      }
       return true;
     } catch (e) {
       _wallet = null;

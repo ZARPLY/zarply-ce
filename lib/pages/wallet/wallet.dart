@@ -33,7 +33,6 @@ class WalletScreenState extends State<WalletScreen> {
   double _walletAmount = 0;
   final Map<String, List<TransactionDetails?>> _transactions =
       <String, List<TransactionDetails?>>{};
-  bool isLamport = true;
   bool _isLoading = true;
   bool _isExpanded = false;
 
@@ -103,7 +102,6 @@ class WalletScreenState extends State<WalletScreen> {
                     children: <Widget>[
                       const Spacer(),
                       BalanceAmount(
-                        isLamport: isLamport,
                         walletAmount: _walletAmount,
                       ),
                       const Spacer(),
@@ -195,19 +193,58 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white30,
-                shape: BoxShape.circle,
+            Tooltip(
+              richMessage: const TextSpan(
+                children: <InlineSpan>[
+                  TextSpan(
+                    text: 'Solana details\n',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'Public key\n',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  TextSpan(
+                    text: 'Balance (on chain rent exempt amount)\n',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  TextSpan(
+                    text: '[people can pay money in but cant pay it out]',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
               ),
-              child: Center(
-                child: Text(
-                  'i',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                      ),
+              preferBelow: true,
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              textStyle: const TextStyle(color: Colors.white),
+              padding: const EdgeInsets.all(12),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white30,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    'i',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
+                        ),
+                  ),
                 ),
               ),
             ),

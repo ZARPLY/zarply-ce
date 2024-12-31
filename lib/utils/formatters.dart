@@ -10,15 +10,21 @@ class Formatters {
     return DateFormat('dd').format(dateTime);
   }
 
-  static String formatAmount(double amount, {required bool isLamport}) {
-    return isLamport
-        ? '${amount.toStringAsFixed(2)} LAM'
-        : 'R ${(amount * 1.5).toStringAsFixed(2)}';
+  static String formatAmount(double amount) {
+    final NumberFormat currencyFormat = NumberFormat.currency(
+      symbol: 'R',
+      decimalDigits: 2,
+    );
+    return currencyFormat.format(amount);
   }
 
-  static String formatAmountWithSign(double amount, {required bool isLamport}) {
+  static String formatAmountWithSign(double amount) {
+    final NumberFormat currencyFormat = NumberFormat.currency(
+      symbol: 'R',
+      decimalDigits: 2,
+    );
     return amount < 0
-        ? '-${amount.toStringAsFixed(2)}'
-        : '+${amount.toStringAsFixed(2)}';
+        ? '-${currencyFormat.format(amount)}'
+        : currencyFormat.format(amount);
   }
 }

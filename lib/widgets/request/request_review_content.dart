@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/formatters.dart';
 import 'request_qrcode.dart';
 
 class RequestReviewContent extends StatefulWidget {
@@ -62,7 +63,7 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  'R${widget.amount}',
+                  Formatters.formatAmount(double.parse(widget.amount)),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 32),

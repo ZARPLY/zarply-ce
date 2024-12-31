@@ -35,7 +35,6 @@ class RecentTransactions extends StatelessWidget {
                   trailing: Text(
                     Formatters.formatAmountWithSign(
                       transaction['amount'].abs(),
-                      isLamport: isLamport,
                     ),
                     style: TextStyle(
                       color:

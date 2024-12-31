@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../utils/formatters.dart';
+
 class PaymentSuccess extends StatelessWidget {
   const PaymentSuccess({
     required this.amount,
@@ -44,7 +46,7 @@ class PaymentSuccess extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            'R$amount',
+            Formatters.formatAmount(double.parse(amount)),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 32),

@@ -4,12 +4,10 @@ import '../../utils/formatters.dart';
 
 class BalanceAmount extends StatelessWidget {
   const BalanceAmount({
-    required this.isLamport,
     required this.walletAmount,
     super.key,
   });
 
-  final bool isLamport;
   final double walletAmount;
 
   @override
@@ -18,7 +16,7 @@ class BalanceAmount extends StatelessWidget {
       child: Column(
         children: <Widget>[
           Text(
-            Formatters.formatAmount(walletAmount, isLamport: isLamport),
+            Formatters.formatAmount(walletAmount),
             style: Theme.of(context)
                 .textTheme
                 .headlineLarge

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../utils/formatters.dart';
 import 'request_completed.dart';
 
 class RequestQRCode extends StatefulWidget {
@@ -71,7 +72,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'R${widget.amount}',
+                  Formatters.formatAmount(double.parse(widget.amount)),
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: 8),
