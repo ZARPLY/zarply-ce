@@ -21,10 +21,14 @@ class _RequestQRCodeState extends State<RequestQRCode> {
   bool isQRCodeShared = false;
 
   Future<void> _shareQRCode() async {
-    await Share.share('Payment request for R${widget.amount}');
-    setState(() {
-      isQRCodeShared = true;
-    });
+    final ShareResult result =
+        await Share.share('Payment request for R${widget.amount}');
+
+    if (result.status == ShareResultStatus.success) {
+      setState(() {
+        isQRCodeShared = true;
+      });
+    }
   }
 
   @override
