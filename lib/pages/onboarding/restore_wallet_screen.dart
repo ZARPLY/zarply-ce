@@ -25,9 +25,12 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   }
 
   void _updateFormValidity() {
+    final String phrase = _phraseController.text.trim();
+    final int wordCount =
+        phrase.split(' ').where((String word) => word.isNotEmpty).length;
+
     setState(() {
-      // Basic validation - can be enhanced to check for valid BIP39 phrase
-      _isFormValid = _phraseController.text.trim().isNotEmpty;
+      _isFormValid = phrase.isNotEmpty && (wordCount == 12 || wordCount == 24);
     });
   }
 
@@ -80,9 +83,14 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
             TextField(
               controller: _phraseController,
               maxLines: 3,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Recovery Phrase',
                 hintText: 'Enter your 12 or 24 word recovery phrase',
+                errorText: _phraseController.text.isNotEmpty
+                    ? _isFormValid
+                        ? null
+                        : 'Please enter exactly 12 or 24 words'
+                    : null,
               ),
             ),
             const Spacer(),

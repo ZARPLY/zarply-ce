@@ -12,6 +12,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   final TextEditingController _publicKeyController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _isFormValid = false;
+  String? _publicKeyError;
 
   @override
   void initState() {
@@ -29,9 +30,19 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   }
 
   void _updateFormValidity() {
+    final String publicKey = _publicKeyController.text;
+
     setState(() {
-      _isFormValid = _publicKeyController.text.isNotEmpty &&
-          _descriptionController.text.isNotEmpty;
+      if (publicKey.isEmpty) {
+        _publicKeyError = 'Public key is required';
+      } else if (publicKey.length < 32) {
+        _publicKeyError = 'Invalid public key format';
+      } else {
+        _publicKeyError = null;
+      }
+
+      _isFormValid =
+          _publicKeyError == null && _publicKeyController.text.isNotEmpty;
     });
   }
 
@@ -89,8 +100,9 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                 style: const TextStyle(
                   fontSize: 16,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Public Key',
+                  errorText: _publicKeyError,
                 ),
               ),
             ),

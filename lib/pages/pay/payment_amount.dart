@@ -29,7 +29,8 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   void _updateFormValidity() {
     setState(() {
-      _isFormValid = _paymentAmountController.text.isNotEmpty;
+      final double amount = double.tryParse(_paymentAmountController.text) ?? 0;
+      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 5;
     });
   }
 
@@ -86,11 +87,17 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
             const SizedBox(height: 40),
             TextField(
               controller: _paymentAmountController,
+              keyboardType: TextInputType.number,
               style: const TextStyle(
                 fontSize: 14,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Payment Amount',
+                errorText: _paymentAmountController.text.isNotEmpty &&
+                        (double.tryParse(_paymentAmountController.text) ?? 0) <
+                            5
+                    ? 'Amount must be at least R5'
+                    : null,
               ),
             ),
             const SizedBox(height: 16),
