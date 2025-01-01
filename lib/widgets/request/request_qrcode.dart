@@ -1,7 +1,13 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
+import 'package:qr/qr.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../provider/wallet_provider.dart';
 import '../../utils/formatters.dart';
 import 'request_completed.dart';
 
@@ -19,10 +25,42 @@ class RequestQRCode extends StatefulWidget {
 
 class _RequestQRCodeState extends State<RequestQRCode> {
   bool isQRCodeShared = false;
+  Future<ui.Image>? _loadImageFuture;
+  final GlobalKey _qrKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageFuture = _loadImage();
+  }
+
+  Future<ui.Image> _loadImage() async {
+    final Completer<ui.Image> completer = Completer<ui.Image>();
+    const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
+    final ImageStream stream = imageProvider.resolve(ImageConfiguration.empty);
+    final ImageStreamListener listener = ImageStreamListener(
+      (ImageInfo info, bool _) => completer.complete(info.image),
+      onError: (Object error, _) => completer.completeError(error),
+    );
+
+    stream.addListener(listener);
+    return completer.future;
+  }
 
   Future<void> _shareQRCode() async {
-    final ShareResult result =
-        await Share.share('Payment request for R${widget.amount}');
+    final RenderRepaintBoundary boundary =
+        _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+    final ui.Image image = await boundary.toImage();
+    final ByteData? byteData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    final ShareResult result = await Share.shareXFiles(
+      <XFile>[
+        XFile.fromData(pngBytes, mimeType: 'image/png', name: 'qr_code.png'),
+      ],
+      subject: 'ZARPLY Payment Request',
+    );
 
     if (result.status == ShareResultStatus.success) {
       setState(() {
@@ -33,6 +71,9 @@ class _RequestQRCodeState extends State<RequestQRCode> {
 
   @override
   Widget build(BuildContext context) {
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context);
+    final String walletAddress = walletProvider.wallet?.address ?? '';
+
     return !isQRCodeShared
         ? Padding(
             padding: const EdgeInsets.all(24),
@@ -57,21 +98,35 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                QrImageView(
-                  data: 'zarply:payment:${widget.amount}',
-                  version: QrVersions.auto,
-                  size: 300,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: Colors.blue,
-                  ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: Colors.blue,
-                  ),
-                  embeddedImage: const AssetImage('images/qr-code-logo.png'),
-                  embeddedImageStyle: const QrEmbeddedImageStyle(
-                    size: Size(60, 60),
+                RepaintBoundary(
+                  key: _qrKey,
+                  child: FutureBuilder<ui.Image>(
+                    future: _loadImageFuture,
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<ui.Image> snapshot,
+                    ) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        if (snapshot.hasError) {
+                          return const Text('Error loading image');
+                        }
+                        return CustomPaint(
+                          size: const Size(300, 300),
+                          painter: QRPainter(
+                            data:
+                                'zarply:payment:${widget.amount}:$walletAddress',
+                            version: 4,
+                            color: Colors.blue,
+                            emptyColor: Colors.white,
+                            gapless: true,
+                            embeddedImageSize: const Size(60, 60),
+                            loadedImage: snapshot.data,
+                          ),
+                        );
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -114,4 +169,71 @@ class _RequestQRCodeState extends State<RequestQRCode> {
           )
         : RequestCompleted(amount: widget.amount);
   }
+}
+
+class QRPainter extends CustomPainter {
+  QRPainter({
+    required this.data,
+    this.version = 1,
+    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
+    this.color = Colors.black,
+    this.emptyColor = Colors.white,
+    this.gapless = false,
+    this.embeddedImageSize = const Size(60, 60),
+    this.loadedImage,
+  });
+
+  final String data;
+  final int version;
+  final int errorCorrectionLevel;
+  final Color color;
+  final Color emptyColor;
+  final bool gapless;
+  final Size embeddedImageSize;
+  final ui.Image? loadedImage;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final QrCode qrCode = QrCode(version, errorCorrectionLevel)..addData(data);
+    final QrImage qrImage = QrImage(qrCode);
+
+    final double squareSize = size.width / qrCode.moduleCount;
+    final Paint paint = Paint()..style = PaintingStyle.fill;
+
+    for (int x = 0; x < qrCode.moduleCount; x++) {
+      for (int y = 0; y < qrCode.moduleCount; y++) {
+        paint.color = qrImage.isDark(x, y) ? color : emptyColor;
+        final Rect rect = Rect.fromLTWH(
+          x * squareSize,
+          y * squareSize,
+          squareSize - (gapless ? 0 : 1),
+          squareSize - (gapless ? 0 : 1),
+        );
+        canvas.drawRect(rect, paint);
+      }
+    }
+
+    if (loadedImage != null) {
+      final ui.Paint paint = Paint()
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high;
+
+      final ui.Size srcSize = Size(
+        loadedImage!.width.toDouble(),
+        loadedImage!.height.toDouble(),
+      );
+      final ui.Rect src =
+          Alignment.center.inscribe(srcSize, Offset.zero & srcSize);
+      final Offset center = Offset(size.width / 2, size.height / 2);
+      final ui.Rect dst = Rect.fromCenter(
+        center: center,
+        width: embeddedImageSize.width,
+        height: embeddedImageSize.height,
+      );
+      canvas.drawImageRect(loadedImage!, src, dst, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
