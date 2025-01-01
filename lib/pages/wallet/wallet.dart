@@ -194,26 +194,48 @@ class WalletScreenState extends State<WalletScreen> {
             ),
             const SizedBox(width: 8),
             Tooltip(
-              richMessage: const TextSpan(
+              richMessage: TextSpan(
                 children: <InlineSpan>[
-                  TextSpan(
-                    text: 'Solana details\n',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  WidgetSpan(
+                    child: SizedBox(
+                      width: 250,
+                      child: Center(
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: const TextSpan(
+                            children: <InlineSpan>[
+                              TextSpan(
+                                text: 'Solana details\n\n',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Public key\n',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Balance (on chain rent exempt amount)\n',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    '[people can pay money in but cant pay it out]',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'Public key\n',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  TextSpan(
-                    text: 'Balance (on chain rent exempt amount)\n',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  TextSpan(
-                    text: '[people can pay money in but cant pay it out]',
-                    style: TextStyle(fontSize: 14),
                   ),
                 ],
               ),
@@ -229,7 +251,6 @@ class WalletScreenState extends State<WalletScreen> {
                   ),
                 ],
               ),
-              textStyle: const TextStyle(color: Colors.white),
               padding: const EdgeInsets.all(12),
               child: Container(
                 width: 40,
