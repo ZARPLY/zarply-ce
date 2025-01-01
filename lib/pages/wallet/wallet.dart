@@ -229,7 +229,6 @@ class WalletScreenState extends State<WalletScreen> {
                   ),
                 ],
               ),
-              textStyle: const TextStyle(color: Colors.white),
               padding: const EdgeInsets.all(12),
               child: Container(
                 width: 40,
