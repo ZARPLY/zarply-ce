@@ -32,8 +32,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
   Future<ui.Image> _loadImage() async {
     final Completer<ui.Image> completer = Completer<ui.Image>();
     const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
-    final ImageStream stream =
-        imageProvider.resolve(const ImageConfiguration());
+    final ImageStream stream = imageProvider.resolve(ImageConfiguration.empty);
     final ImageStreamListener listener = ImageStreamListener(
       (ImageInfo info, bool _) => completer.complete(info.image),
       onError: (Object error, _) => completer.completeError(error),
@@ -84,17 +83,25 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                   future: _loadImageFuture,
                   builder:
                       (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
-                    return CustomPaint(
-                      size: const Size(300, 300),
-                      painter: QRPainter(
-                        data: 'zarply:payment:${widget.amount}',
-                        version: 4,
-                        color: Colors.blue,
-                        emptyColor: Colors.white,
-                        gapless: true,
-                        embeddedImageSize: const Size(60, 60),
-                      ),
-                    );
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasError) {
+                        return const Text('Error loading image');
+                      }
+                      return CustomPaint(
+                        size: const Size(300, 300),
+                        painter: QRPainter(
+                          data: 'zarply:payment:${widget.amount}',
+                          version: 4,
+                          color: Colors.blue,
+                          emptyColor: Colors.white,
+                          gapless: true,
+                          embeddedImageSize: const Size(60, 60),
+                          loadedImage: snapshot.data,
+                        ),
+                      );
+                    } else {
+                      return const CircularProgressIndicator();
+                    }
                   },
                 ),
                 const SizedBox(height: 32),
@@ -147,10 +154,9 @@ class QRPainter extends CustomPainter {
     this.color = Colors.black,
     this.emptyColor = Colors.white,
     this.gapless = false,
-    this.embeddedImageSize = const Size(40, 40),
-  }) {
-    _loadImage();
-  }
+    this.embeddedImageSize = const Size(60, 60),
+    this.loadedImage,
+  });
 
   final String data;
   final int version;
@@ -159,18 +165,7 @@ class QRPainter extends CustomPainter {
   final Color emptyColor;
   final bool gapless;
   final Size embeddedImageSize;
-  ui.Image? _loadedImage;
-
-  void _loadImage() {
-    const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
-    final ImageStream stream =
-        imageProvider.resolve(const ImageConfiguration());
-    stream.addListener(
-      ImageStreamListener((ImageInfo info, _) {
-        _loadedImage = info.image;
-      }),
-    );
-  }
+  final ui.Image? loadedImage;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -193,14 +188,14 @@ class QRPainter extends CustomPainter {
       }
     }
 
-    if (_loadedImage != null) {
+    if (loadedImage != null) {
       final ui.Paint paint = Paint()
         ..isAntiAlias = true
         ..filterQuality = FilterQuality.high;
 
       final ui.Size srcSize = Size(
-        _loadedImage!.width.toDouble(),
-        _loadedImage!.height.toDouble(),
+        loadedImage!.width.toDouble(),
+        loadedImage!.height.toDouble(),
       );
       final ui.Rect src =
           Alignment.center.inscribe(srcSize, Offset.zero & srcSize);
@@ -210,7 +205,7 @@ class QRPainter extends CustomPainter {
         width: embeddedImageSize.width,
         height: embeddedImageSize.height,
       );
-      canvas.drawImageRect(_loadedImage!, src, dst, paint);
+      canvas.drawImageRect(loadedImage!, src, dst, paint);
     }
   }
 
