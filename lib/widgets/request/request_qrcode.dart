@@ -1,5 +1,7 @@
+import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:qr/qr.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../utils/formatters.dart';
@@ -19,6 +21,27 @@ class RequestQRCode extends StatefulWidget {
 
 class _RequestQRCodeState extends State<RequestQRCode> {
   bool isQRCodeShared = false;
+  Future<ui.Image>? _loadImageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageFuture = _loadImage();
+  }
+
+  Future<ui.Image> _loadImage() async {
+    final Completer<ui.Image> completer = Completer<ui.Image>();
+    const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
+    final ImageStream stream =
+        imageProvider.resolve(const ImageConfiguration());
+    final ImageStreamListener listener = ImageStreamListener(
+      (ImageInfo info, bool _) => completer.complete(info.image),
+      onError: (Object error, _) => completer.completeError(error),
+    );
+
+    stream.addListener(listener);
+    return completer.future;
+  }
 
   Future<void> _shareQRCode() async {
     final ShareResult result =
@@ -57,22 +80,22 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                QrImageView(
-                  data: 'zarply:payment:${widget.amount}',
-                  version: QrVersions.auto,
-                  size: 300,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: Colors.blue,
-                  ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: Colors.blue,
-                  ),
-                  embeddedImage: const AssetImage('images/qr-code-logo.png'),
-                  embeddedImageStyle: const QrEmbeddedImageStyle(
-                    size: Size(60, 60),
-                  ),
+                FutureBuilder<ui.Image>(
+                  future: _loadImageFuture,
+                  builder:
+                      (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
+                    return CustomPaint(
+                      size: const Size(300, 300),
+                      painter: QRPainter(
+                        data: 'zarply:payment:${widget.amount}',
+                        version: 4,
+                        color: Colors.blue,
+                        emptyColor: Colors.white,
+                        gapless: true,
+                        embeddedImageSize: const Size(60, 60),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -114,4 +137,83 @@ class _RequestQRCodeState extends State<RequestQRCode> {
           )
         : RequestCompleted(amount: widget.amount);
   }
+}
+
+class QRPainter extends CustomPainter {
+  QRPainter({
+    required this.data,
+    this.version = 1,
+    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
+    this.color = Colors.black,
+    this.emptyColor = Colors.white,
+    this.gapless = false,
+    this.embeddedImageSize = const Size(40, 40),
+  }) {
+    _loadImage();
+  }
+
+  final String data;
+  final int version;
+  final int errorCorrectionLevel;
+  final Color color;
+  final Color emptyColor;
+  final bool gapless;
+  final Size embeddedImageSize;
+  ui.Image? _loadedImage;
+
+  void _loadImage() {
+    const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
+    final ImageStream stream =
+        imageProvider.resolve(const ImageConfiguration());
+    stream.addListener(
+      ImageStreamListener((ImageInfo info, _) {
+        _loadedImage = info.image;
+      }),
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final QrCode qrCode = QrCode(version, errorCorrectionLevel)..addData(data);
+    final QrImage qrImage = QrImage(qrCode);
+
+    final double squareSize = size.width / qrCode.moduleCount;
+    final Paint paint = Paint()..style = PaintingStyle.fill;
+
+    for (int x = 0; x < qrCode.moduleCount; x++) {
+      for (int y = 0; y < qrCode.moduleCount; y++) {
+        paint.color = qrImage.isDark(x, y) ? color : emptyColor;
+        final Rect rect = Rect.fromLTWH(
+          x * squareSize,
+          y * squareSize,
+          squareSize - (gapless ? 0 : 1),
+          squareSize - (gapless ? 0 : 1),
+        );
+        canvas.drawRect(rect, paint);
+      }
+    }
+
+    if (_loadedImage != null) {
+      final ui.Paint paint = Paint()
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high;
+
+      final ui.Size srcSize = Size(
+        _loadedImage!.width.toDouble(),
+        _loadedImage!.height.toDouble(),
+      );
+      final ui.Rect src =
+          Alignment.center.inscribe(srcSize, Offset.zero & srcSize);
+      final Offset center = Offset(size.width / 2, size.height / 2);
+      final ui.Rect dst = Rect.fromCenter(
+        center: center,
+        width: embeddedImageSize.width,
+        height: embeddedImageSize.height,
+      );
+      canvas.drawImageRect(_loadedImage!, src, dst, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
