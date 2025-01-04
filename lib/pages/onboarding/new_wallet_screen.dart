@@ -29,6 +29,9 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
 
   Future<void> _createAndStoreWallet() async {
     final Wallet wallet = await _walletService.createWallet();
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await _walletService.createAssociatedTokenAccount(wallet);
+
     await _storageService.saveWallet(wallet);
     setState(() {
       _walletAddress = wallet.address;

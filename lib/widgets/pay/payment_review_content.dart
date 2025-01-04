@@ -47,17 +47,11 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         throw Exception('Wallet not found');
       }
 
-      final double balance =
-          await walletSolanaService.getAccountBalance(wallet.address);
-      if (balance < 500000) {
-        await walletSolanaService.requestAirdrop(wallet.address, 100000000);
-      }
-
       if (recipientAddress != '') {
         await walletSolanaService.sendTransaction(
           senderWallet: wallet,
           recipientAddress: recipientAddress,
-          lamports: 500000,
+          zarpAmount: double.parse(widget.amount),
         );
         setState(() {
           hasPaymentBeenMade = true;

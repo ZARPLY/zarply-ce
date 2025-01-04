@@ -21,7 +21,6 @@ class WalletScreen extends StatefulWidget {
 }
 
 class WalletScreenState extends State<WalletScreen> {
-  // services
   final WalletStorageService walletStorageService = WalletStorageService();
 
   final WalletSolanaService walletSolanaService = WalletSolanaService(
@@ -29,8 +28,8 @@ class WalletScreenState extends State<WalletScreen> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
 
-  // data storing variables
   double _walletAmount = 0;
+  double _solBalance = 0;
   final Map<String, List<TransactionDetails?>> _transactions =
       <String, List<TransactionDetails?>>{};
   bool _isLoading = true;
@@ -50,10 +49,13 @@ class WalletScreenState extends State<WalletScreen> {
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
     final Wallet? wallet = walletProvider.wallet;
+    final ProgramAccount? tokenAccount = walletProvider.userTokenAccount;
 
-    if (wallet != null) {
+    if (wallet != null && tokenAccount != null) {
       final double walletAmount =
-          await walletSolanaService.getAccountBalance(wallet.address);
+          await walletSolanaService.getZarpBalance(tokenAccount.pubkey);
+      final double solBalance =
+          await walletSolanaService.getSolBalance(wallet.address);
       final Map<String, List<TransactionDetails?>> transactions =
           await walletSolanaService.getAccountTransactions(
         walletAddress: wallet.address,
@@ -61,6 +63,7 @@ class WalletScreenState extends State<WalletScreen> {
 
       setState(() {
         _walletAmount = walletAmount;
+        _solBalance = solBalance;
         _transactions.addAll(transactions);
         _isLoading = false;
       });
@@ -202,9 +205,9 @@ class WalletScreenState extends State<WalletScreen> {
                       child: Center(
                         child: RichText(
                           textAlign: TextAlign.center,
-                          text: const TextSpan(
+                          text: TextSpan(
                             children: <InlineSpan>[
-                              TextSpan(
+                              const TextSpan(
                                 text: 'Solana details\n\n',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -212,7 +215,7 @@ class WalletScreenState extends State<WalletScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-                              TextSpan(
+                              const TextSpan(
                                 text: 'Public key\n',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -220,13 +223,13 @@ class WalletScreenState extends State<WalletScreen> {
                                 ),
                               ),
                               TextSpan(
-                                text: 'Balance (on chain rent exempt amount)\n',
-                                style: TextStyle(
+                                text: '$_solBalance SOL\n',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.white,
                                 ),
                               ),
-                              TextSpan(
+                              const TextSpan(
                                 text:
                                     '[people can pay money in but cant pay it out]',
                                 style: TextStyle(fontSize: 14),
