@@ -25,6 +25,22 @@ class WalletSolanaService {
     return wallet;
   }
 
+  Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
+    try {
+      // Validate the mnemonic phrase
+      if (!isValidMnemonic(mnemonic)) {
+        throw WalletSolanaServiceException('Invalid mnemonic phrase');
+      }
+
+      // Create wallet from mnemonic
+      final Ed25519HDKeyPair wallet =
+          await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+      return wallet;
+    } catch (e) {
+      throw WalletSolanaServiceException('Failed to restore wallet: $e');
+    }
+  }
+
   Future<String> requestAirdrop(String address, int lamports) async {
     try {
       final String signature = await _client.requestAirdrop(
@@ -115,5 +131,10 @@ class WalletSolanaService {
         'Error fetching transactions by signatures: $e',
       );
     }
+  }
+
+  bool isValidMnemonic(String mnemonic) {
+    final List<String> words = mnemonic.trim().split(' ');
+    return words.length == 12 || words.length == 24;
   }
 }
