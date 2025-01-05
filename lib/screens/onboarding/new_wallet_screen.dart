@@ -36,15 +36,13 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
     final String? recoveryPhrase = walletProvider.recoveryPhrase;
 
     if (recoveryPhrase == null) {
-      // Handle error - recovery phrase should exist
-      return;
+      throw Exception('Recovery phrase is null');
     }
 
-    final Ed25519HDKeyPair wallet =
+    final Wallet wallet =
         await _walletService.createWalletFromMnemonic(recoveryPhrase);
     await _storageService.saveWallet(wallet);
 
-    // Clear the recovery phrase from memory
     walletProvider.clearRecoveryPhrase();
 
     setState(() {
@@ -143,9 +141,7 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text(
-                  'Go to Wallet',
-                ),
+                child: const Text('Go to Wallet'),
               ),
             ),
           ],

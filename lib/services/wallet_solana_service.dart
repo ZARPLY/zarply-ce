@@ -25,6 +25,12 @@ class WalletSolanaService {
     return wallet;
   }
 
+  Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
+    final Ed25519HDKeyPair wallet =
+        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+    return wallet;
+  }
+
   Future<String> requestAirdrop(String address, int lamports) async {
     try {
       final String signature = await _client.requestAirdrop(

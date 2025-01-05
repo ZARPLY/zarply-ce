@@ -152,10 +152,16 @@ class _GettingStartedScreenState extends State<GettingStartedScreen> {
                 onPressed: _selectedOption != null
                     ? () => context.go(
                           _selectedOption == 'new'
-                              ? '/new_wallet'
+                              ? '/backup_wallet'
                               : '/restore_wallet',
                         )
                     : null,
+                style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 child: const Text('Continue'),
               ),
             ),

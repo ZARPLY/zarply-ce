@@ -90,6 +90,12 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isFormValid ? _restoreWallet : null,
+                style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 child: const Text('Restore Wallet'),
               ),
             ),

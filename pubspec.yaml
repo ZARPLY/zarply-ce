@@ -8,6 +8,7 @@ environment:
   sdk: ^3.5.4
 
 dependencies:
+  bip39: ^1.0.6
   flutter:
     sdk: flutter
   flutter_dotenv: ^5.1.0

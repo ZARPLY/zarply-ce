@@ -5,10 +5,25 @@ import '../services/wallet_storage_service.dart';
 class WalletProvider extends ChangeNotifier {
   final WalletStorageService _walletStorageService = WalletStorageService();
   Wallet? _wallet;
+  String? _recoveryPhrase;
 
   Wallet? get wallet => _wallet;
 
   bool get hasWallet => _wallet != null;
+
+  String? get recoveryPhrase => _recoveryPhrase;
+
+  bool get hasRecoveryPhrase => _recoveryPhrase != null;
+
+  void setRecoveryPhrase(String phrase) {
+    _recoveryPhrase = phrase;
+    notifyListeners();
+  }
+
+  void clearRecoveryPhrase() {
+    _recoveryPhrase = null;
+    notifyListeners();
+  }
 
   Future<bool> initializeWallet() async {
     try {
