@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../provider/wallet_provider.dart';
 import '../screens/onboarding/backup_wallet.dart';
-import '../screens/onboarding/getting_started_screen.dart';
 import '../screens/onboarding/new_wallet_screen.dart';
 import '../screens/onboarding/restore_wallet_screen.dart';
 import '../screens/onboarding/welcome_screen.dart';
@@ -35,11 +34,6 @@ GoRouter createRouter(WalletProvider walletProvider) {
             path: '/welcome',
             builder: (BuildContext context, GoRouterState state) =>
                 const WelcomeScreen(),
-          ),
-          GoRoute(
-            path: '/getting_started',
-            builder: (BuildContext context, GoRouterState state) =>
-                const GettingStartedScreen(),
           ),
           GoRoute(
             path: '/new_wallet',

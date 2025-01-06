@@ -61,27 +61,18 @@ class WelcomeScreen extends StatelessWidget {
                       TextSpan(
                         text: 'Rand\nstable-coin\nwallet',
                         style: TextStyle(
-                          color: Color(0xFF6B5DE0), // Purple color
+                          color: Color(0xFF1F75DC), // Purple color
                         ),
                       ),
                       TextSpan(text: ' on Solana.'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'When minting ZARP, the system automatically deducts the necessary transaction fees from your wallet balance.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
-                ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.go('/getting_started'),
+                    onPressed: () => context.go('/backup_wallet'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4169E1),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -90,10 +81,24 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'Continue',
+                      'Create new wallet',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => context.go('/restore_wallet'),
+                    child: const Text(
+                      'I already have a wallet',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF181C1F),
                       ),
                     ),
                   ),
@@ -113,12 +118,11 @@ class CurvedBottomClipper extends CustomClipper<Path> {
     final Path path = Path();
     path.lineTo(0, size.height * 0.90);
 
-    // Gentler curve overall
     path.quadraticBezierTo(
-      size.width * 0.4, // Control point X at center
-      size.height * 1.1, // Control point Y just slightly below
-      size.width, // End point X
-      size.height * 0.85, // End point Y
+      size.width * 0.4,
+      size.height * 1.1,
+      size.width,
+      size.height * 0.85,
     );
 
     path.lineTo(size.width, 0);
@@ -136,12 +140,11 @@ class SteeperCurvedBottomClipper extends CustomClipper<Path> {
     final Path path = Path();
     path.lineTo(0, size.height * 0.90);
 
-    // Slightly steeper version of the gentle curve
     path.quadraticBezierTo(
-      size.width * 0.45, // Control point X slightly left of center
-      size.height * 1.08, // Control point Y slightly lower
-      size.width, // End point X
-      size.height * 0.90, // End point Y
+      size.width * 0.45,
+      size.height * 1.08,
+      size.width,
+      size.height * 0.90,
     );
 
     path.lineTo(size.width, 0);
