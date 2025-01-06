@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:solana/solana.dart';
+
+import '../../provider/wallet_provider.dart';
+import '../../services/wallet_solana_service.dart';
 
 class RestoreWalletScreen extends StatefulWidget {
   const RestoreWalletScreen({super.key});
@@ -10,6 +16,10 @@ class RestoreWalletScreen extends StatefulWidget {
 
 class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   final TextEditingController _phraseController = TextEditingController();
+  final WalletSolanaService _walletService = WalletSolanaService(
+    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+  );
   bool _isFormValid = false;
 
   @override
@@ -26,15 +36,34 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
 
   void _updateFormValidity() {
     setState(() {
-      // Basic validation - can be enhanced to check for valid BIP39 phrase
-      _isFormValid = _phraseController.text.trim().isNotEmpty;
+      _isFormValid = _phraseController.text.trim().isNotEmpty &&
+          _walletService.isValidMnemonic(_phraseController.text.trim());
     });
   }
 
   Future<void> _restoreWallet() async {
-    // TODO: Implement wallet restoration logic
-    if (mounted) {
-      context.go('/wallet');
+    try {
+      final WalletProvider walletProvider =
+          Provider.of<WalletProvider>(context, listen: false);
+
+      final Wallet wallet = await _walletService.restoreWalletFromMnemonic(
+        _phraseController.text.trim(),
+      );
+
+      await walletProvider.storeWallet(wallet);
+
+      if (mounted) {
+        context.go('/wallet');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to restore wallet: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
