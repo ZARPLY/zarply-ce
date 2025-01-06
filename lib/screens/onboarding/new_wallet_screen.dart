@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
+
+import '../../provider/wallet_provider.dart';
 import '../../services/wallet_solana_service.dart';
 import '../../services/wallet_storage_service.dart';
 
@@ -28,8 +31,20 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
   }
 
   Future<void> _createAndStoreWallet() async {
-    final Wallet wallet = await _walletService.createWallet();
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final String? recoveryPhrase = walletProvider.recoveryPhrase;
+
+    if (recoveryPhrase == null) {
+      throw Exception('Recovery phrase is null');
+    }
+
+    final Wallet wallet =
+        await _walletService.createWalletFromMnemonic(recoveryPhrase);
     await _storageService.saveWallet(wallet);
+
+    walletProvider.clearRecoveryPhrase();
+
     setState(() {
       _walletAddress = wallet.address;
     });
@@ -120,6 +135,12 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
               child: ElevatedButton(
                 onPressed:
                     _walletAddress != null ? () => context.go('/wallet') : null,
+                style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 child: const Text('Go to Wallet'),
               ),
             ),

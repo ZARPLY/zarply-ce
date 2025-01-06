@@ -25,14 +25,18 @@ class WalletSolanaService {
     return wallet;
   }
 
+  Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
+    final Ed25519HDKeyPair wallet =
+        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+    return wallet;
+  }
+
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
     try {
-      // Validate the mnemonic phrase
       if (!isValidMnemonic(mnemonic)) {
         throw WalletSolanaServiceException('Invalid mnemonic phrase');
       }
 
-      // Create wallet from mnemonic
       final Ed25519HDKeyPair wallet =
           await Ed25519HDKeyPair.fromMnemonic(mnemonic);
       return wallet;

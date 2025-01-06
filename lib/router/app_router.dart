@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../pages/onboarding/getting_started_screen.dart';
-import '../pages/onboarding/new_wallet_screen.dart';
-import '../pages/onboarding/restore_wallet_screen.dart';
-import '../pages/onboarding/welcome_screen.dart';
-import '../pages/pay/pay_request.dart';
-import '../pages/pay/payment_amount.dart';
-import '../pages/pay/payment_details.dart';
-import '../pages/request/request_amount_screen.dart';
-import '../pages/splash_screen.dart';
-import '../pages/wallet/wallet.dart';
 import '../provider/wallet_provider.dart';
+import '../screens/onboarding/backup_wallet.dart';
+import '../screens/onboarding/new_wallet_screen.dart';
+import '../screens/onboarding/restore_wallet_screen.dart';
+import '../screens/onboarding/welcome_screen.dart';
+import '../screens/pay/pay_request_screen.dart';
+import '../screens/pay/payment_amount_screen.dart';
+import '../screens/pay/payment_details_screen.dart';
+import '../screens/request/request_amount_screen.dart';
+import '../screens/splash_screen.dart';
+import '../screens/wallet/wallet_screen.dart';
 
 GoRouter createRouter(WalletProvider walletProvider) {
   return GoRouter(
@@ -36,14 +36,14 @@ GoRouter createRouter(WalletProvider walletProvider) {
                 const WelcomeScreen(),
           ),
           GoRoute(
-            path: '/getting_started',
-            builder: (BuildContext context, GoRouterState state) =>
-                const GettingStartedScreen(),
-          ),
-          GoRoute(
             path: '/new_wallet',
             builder: (BuildContext context, GoRouterState state) =>
                 const NewWalletScreen(),
+          ),
+          GoRoute(
+            path: '/backup_wallet',
+            builder: (BuildContext context, GoRouterState state) =>
+                const BackupWalletScreen(),
           ),
           GoRoute(
             path: '/restore_wallet',
