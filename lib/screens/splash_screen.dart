@@ -46,11 +46,11 @@ class _SplashScreenState extends State<SplashScreen>
       if (haveWalletAndTokenAccount) {
         context.go('/wallet');
       } else {
-        context.go('/getting_started');
+        context.go('/welcome');
       }
     } catch (e) {
       if (mounted) {
-        context.go('/getting_started');
+        context.go('/welcome');
       }
     }
   }

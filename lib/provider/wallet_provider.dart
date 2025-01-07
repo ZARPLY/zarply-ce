@@ -15,12 +15,27 @@ class WalletProvider extends ChangeNotifier {
 
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
+  String? _recoveryPhrase;
 
   Wallet? get wallet => _wallet;
 
   ProgramAccount? get userTokenAccount => _userTokenAccount;
 
   bool get hasWallet => _wallet != null;
+
+  String? get recoveryPhrase => _recoveryPhrase;
+
+  bool get hasRecoveryPhrase => _recoveryPhrase != null;
+
+  void setRecoveryPhrase(String phrase) {
+    _recoveryPhrase = phrase;
+    notifyListeners();
+  }
+
+  void clearRecoveryPhrase() {
+    _recoveryPhrase = null;
+    notifyListeners();
+  }
 
   Future<bool> initialize() async {
     try {
