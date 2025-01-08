@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/wallet_provider.dart';
+import '../../widgets/onboarding/progress_steps.dart';
 
 class BackupWalletScreen extends StatefulWidget {
   const BackupWalletScreen({super.key});
@@ -28,7 +29,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
   void confirmBackupAndProceed() {
     Provider.of<WalletProvider>(context, listen: false)
         .setRecoveryPhrase(_recoveryPhrase);
-    context.go('/new_wallet');
+    context.go('/create_password');
   }
 
   @override
@@ -52,6 +53,13 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
                 ),
               ),
             ),
+          ),
+        ),
+        title: const Padding(
+          padding: EdgeInsets.only(right: 24),
+          child: ProgressSteps(
+            currentStep: 0,
+            totalSteps: 3,
           ),
         ),
       ),

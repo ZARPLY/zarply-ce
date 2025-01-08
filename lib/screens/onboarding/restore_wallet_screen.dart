@@ -6,6 +6,7 @@ import 'package:solana/solana.dart';
 
 import '../../provider/wallet_provider.dart';
 import '../../services/wallet_solana_service.dart';
+import '../../widgets/onboarding/progress_steps.dart';
 
 class RestoreWalletScreen extends StatefulWidget {
   const RestoreWalletScreen({super.key});
@@ -88,6 +89,13 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                 ),
               ),
             ),
+          ),
+        ),
+        title: const Padding(
+          padding: EdgeInsets.only(right: 24),
+          child: ProgressSteps(
+            currentStep: 0,
+            totalSteps: 3,
           ),
         ),
       ),

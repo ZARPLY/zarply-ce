@@ -12,17 +12,13 @@ class WelcomeScreen extends StatelessWidget {
         children: <Widget>[
           Stack(
             children: <Widget>[
-              // Background curved container (more transparent)
               ClipPath(
                 clipper: SteeperCurvedBottomClipper(),
                 child: Container(
-                  height: MediaQuery.of(context).size.height *
-                      0.53, // Slightly bigger
-                  color: const Color(0xFF4169E1)
-                      .withOpacity(0.3), // More transparent
+                  height: MediaQuery.of(context).size.height * 0.53,
+                  color: const Color(0xFF4169E1).withOpacity(0.3),
                 ),
               ),
-              // Original curved container
               ClipPath(
                 clipper: CurvedBottomClipper(),
                 child: Container(
@@ -68,7 +64,7 @@ class WelcomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 64),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
