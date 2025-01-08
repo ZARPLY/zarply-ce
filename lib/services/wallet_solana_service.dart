@@ -43,6 +43,24 @@ class WalletSolanaService {
     }
   }
 
+  Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
+    final Ed25519HDKeyPair wallet =
+        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+
+    if (zarpMint.isEmpty) {
+      throw WalletSolanaServiceException(
+        'ZARP_MINT_ADDRESS is not configured in .env file',
+      );
+    }
+
+    await requestAirdrop(
+      wallet.address,
+      50000000, // SOL 0.05
+    );
+
+    return wallet;
+  }
+
   Future<ProgramAccount> createAssociatedTokenAccount(
     Wallet wallet,
   ) async {
@@ -57,16 +75,13 @@ class WalletSolanaService {
   Future<ProgramAccount?> getAssociatedTokenAccount(
     Wallet wallet,
   ) async {
-    return await _client.getAssociatedTokenAccount(
+    final ProgramAccount? tokenAccount =
+        await _client.getAssociatedTokenAccount(
       owner: wallet.publicKey,
       mint: Ed25519HDPublicKey.fromBase58(zarpMint),
     );
-  }
 
-  Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
-    final Ed25519HDKeyPair wallet =
-        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
-    return wallet;
+    return tokenAccount;
   }
 
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {

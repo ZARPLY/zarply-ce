@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../provider/wallet_provider.dart';
@@ -23,6 +24,7 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
   );
   final WalletStorageService _storageService = WalletStorageService();
   String? _walletAddress;
+  String? _tokenAccountAddress;
 
   @override
   void initState() {
@@ -42,26 +44,64 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
     final Wallet wallet =
         await _walletService.createWalletFromMnemonic(recoveryPhrase);
     await Future<void>.delayed(const Duration(seconds: 2));
-    await _walletService.createAssociatedTokenAccount(wallet);
+    final ProgramAccount tokenAccount =
+        await _walletService.createAssociatedTokenAccount(wallet);
 
     await _storageService.saveWallet(wallet);
-
-    walletProvider.clearRecoveryPhrase();
+    await _storageService.saveAssociatedTokenAccount(tokenAccount);
 
     setState(() {
       _walletAddress = wallet.address;
+      _tokenAccountAddress = tokenAccount.pubkey;
     });
   }
 
-  Future<void> _copyToClipboard() async {
-    if (_walletAddress != null) {
-      await Clipboard.setData(ClipboardData(text: _walletAddress!));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Address copied to clipboard')),
-        );
-      }
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Address copied to clipboard')),
+      );
     }
+  }
+
+  Widget _buildAddressContainer(String label, String address) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _copyToClipboard(address),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F8F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFD3D9DF)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    address,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.copy, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -103,32 +143,19 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const Spacer(),
-            if (_walletAddress != null)
-              Center(
-                child: GestureDetector(
-                  onTap: _copyToClipboard,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F8F9),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFD3D9DF)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Flexible(
-                          child: Text(
-                            _walletAddress!,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.copy, size: 20),
-                      ],
-                    ),
+            if (_walletAddress != null && _tokenAccountAddress != null)
+              Column(
+                children: <Widget>[
+                  _buildAddressContainer(
+                    'Wallet Address:',
+                    _walletAddress!,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  _buildAddressContainer(
+                    'Token Account:',
+                    _tokenAccountAddress!,
+                  ),
+                ],
               )
             else
               const Center(child: CircularProgressIndicator()),

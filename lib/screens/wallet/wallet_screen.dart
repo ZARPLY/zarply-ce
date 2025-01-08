@@ -28,6 +28,8 @@ class WalletScreenState extends State<WalletScreen> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
 
+  ProgramAccount? _tokenAccount;
+  Wallet? _wallet;
   double _walletAmount = 0;
   double _solBalance = 0;
   final Map<String, List<TransactionDetails?>> _transactions =
@@ -65,6 +67,8 @@ class WalletScreenState extends State<WalletScreen> {
         _walletAmount = walletAmount;
         _solBalance = solBalance;
         _transactions.addAll(transactions);
+        _tokenAccount = tokenAccount;
+        _wallet = wallet;
         _isLoading = false;
       });
     } else {
@@ -215,9 +219,9 @@ class WalletScreenState extends State<WalletScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-                              const TextSpan(
-                                text: 'Public key\n',
-                                style: TextStyle(
+                              TextSpan(
+                                text: '${_wallet?.address}\n',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.white,
                                 ),
@@ -229,10 +233,9 @@ class WalletScreenState extends State<WalletScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-                              const TextSpan(
-                                text:
-                                    '[people can pay money in but cant pay it out]',
-                                style: TextStyle(fontSize: 14),
+                              TextSpan(
+                                text: '${_tokenAccount?.pubkey}\n',
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),

@@ -40,7 +40,6 @@ class WalletProvider extends ChangeNotifier {
   Future<bool> initialize() async {
     try {
       _wallet = await _walletStorageService.retrieveWallet();
-      notifyListeners();
 
       if (_wallet == null) {
         return false;
@@ -68,6 +67,12 @@ class WalletProvider extends ChangeNotifier {
       // Handle error
       rethrow;
     }
+  }
+
+  Future<void> storeAssociatedTokenAccount(ProgramAccount tokenAccount) async {
+    await _walletStorageService.saveAssociatedTokenAccount(tokenAccount);
+    _userTokenAccount = tokenAccount;
+    notifyListeners();
   }
 
   Future<void> deleteWallet() async {
