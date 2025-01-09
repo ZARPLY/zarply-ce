@@ -13,10 +13,12 @@ import 'payment_success.dart';
 class PaymentReviewContent extends StatefulWidget {
   const PaymentReviewContent({
     required this.amount,
+    required this.recipientAddress,
     required this.onCancel,
     super.key,
   });
   final String amount;
+  final String recipientAddress;
   final VoidCallback onCancel;
 
   @override
@@ -29,8 +31,6 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletStorageService walletStorageService = WalletStorageService();
-  final String recipientAddress =
-      dotenv.env['solana_wallet_devnet_public_key'] ?? '';
   bool hasPaymentBeenMade = false;
   bool isLoading = false;
 
@@ -47,10 +47,10 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         throw Exception('Wallet not found');
       }
 
-      if (recipientAddress != '') {
+      if (widget.recipientAddress != '') {
         await walletSolanaService.sendTransaction(
           senderWallet: wallet,
-          recipientAddress: recipientAddress,
+          recipientAddress: widget.recipientAddress,
           zarpAmount: double.parse(widget.amount),
         );
         setState(() {
@@ -125,7 +125,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Text(
-                    Formatters.shortenAddress(recipientAddress),
+                    Formatters.shortenAddress(widget.recipientAddress),
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ),

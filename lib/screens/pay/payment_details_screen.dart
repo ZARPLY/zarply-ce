@@ -16,7 +16,6 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   @override
   void initState() {
     super.initState();
-    // Add listeners to update form validity
     _publicKeyController.addListener(_updateFormValidity);
     _descriptionController.addListener(_updateFormValidity);
   }
@@ -109,8 +108,12 @@ class _PaymentDetailsState extends State<PaymentDetails> {
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed:
-                  _isFormValid ? () => context.go('/payment-amount') : null,
+              onPressed: _isFormValid
+                  ? () => context.go(
+                        '/payment-amount',
+                        extra: _publicKeyController.text,
+                      )
+                  : null,
               style: ElevatedButton.styleFrom(
                 textStyle: const TextStyle(
                   fontSize: 18,

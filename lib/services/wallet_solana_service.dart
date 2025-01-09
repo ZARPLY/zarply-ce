@@ -21,6 +21,7 @@ class WalletSolanaService {
         );
   final SolanaClient _client;
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
+  static const int zarpDecimalFactor = 1000000000;
 
   Future<Wallet> createWallet() async {
     try {
@@ -133,13 +134,14 @@ class WalletSolanaService {
         );
       }
 
-      final int tokenAmount = (zarpAmount * 1000000).round();
+      final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
 
       final TransactionId transaction = await _client.transferSplToken(
         owner: senderWallet,
         destination: Ed25519HDPublicKey(base58decode(recipientAddress)),
         amount: tokenAmount,
-        mint: Ed25519HDPublicKey(base58decode(zarpMint)),
+        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+        // tokenProgramType: TokenProgramType.token2022Program,
       );
 
       return transaction;
@@ -152,7 +154,7 @@ class WalletSolanaService {
     try {
       final TokenAmountResult balance =
           await _client.rpcClient.getTokenAccountBalance(publicKey);
-      return double.parse(balance.value.amount) / 1000000;
+      return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       throw WalletSolanaServiceException(
         'Could not retrieve ZARP balance: $e',
