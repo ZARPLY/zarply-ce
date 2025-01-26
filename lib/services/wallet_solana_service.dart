@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -19,10 +20,83 @@ class WalletSolanaService {
           websocketUrl: Uri.parse(websocketUrl),
         );
   final SolanaClient _client;
+  static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
+  static const int zarpDecimalFactor = 1000000000;
 
   Future<Wallet> createWallet() async {
-    final Ed25519HDKeyPair wallet = await Wallet.random();
+    try {
+      final Ed25519HDKeyPair wallet = await Wallet.random();
+
+      if (zarpMint.isEmpty) {
+        throw WalletSolanaServiceException(
+          'ZARP_MINT_ADDRESS is not configured in .env file',
+        );
+      }
+
+      await requestAirdrop(
+        wallet.address,
+        50000000, // SOL 0.05
+      );
+
+      return wallet;
+    } catch (e) {
+      throw WalletSolanaServiceException('Failed to create wallet: $e');
+    }
+  }
+
+  Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
+    final Ed25519HDKeyPair wallet =
+        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+
+    if (zarpMint.isEmpty) {
+      throw WalletSolanaServiceException(
+        'ZARP_MINT_ADDRESS is not configured in .env file',
+      );
+    }
+
+    await requestAirdrop(
+      wallet.address,
+      50000000, // SOL 0.05
+    );
+
     return wallet;
+  }
+
+  Future<ProgramAccount> createAssociatedTokenAccount(
+    Wallet wallet,
+  ) async {
+    return await _client.createAssociatedTokenAccount(
+      owner: wallet.publicKey,
+      mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+      funder: wallet,
+      tokenProgramType: TokenProgramType.token2022Program,
+    );
+  }
+
+  Future<ProgramAccount?> getAssociatedTokenAccount(
+    Wallet wallet,
+  ) async {
+    final ProgramAccount? tokenAccount =
+        await _client.getAssociatedTokenAccount(
+      owner: wallet.publicKey,
+      mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+    );
+
+    return tokenAccount;
+  }
+
+  Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
+    try {
+      if (!isValidMnemonic(mnemonic)) {
+        throw WalletSolanaServiceException('Invalid mnemonic phrase');
+      }
+
+      final Ed25519HDKeyPair wallet =
+          await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+      return wallet;
+    } catch (e) {
+      throw WalletSolanaServiceException('Failed to restore wallet: $e');
+    }
   }
 
   Future<String> requestAirdrop(String address, int lamports) async {
@@ -37,32 +111,53 @@ class WalletSolanaService {
     }
   }
 
+  Future<double> getSolBalance(String publicKey) async {
+    try {
+      final BalanceResult lamports =
+          await _client.rpcClient.getBalance(publicKey);
+      return lamports.value.toDouble() / lamportsPerSol;
+    } catch (e) {
+      throw WalletSolanaServiceException('Could not retrieve SOL balance: $e');
+    }
+  }
+
   Future<String> sendTransaction({
     required Wallet senderWallet,
     required String recipientAddress,
-    required int lamports,
+    required double zarpAmount,
   }) async {
     try {
-      final TransactionId transaction = await _client.transferLamports(
-        source: senderWallet,
+      final double solBalance = await getSolBalance(senderWallet.address);
+      if (solBalance < 0.001) {
+        throw WalletSolanaServiceException(
+          'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
+        );
+      }
+
+      final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
+
+      final TransactionId transaction = await _client.transferSplToken(
+        owner: senderWallet,
         destination: Ed25519HDPublicKey(base58decode(recipientAddress)),
-        lamports: lamports,
+        amount: tokenAmount,
+        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+        tokenProgram: TokenProgramType.token2022Program,
       );
 
       return transaction;
     } catch (e) {
-      throw WalletSolanaServiceException('Transaction failed: $e');
+      throw WalletSolanaServiceException('ZARP transaction failed: $e');
     }
   }
 
-  Future<double> getAccountBalance(String publicKey) async {
+  Future<double> getZarpBalance(String publicKey) async {
     try {
-      final BalanceResult balance =
-          await _client.rpcClient.getBalance(publicKey);
-      return balance.value.toDouble();
+      final TokenAmountResult balance =
+          await _client.rpcClient.getTokenAccountBalance(publicKey);
+      return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       throw WalletSolanaServiceException(
-        'Could not retrieve account balance from Solana:: $e',
+        'Could not retrieve ZARP balance: $e',
       );
     }
   }
@@ -115,5 +210,10 @@ class WalletSolanaService {
         'Error fetching transactions by signatures: $e',
       );
     }
+  }
+
+  bool isValidMnemonic(String mnemonic) {
+    final List<String> words = mnemonic.trim().split(' ');
+    return words.length == 12 || words.length == 24;
   }
 }

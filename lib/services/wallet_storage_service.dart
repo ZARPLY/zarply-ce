@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 class WalletStorageException implements Exception {
@@ -14,6 +15,7 @@ class WalletStorageException implements Exception {
 class WalletStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String _walletKey = 'wallet_key';
+  final String _associatedTokenAccountKey = 'associated_token_account_key';
 
   Future<void> saveWallet(Wallet wallet) async {
     try {
@@ -26,6 +28,13 @@ class WalletStorageService {
     } catch (e) {
       throw WalletStorageException('Failed to save wallet key: $e');
     }
+  }
+
+  Future<void> saveAssociatedTokenAccount(ProgramAccount? tokenAccount) async {
+    await _secureStorage.write(
+      key: _associatedTokenAccountKey,
+      value: tokenAccount?.pubkey,
+    );
   }
 
   Future<Wallet?> retrieveWallet() async {
