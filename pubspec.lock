@@ -561,10 +561,10 @@ packages:
     dependency: "direct main"
     description:
       name: solana
-      sha256: "7a9e8f18535ffb4460513995ed911ede79a3cb8f455b0d7bce940a9e7c87c9ae"
+      sha256: e2d1cdddd9b0d0f292e18cd4ed4ffee1d0c81375cf9fab4c95db994ee1757136
       url: "https://pub.dev"
     source: hosted
-    version: "0.31.1+1"
+    version: "0.31.2"
   source_span:
     dependency: transitive
     description:

@@ -141,7 +141,7 @@ class WalletSolanaService {
         destination: Ed25519HDPublicKey(base58decode(recipientAddress)),
         amount: tokenAmount,
         mint: Ed25519HDPublicKey.fromBase58(zarpMint),
-        // tokenProgramType: TokenProgramType.token2022Program,
+        tokenProgram: TokenProgramType.token2022Program,
       );
 
       return transaction;
