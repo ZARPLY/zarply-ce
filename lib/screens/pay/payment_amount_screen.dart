@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../widgets/pay/payment_review_content.dart';
+import '../../widgets/shared/amount_input.dart';
 
 class PaymentAmountScreen extends StatefulWidget {
-  const PaymentAmountScreen({super.key});
+  const PaymentAmountScreen({
+    required this.recipientAddress,
+    super.key,
+  });
+
+  final String recipientAddress;
 
   @override
   State<PaymentAmountScreen> createState() => _PaymentAmountScreenState();
@@ -29,27 +36,34 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   void _updateFormValidity() {
     setState(() {
-      _isFormValid = _paymentAmountController.text.isNotEmpty;
+      final double amount = double.tryParse(
+            _paymentAmountController.text,
+          ) ??
+          0;
+      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 500;
     });
   }
 
   void _showPaymentReviewModal() {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.90,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: PaymentReviewContent(
-            amount: _paymentAmountController.text,
-            onCancel: () => Navigator.pop(context),
-          ),
-        );
-      },
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) => Container(
+        height: MediaQuery.of(context).size.height * 0.90,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: PaymentReviewContent(
+          amount: _paymentAmountController.text,
+          recipientAddress: widget.recipientAddress,
+          onCancel: () => Navigator.pop(context),
+        ),
+      ),
     );
   }
 
@@ -84,15 +98,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             const SizedBox(height: 40),
-            TextField(
-              controller: _paymentAmountController,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
-              ),
-            ),
+            AmountInput(controller: _paymentAmountController),
             const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -107,8 +113,8 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                     color: const Color(0xFFEBECEF),
                     borderRadius: BorderRadius.circular(40),
                   ),
-                  child: const Text(
-                    'D1f4HnfUPGPqbatYFq8yTd6VzhMuqesTCHRPxUUk9ttC',
+                  child: Text(
+                    widget.recipientAddress,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

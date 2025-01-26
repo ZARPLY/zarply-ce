@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 
@@ -13,10 +12,12 @@ import 'payment_success.dart';
 class PaymentReviewContent extends StatefulWidget {
   const PaymentReviewContent({
     required this.amount,
+    required this.recipientAddress,
     required this.onCancel,
     super.key,
   });
   final String amount;
+  final String recipientAddress;
   final VoidCallback onCancel;
 
   @override
@@ -29,8 +30,6 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletStorageService walletStorageService = WalletStorageService();
-  final String recipientAddress =
-      dotenv.env['solana_wallet_devnet_public_key'] ?? '';
   bool hasPaymentBeenMade = false;
   bool isLoading = false;
 
@@ -47,25 +46,18 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         throw Exception('Wallet not found');
       }
 
-      final double balance =
-          await walletSolanaService.getAccountBalance(wallet.address);
-      if (balance < 500000) {
-        await walletSolanaService.requestAirdrop(wallet.address, 100000000);
-      }
-
-      if (recipientAddress != '') {
+      if (widget.recipientAddress != '') {
         await walletSolanaService.sendTransaction(
           senderWallet: wallet,
-          recipientAddress: recipientAddress,
-          lamports: 500000,
+          recipientAddress: widget.recipientAddress,
+          zarpAmount: double.parse(
+                widget.amount,
+              ) /
+              100,
         );
         setState(() {
           hasPaymentBeenMade = true;
         });
-
-        if (mounted) {
-          context.go('/wallet');
-        }
       } else {
         setState(() {
           hasPaymentBeenMade = false;
@@ -120,7 +112,12 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  Formatters.formatAmount(double.parse(widget.amount)),
+                  Formatters.formatAmount(
+                    double.parse(
+                          widget.amount,
+                        ) /
+                        100,
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 32),
@@ -131,7 +128,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Text(
-                    Formatters.shortenAddress(recipientAddress),
+                    Formatters.shortenAddress(widget.recipientAddress),
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ),

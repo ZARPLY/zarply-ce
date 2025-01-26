@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../provider/wallet_provider.dart';
 import '../../services/wallet_solana_service.dart';
+import '../../services/wallet_storage_service.dart';
 import '../../widgets/onboarding/progress_steps.dart';
 
 class RestoreWalletScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class RestoreWalletScreen extends StatefulWidget {
 
 class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   final TextEditingController _phraseController = TextEditingController();
+  final WalletStorageService _storageService = WalletStorageService();
   final WalletSolanaService _walletService = WalletSolanaService(
     rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
@@ -42,20 +45,16 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
     });
   }
 
-  Future<void> _restoreWallet() async {
+  Future<Wallet?> _restoreWallet(WalletProvider walletProvider) async {
     try {
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
-
       final Wallet wallet = await _walletService.restoreWalletFromMnemonic(
         _phraseController.text.trim(),
       );
 
       await walletProvider.storeWallet(wallet);
+      await _storageService.saveWallet(wallet);
 
-      if (mounted) {
-        context.go('/wallet');
-      }
+      return wallet;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,6 +64,35 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
           ),
         );
       }
+      return null;
+    }
+  }
+
+  Future<void> _restoreAssociatedTokenAccount(
+    Wallet wallet,
+    WalletProvider walletProvider,
+  ) async {
+    try {
+      final ProgramAccount? tokenAccount =
+          await _walletService.getAssociatedTokenAccount(wallet);
+      if (tokenAccount == null) return;
+      await walletProvider.storeAssociatedTokenAccount(tokenAccount);
+    } catch (e) {
+      throw WalletStorageException(
+        'Failed to restore associated token account: $e',
+      );
+    }
+  }
+
+  Future<void> _handleRestoreWallet() async {
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final Wallet? wallet = await _restoreWallet(walletProvider);
+    if (wallet == null) return;
+    await _restoreAssociatedTokenAccount(wallet, walletProvider);
+
+    if (mounted) {
+      context.go('/wallet');
     }
   }
 
@@ -117,16 +145,21 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
             TextField(
               controller: _phraseController,
               maxLines: 3,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Recovery Phrase',
                 hintText: 'Enter your 12 or 24 word recovery phrase',
+                errorText: _phraseController.text.isNotEmpty
+                    ? _isFormValid
+                        ? null
+                        : 'Please enter exactly 12 or 24 words'
+                    : null,
               ),
             ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isFormValid ? _restoreWallet : null,
+                onPressed: _isFormValid ? _handleRestoreWallet : null,
                 style: ElevatedButton.styleFrom(
                   textStyle: const TextStyle(
                     fontSize: 18,

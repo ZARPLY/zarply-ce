@@ -12,11 +12,11 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   final TextEditingController _publicKeyController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _isFormValid = false;
+  String? _publicKeyError;
 
   @override
   void initState() {
     super.initState();
-    // Add listeners to update form validity
     _publicKeyController.addListener(_updateFormValidity);
     _descriptionController.addListener(_updateFormValidity);
   }
@@ -29,9 +29,19 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   }
 
   void _updateFormValidity() {
+    final String publicKey = _publicKeyController.text;
+
     setState(() {
-      _isFormValid = _publicKeyController.text.isNotEmpty &&
-          _descriptionController.text.isNotEmpty;
+      if (publicKey.isEmpty) {
+        _publicKeyError = 'Public key is required';
+      } else if (publicKey.length < 32) {
+        _publicKeyError = 'Invalid public key format';
+      } else {
+        _publicKeyError = null;
+      }
+
+      _isFormValid =
+          _publicKeyError == null && _publicKeyController.text.isNotEmpty;
     });
   }
 
@@ -89,8 +99,14 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                 style: const TextStyle(
                   fontSize: 16,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Public Key',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.red,
+                    ),
+                  ),
+                  errorText: _publicKeyError,
                 ),
               ),
             ),
@@ -109,8 +125,12 @@ class _PaymentDetailsState extends State<PaymentDetails> {
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed:
-                  _isFormValid ? () => context.go('/payment-amount') : null,
+              onPressed: _isFormValid
+                  ? () => context.go(
+                        '/payment-amount',
+                        extra: _publicKeyController.text,
+                      )
+                  : null,
               style: ElevatedButton.styleFrom(
                 textStyle: const TextStyle(
                   fontSize: 18,

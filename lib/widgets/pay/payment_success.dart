@@ -46,7 +46,7 @@ class PaymentSuccess extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            Formatters.formatAmount(double.parse(amount)),
+            Formatters.formatAmount(double.parse(amount) / 100),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 32),
