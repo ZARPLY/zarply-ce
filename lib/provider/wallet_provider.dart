@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
+
+import '../services/wallet_solana_service.dart';
 import '../services/wallet_storage_service.dart';
 
 class WalletProvider extends ChangeNotifier {
   final WalletStorageService _walletStorageService = WalletStorageService();
+  final WalletSolanaService _walletSolanaService = WalletSolanaService(
+    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+  );
+
   Wallet? _wallet;
+  ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
 
   Wallet? get wallet => _wallet;
+
+  ProgramAccount? get userTokenAccount => _userTokenAccount;
 
   bool get hasWallet => _wallet != null;
 
@@ -25,16 +37,22 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> initializeWallet() async {
+  Future<bool> initialize() async {
     try {
       _wallet = await _walletStorageService.retrieveWallet();
-      notifyListeners();
+
       if (_wallet == null) {
         return false;
       }
+
+      _userTokenAccount =
+          await _walletSolanaService.getAssociatedTokenAccount(_wallet!);
+      notifyListeners();
+
       return true;
     } catch (e) {
       _wallet = null;
+      _userTokenAccount = null;
       notifyListeners();
       return false;
     }
@@ -49,6 +67,12 @@ class WalletProvider extends ChangeNotifier {
       // Handle error
       rethrow;
     }
+  }
+
+  Future<void> storeAssociatedTokenAccount(ProgramAccount tokenAccount) async {
+    await _walletStorageService.saveAssociatedTokenAccount(tokenAccount);
+    _userTokenAccount = tokenAccount;
+    notifyListeners();
   }
 
   Future<void> deleteWallet() async {

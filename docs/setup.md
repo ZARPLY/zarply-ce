@@ -92,3 +92,6 @@ below:
    ```bash
    python3 scripts/setup-locally.py
    ```
+6. **Request ZARP mint address**
+
+   Request the ZARP mint address from the team.

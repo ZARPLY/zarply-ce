@@ -67,8 +67,10 @@ GoRouter createRouter(WalletProvider walletProvider) {
           ),
           GoRoute(
             path: '/payment-amount',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PaymentAmountScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final String publicKey = state.extra as String;
+              return PaymentAmountScreen(recipientAddress: publicKey);
+            },
           ),
           GoRoute(
             path: '/request-amount',
