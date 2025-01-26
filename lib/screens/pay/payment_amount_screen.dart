@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../widgets/pay/payment_review_content.dart';
+import '../../widgets/shared/amount_input.dart';
 
 class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
@@ -34,7 +36,11 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   void _updateFormValidity() {
     setState(() {
-      _isFormValid = _paymentAmountController.text.isNotEmpty;
+      final double amount = double.tryParse(
+            _paymentAmountController.text,
+          ) ??
+          0;
+      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 500;
     });
   }
 
@@ -92,15 +98,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             const SizedBox(height: 40),
-            TextField(
-              controller: _paymentAmountController,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
-              ),
-            ),
+            AmountInput(controller: _paymentAmountController),
             const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,

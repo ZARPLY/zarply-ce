@@ -137,9 +137,14 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
             TextField(
               controller: _phraseController,
               maxLines: 3,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Recovery Phrase',
                 hintText: 'Enter your 12 or 24 word recovery phrase',
+                errorText: _phraseController.text.isNotEmpty
+                    ? _isFormValid
+                        ? null
+                        : 'Please enter exactly 12 or 24 words'
+                    : null,
               ),
             ),
             const Spacer(),
