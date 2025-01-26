@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 
@@ -51,15 +50,14 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         await walletSolanaService.sendTransaction(
           senderWallet: wallet,
           recipientAddress: widget.recipientAddress,
-          zarpAmount: double.parse(widget.amount),
+          zarpAmount: double.parse(
+                widget.amount,
+              ) /
+              100,
         );
         setState(() {
           hasPaymentBeenMade = true;
         });
-
-        if (mounted) {
-          context.go('/wallet');
-        }
       } else {
         setState(() {
           hasPaymentBeenMade = false;
@@ -114,7 +112,12 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  Formatters.formatAmount(double.parse(widget.amount)),
+                  Formatters.formatAmount(
+                    double.parse(
+                          widget.amount,
+                        ) /
+                        100,
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 32),

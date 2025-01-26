@@ -101,6 +101,11 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                 ),
                 decoration: InputDecoration(
                   labelText: 'Public Key',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.red,
+                    ),
+                  ),
                   errorText: _publicKeyError,
                 ),
               ),

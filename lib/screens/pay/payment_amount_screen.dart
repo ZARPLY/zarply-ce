@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../widgets/pay/payment_review_content.dart';
+import '../../widgets/shared/amount_input.dart';
 
 class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
@@ -34,8 +36,11 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   void _updateFormValidity() {
     setState(() {
-      final double amount = double.tryParse(_paymentAmountController.text) ?? 0;
-      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 5;
+      final double amount = double.tryParse(
+            _paymentAmountController.text,
+          ) ??
+          0;
+      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 500;
     });
   }
 
@@ -93,21 +98,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             const SizedBox(height: 40),
-            TextField(
-              controller: _paymentAmountController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Payment Amount',
-                errorText: _paymentAmountController.text.isNotEmpty &&
-                        (double.tryParse(_paymentAmountController.text) ?? 0) <
-                            5
-                    ? 'Amount must be at least R5'
-                    : null,
-              ),
-            ),
+            AmountInput(controller: _paymentAmountController),
             const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
