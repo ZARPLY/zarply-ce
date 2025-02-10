@@ -14,23 +14,36 @@ class WalletStorageException implements Exception {
 
 class WalletStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  final String _walletKey = 'wallet_key';
+  final String _walletPrivateKey = 'wallet_private_key';
+  final String _walletPublicKey = 'wallet_public_key';
   final String _associatedTokenAccountKey = 'associated_token_account_key';
 
-  Future<void> saveWallet(Wallet wallet) async {
+  Future<void> saveWalletPrivateKey(Wallet wallet) async {
     try {
       if (wallet.address.isEmpty) {
         throw WalletStorageException('Wallet address cannot be empty.');
       }
       final Ed25519HDKeyPairData keyPairData = await wallet.extract();
       final String privateKeyBase64 = base64Encode(keyPairData.bytes);
-      await _secureStorage.write(key: _walletKey, value: privateKeyBase64);
+      await _secureStorage.write(
+        key: _walletPrivateKey,
+        value: privateKeyBase64,
+      );
     } catch (e) {
       throw WalletStorageException('Failed to save wallet key: $e');
     }
   }
 
-  Future<void> saveAssociatedTokenAccount(ProgramAccount? tokenAccount) async {
+  Future<void> saveWalletPublicKey(Wallet wallet) async {
+    await _secureStorage.write(
+      key: _walletPublicKey,
+      value: wallet.address,
+    );
+  }
+
+  Future<void> saveAssociatedTokenAccountPublicKey(
+    ProgramAccount? tokenAccount,
+  ) async {
     await _secureStorage.write(
       key: _associatedTokenAccountKey,
       value: tokenAccount?.pubkey,
@@ -39,7 +52,8 @@ class WalletStorageService {
 
   Future<Wallet?> retrieveWallet() async {
     try {
-      final String? walletKey = await _secureStorage.read(key: _walletKey);
+      final String? walletKey =
+          await _secureStorage.read(key: _walletPrivateKey);
       if (walletKey == null) {
         return null;
       }
@@ -52,16 +66,41 @@ class WalletStorageService {
     }
   }
 
+  Future<String?> retrieveWalletPublicKey() async {
+    final String? walletKey = await _secureStorage.read(key: _walletPublicKey);
+    return walletKey;
+  }
+
+  Future<String?> retrieveWalletPrivateKey() async {
+    final String? walletKey = await _secureStorage.read(key: _walletPrivateKey);
+    return walletKey;
+  }
+
+  Future<String?> retrieveAssociatedTokenAccountPublicKey() async {
+    final String? tokenAccount =
+        await _secureStorage.read(key: _associatedTokenAccountKey);
+    return tokenAccount;
+  }
+
   Future<void> deletePrivateKey() async {
     try {
-      final bool exists = await _secureStorage.containsKey(key: _walletKey);
+      final bool exists =
+          await _secureStorage.containsKey(key: _walletPrivateKey);
       // TODO: destroy wallet
       if (!exists) {
         throw WalletStorageException('No wallet key to delete.');
       }
-      await _secureStorage.delete(key: _walletKey);
+      await _secureStorage.delete(key: _walletPrivateKey);
     } catch (e) {
       throw WalletStorageException('Failed to delete wallet key: $e');
+    }
+  }
+
+  Future<bool> hasPassword() async {
+    try {
+      return await _secureStorage.containsKey(key: 'user_pin');
+    } catch (e) {
+      throw WalletStorageException('Failed to check password existence: $e');
     }
   }
 }

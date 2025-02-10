@@ -52,7 +52,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/pay-request'),
+            onTap: () => context.go('/pay_request'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),
@@ -127,7 +127,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
             ElevatedButton(
               onPressed: _isFormValid
                   ? () => context.go(
-                        '/payment-amount',
+                        '/payment_amount',
                         extra: _publicKeyController.text,
                       )
                   : null,

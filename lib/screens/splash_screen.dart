@@ -39,14 +39,17 @@ class _SplashScreenState extends State<SplashScreen>
       _playAnimation();
 
       final bool haveWalletAndTokenAccount = await walletProvider.initialize();
+      final bool hasPassword = await walletProvider.hasPassword();
       await Future<void>.delayed(const Duration(seconds: 4));
 
       if (!mounted) return;
 
-      if (haveWalletAndTokenAccount) {
-        context.go('/wallet');
-      } else {
+      if (!haveWalletAndTokenAccount) {
         context.go('/welcome');
+      } else if (!hasPassword) {
+        context.go('/create_password');
+      } else {
+        context.go('/login');
       }
     } catch (e) {
       if (mounted) {

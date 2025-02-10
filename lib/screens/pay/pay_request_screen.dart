@@ -50,7 +50,7 @@ class PayRequest extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             InkWell(
-              onTap: () => context.go('/payment-details'),
+              onTap: () => context.go('/payment_details'),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
@@ -87,7 +87,7 @@ class PayRequest extends StatelessWidget {
             const SizedBox(height: 12),
             InkWell(
               onTap: () {
-                context.go('/request-amount');
+                context.go('/request_amount');
               },
               child: Container(
                 padding:

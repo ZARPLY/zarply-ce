@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../widgets/pay/payment_review_content.dart';
@@ -74,7 +73,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/pay-request'),
+            onTap: () => context.go('/pay_request'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),

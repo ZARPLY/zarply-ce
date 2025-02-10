@@ -60,7 +60,8 @@ class WalletProvider extends ChangeNotifier {
 
   Future<void> storeWallet(Wallet wallet) async {
     try {
-      await _walletStorageService.saveWallet(wallet);
+      await _walletStorageService.saveWalletPrivateKey(wallet);
+      await _walletStorageService.saveWalletPublicKey(wallet);
       _wallet = wallet;
       notifyListeners();
     } catch (e) {
@@ -70,7 +71,8 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<void> storeAssociatedTokenAccount(ProgramAccount tokenAccount) async {
-    await _walletStorageService.saveAssociatedTokenAccount(tokenAccount);
+    await _walletStorageService
+        .saveAssociatedTokenAccountPublicKey(tokenAccount);
     _userTokenAccount = tokenAccount;
     notifyListeners();
   }
@@ -84,5 +86,9 @@ class WalletProvider extends ChangeNotifier {
       // Handle error
       rethrow;
     }
+  }
+
+  Future<bool> hasPassword() async {
+    return _walletStorageService.hasPassword();
   }
 }

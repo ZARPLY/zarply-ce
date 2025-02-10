@@ -308,7 +308,7 @@ class WalletScreenState extends State<WalletScreen> {
         height: 60,
         child: FloatingActionButton(
           onPressed: () {
-            context.go('/pay-request');
+            context.go('/pay_request');
           },
           shape: const CircleBorder(),
           backgroundColor: Colors.blue,
