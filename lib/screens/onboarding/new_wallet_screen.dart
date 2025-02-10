@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
-import 'package:solana/solana.dart';
 
-import '../../provider/wallet_provider.dart';
-import '../../services/wallet_solana_service.dart';
 import '../../services/wallet_storage_service.dart';
 
 class NewWalletScreen extends StatefulWidget {
@@ -18,10 +12,6 @@ class NewWalletScreen extends StatefulWidget {
 }
 
 class _NewWalletScreenState extends State<NewWalletScreen> {
-  final WalletSolanaService _walletService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
   final WalletStorageService _storageService = WalletStorageService();
   String? _walletAddress;
   String? _tokenAccountAddress;
@@ -29,31 +19,13 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
   @override
   void initState() {
     super.initState();
-    _createAndStoreWallet();
+    getWalletAddresses();
   }
 
-  Future<void> _createAndStoreWallet() async {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
-    final String? recoveryPhrase = walletProvider.recoveryPhrase;
-
-    if (recoveryPhrase == null) {
-      throw Exception('Recovery phrase is null');
-    }
-
-    final Wallet wallet =
-        await _walletService.createWalletFromMnemonic(recoveryPhrase);
-    await Future<void>.delayed(const Duration(seconds: 2));
-    final ProgramAccount tokenAccount =
-        await _walletService.createAssociatedTokenAccount(wallet);
-
-    await _storageService.saveWallet(wallet);
-    await _storageService.saveAssociatedTokenAccount(tokenAccount);
-
-    setState(() {
-      _walletAddress = wallet.address;
-      _tokenAccountAddress = tokenAccount.pubkey;
-    });
+  Future<void> getWalletAddresses() async {
+    _walletAddress = await _storageService.retrieveWalletPublicKey();
+    _tokenAccountAddress =
+        await _storageService.retrieveAssociatedTokenAccountPublicKey();
   }
 
   Future<void> _copyToClipboard(String text) async {
@@ -111,7 +83,7 @@ class _NewWalletScreenState extends State<NewWalletScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/getting_started'),
+            onTap: () => context.go('/welcome'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),

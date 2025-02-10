@@ -1,8 +1,56 @@
+import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
+import 'package:solana/solana.dart';
 
-class WelcomeScreen extends StatelessWidget {
+import '../../provider/wallet_provider.dart';
+import '../../services/wallet_solana_service.dart';
+import '../../services/wallet_storage_service.dart';
+
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final WalletSolanaService _walletService = WalletSolanaService(
+    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+  );
+  final WalletStorageService _storageService = WalletStorageService();
+  bool _isLoading = false;
+
+  Future<void> _createAndStoreWallet(BuildContext context) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final String recoveryPhrase = bip39.generateMnemonic();
+
+      Provider.of<WalletProvider>(context, listen: false)
+          .setRecoveryPhrase(recoveryPhrase);
+
+      final Wallet wallet =
+          await _walletService.createWalletFromMnemonic(recoveryPhrase);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      final ProgramAccount tokenAccount =
+          await _walletService.createAssociatedTokenAccount(wallet);
+
+      await _storageService.saveWalletPrivateKey(wallet);
+      await _storageService.saveWalletPublicKey(wallet);
+      await _storageService.saveAssociatedTokenAccountPublicKey(tokenAccount);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +116,13 @@ class WelcomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.go('/backup_wallet'),
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            await _createAndStoreWallet(context);
+                            if (!context.mounted) return;
+                            context.go('/backup_wallet');
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4169E1),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -76,20 +130,31 @@ class WelcomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: const Text(
-                      'Create new wallet',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Create new wallet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () => context.go('/restore_wallet'),
+                    onPressed: () {
+                      context.go('/restore_wallet');
+                    },
                     child: const Text(
                       'I already have a wallet',
                       style: TextStyle(

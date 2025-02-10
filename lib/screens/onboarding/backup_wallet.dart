@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 
-import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -17,23 +18,71 @@ class BackupWalletScreen extends StatefulWidget {
 }
 
 class _BackupWalletScreenState extends State<BackupWalletScreen> {
-  bool _isRecoveryPhraseVisible = false;
-  late final String _recoveryPhrase;
+  final bool _isRecoveryPhraseVisible = false;
+  late final String? _recoveryPhrase;
 
   @override
   void initState() {
     super.initState();
-    _recoveryPhrase = bip39.generateMnemonic();
+    _recoveryPhrase =
+        Provider.of<WalletProvider>(context, listen: false).recoveryPhrase;
   }
 
-  void confirmBackupAndProceed() {
-    Provider.of<WalletProvider>(context, listen: false)
-        .setRecoveryPhrase(_recoveryPhrase);
-    context.go('/create_password');
+  void _showRevealConfirmationDialog() {
+    if (Platform.isIOS) {
+      showCupertinoDialog(
+        context: context,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+          title: const Text('Reveal Private Keys'),
+          content:
+              const Text('Are you sure you want to reveal your private keys?'),
+          actions: <Widget>[
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go('/private_keys');
+              },
+              child: const Text('Reveal'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text('Reveal Private Keys'),
+          content:
+              const Text('Are you sure you want to reveal your private keys?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go('/private_keys');
+              },
+              child: const Text('Reveal'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_recoveryPhrase == null) {
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
@@ -79,7 +128,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Save these 12-14 words in a secure location such as a password manager and never share them with anyone.',
+              'Write these words down offline, and store them securely in order to be able to restore/recover your ZARP wallet.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const Spacer(),
@@ -130,12 +179,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
                           ),
                           child: Center(
                             child: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isRecoveryPhraseVisible =
-                                      !_isRecoveryPhraseVisible;
-                                });
-                              },
+                              onPressed: _showRevealConfirmationDialog,
                               icon: Icon(
                                 _isRecoveryPhraseVisible
                                     ? Icons.visibility_off
@@ -155,7 +199,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
                     await Clipboard.setData(
                       ClipboardData(text: _recoveryPhrase),
                     );
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
@@ -179,7 +223,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: confirmBackupAndProceed,
+                onPressed: () => context.go('/create_password'),
                 style: ElevatedButton.styleFrom(
                   textStyle: const TextStyle(
                     fontSize: 18,

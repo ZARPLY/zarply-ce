@@ -99,6 +99,23 @@ class WalletSolanaService {
     }
   }
 
+  Future<Wallet> restoreWalletFromPrivateKey(String privateKey) async {
+    try {
+      if (privateKey.isEmpty) {
+        throw WalletSolanaServiceException('Private key is empty');
+      }
+
+      final Ed25519HDKeyPair wallet =
+          await Ed25519HDKeyPair.fromPrivateKeyBytes(
+        privateKey: base58decode(privateKey),
+      );
+
+      return wallet;
+    } catch (e) {
+      throw WalletSolanaServiceException('Failed to restore wallet: $e');
+    }
+  }
+
   Future<String> requestAirdrop(String address, int lamports) async {
     try {
       final String signature = await _client.requestAirdrop(
@@ -215,5 +232,9 @@ class WalletSolanaService {
   bool isValidMnemonic(String mnemonic) {
     final List<String> words = mnemonic.trim().split(' ');
     return words.length == 12 || words.length == 24;
+  }
+
+  bool isValidPrivateKey(String privateKey) {
+    return privateKey.length == 64;
   }
 }
