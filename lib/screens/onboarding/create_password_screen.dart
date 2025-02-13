@@ -128,13 +128,14 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
               style: const TextStyle(
                 fontSize: 14,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Confirm Password',
-                border: OutlineInputBorder(
+                border: const OutlineInputBorder(
                   borderSide: BorderSide(
                     color: Colors.red,
                   ),
                 ),
+                errorText: _errorText,
               ),
             ),
             const SizedBox(height: 24),
