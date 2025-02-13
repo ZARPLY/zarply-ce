@@ -22,9 +22,25 @@ class _QRScannerState extends State<QRScanner> {
         final String? code = barcode.rawValue;
         if (code != null && code.startsWith('zarply:payment:')) {
           final List<String> parts = code.split(':');
-          if (parts.length == 4) {
+          if (parts.length == 5) {
             final String amount = parts[2];
             final String walletAddress = parts[3];
+            final int timestamp = int.parse(parts[4]);
+
+            final bool isExpired =
+                DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
+
+            if (isExpired) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'This QR code has expired. Please request a new one.',
+                  ),
+                ),
+              );
+              return;
+            }
 
             if (mounted) {
               context.go(
@@ -43,7 +59,7 @@ class _QRScannerState extends State<QRScanner> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(barcodes.toString())),
+        const SnackBar(content: Text('Error processing QR code')),
       );
     }
   }
@@ -78,9 +94,25 @@ class _QRScannerState extends State<QRScanner> {
         final String code = barcodeCapture.barcodes.first.rawValue!;
         if (code.startsWith('zarply:payment:')) {
           final List<String> parts = code.split(':');
-          if (parts.length == 4) {
+          if (parts.length == 5) {
             final String amount = parts[2];
             final String walletAddress = parts[3];
+            final int timestamp = int.parse(parts[4]);
+
+            final bool isExpired =
+                DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
+
+            if (isExpired) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'This QR code has expired. Please request a new one.',
+                  ),
+                ),
+              );
+              return;
+            }
 
             if (mounted) {
               context.go(

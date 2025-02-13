@@ -114,7 +114,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                           size: const Size(300, 300),
                           painter: QRPainter(
                             data:
-                                'zarply:payment:${widget.amount}:$walletAddress',
+                                'zarply:payment:${widget.amount}:$walletAddress:${DateTime.now().millisecondsSinceEpoch}',
                             version: 4,
                             color: Colors.blue,
                             emptyColor: Colors.white,
