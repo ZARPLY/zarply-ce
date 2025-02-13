@@ -110,6 +110,7 @@ class WalletScreenState extends State<WalletScreen> {
                       const Spacer(),
                       BalanceAmount(
                         walletAmount: _walletAmount,
+                        walletAddress: _wallet?.address ?? '',
                       ),
                       const Spacer(),
                       const QuickActions(),
@@ -188,7 +189,11 @@ class WalletScreenState extends State<WalletScreen> {
               ),
               child: Row(
                 children: <Widget>[
-                  const Image(image: AssetImage('images/zarp.jpeg')),
+                  const SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Image(image: AssetImage('images/zarp.png')),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'ZARP',

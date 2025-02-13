@@ -81,7 +81,7 @@ class PrivateKeysScreenState extends State<PrivateKeysScreen> {
                   child: Column(
                     children: <Widget>[
                       const Image(
-                        image: AssetImage('images/zarp.jpeg'),
+                        image: AssetImage('images/zarp.png'),
                         fit: BoxFit.contain,
                         width: 30,
                         height: 30,

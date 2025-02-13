@@ -1,7 +1,7 @@
 # zarply
 ![zarply](images/banner.png)
 
-> A ZARP <img src="./images/zarp.jpeg" width="15"> stable coin wallet
+> A ZARP <img src="./images/zarp.png" width="15"> stable coin wallet
 
 The initial BRS is available [here](docs/brs.md)
 

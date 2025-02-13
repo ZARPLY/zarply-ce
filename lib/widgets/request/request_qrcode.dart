@@ -197,15 +197,20 @@ class QRPainter extends CustomPainter {
     final QrCode qrCode = QrCode(version, errorCorrectionLevel)..addData(data);
     final QrImage qrImage = QrImage(qrCode);
 
-    final double squareSize = size.width / qrCode.moduleCount;
+    const double padding = 16;
+    final double availableSize = size.width - (padding * 2);
+    final double squareSize = availableSize / qrCode.moduleCount;
     final Paint paint = Paint()..style = PaintingStyle.fill;
+
+    paint.color = emptyColor;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
     for (int x = 0; x < qrCode.moduleCount; x++) {
       for (int y = 0; y < qrCode.moduleCount; y++) {
         paint.color = qrImage.isDark(x, y) ? color : emptyColor;
         final Rect rect = Rect.fromLTWH(
-          x * squareSize,
-          y * squareSize,
+          padding + (x * squareSize),
+          padding + (y * squareSize),
           squareSize - (gapless ? 0 : 1),
           squareSize - (gapless ? 0 : 1),
         );

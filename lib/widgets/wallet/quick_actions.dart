@@ -13,7 +13,7 @@ class QuickActions extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             InkWell(
-              onTap: () => context.go('/wallet'),
+              onTap: () => context.go('/scan'),
               child: SizedBox(
                 width: 160,
                 height: 50,

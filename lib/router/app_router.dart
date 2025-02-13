@@ -16,6 +16,7 @@ import '../screens/pay/payment_details_screen.dart';
 import '../screens/request/request_amount_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/wallet/wallet_screen.dart';
+import '../widgets/scanner/qr_scanner.dart';
 
 GoRouter createRouter(WalletProvider walletProvider) {
   return GoRouter(
@@ -92,14 +93,25 @@ GoRouter createRouter(WalletProvider walletProvider) {
           GoRoute(
             path: '/payment_amount',
             builder: (BuildContext context, GoRouterState state) {
-              final String publicKey = state.extra as String;
-              return PaymentAmountScreen(recipientAddress: publicKey);
+              final Map<String, String> extra =
+                  state.extra as Map<String, String>;
+              final String publicKey = extra['recipientAddress'] ?? '';
+              final String amount = extra['amount'] ?? '';
+              return PaymentAmountScreen(
+                recipientAddress: publicKey,
+                initialAmount: amount,
+              );
             },
           ),
           GoRoute(
             path: '/request_amount',
             builder: (BuildContext context, GoRouterState state) =>
                 const RequestAmountScreen(),
+          ),
+          GoRoute(
+            path: '/scan',
+            builder: (BuildContext context, GoRouterState state) =>
+                const QRScanner(),
           ),
         ],
       ),

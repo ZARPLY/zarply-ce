@@ -7,10 +7,12 @@ import '../../widgets/shared/amount_input.dart';
 class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
     required this.recipientAddress,
+    this.initialAmount,
     super.key,
   });
 
   final String recipientAddress;
+  final String? initialAmount;
 
   @override
   State<PaymentAmountScreen> createState() => _PaymentAmountScreenState();
@@ -24,6 +26,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialAmount != null) {
+      _paymentAmountController.text = widget.initialAmount!;
+    }
     _paymentAmountController.addListener(_updateFormValidity);
   }
 
