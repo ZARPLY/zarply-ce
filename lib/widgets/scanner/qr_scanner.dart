@@ -32,6 +32,7 @@ class _QRScannerState extends State<QRScanner> {
                 extra: <String, String>{
                   'amount': amount,
                   'recipientAddress': walletAddress,
+                  'source': '/scan',
                 },
               );
             }
@@ -87,6 +88,7 @@ class _QRScannerState extends State<QRScanner> {
                 extra: <String, String>{
                   'amount': amount,
                   'recipientAddress': walletAddress,
+                  'source': '/scan',
                 },
               );
             }

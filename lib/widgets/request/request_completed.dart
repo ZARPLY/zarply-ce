@@ -51,7 +51,7 @@ class RequestCompleted extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Text(
-            'Payment Successful',
+            'Request sent successfully',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -59,7 +59,20 @@ class RequestCompleted extends StatelessWidget {
             DateTime.now().toString().substring(0, 16),
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 24),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.go('/wallet'),
+              style: ElevatedButton.styleFrom(
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('Done'),
+            ),
+          ),
         ],
       ),
     );

@@ -97,9 +97,11 @@ GoRouter createRouter(WalletProvider walletProvider) {
                   state.extra as Map<String, String>;
               final String publicKey = extra['recipientAddress'] ?? '';
               final String amount = extra['amount'] ?? '';
+              final String source = extra['source'] ?? '/pay_request';
               return PaymentAmountScreen(
                 recipientAddress: publicKey,
                 initialAmount: amount,
+                source: source,
               );
             },
           ),

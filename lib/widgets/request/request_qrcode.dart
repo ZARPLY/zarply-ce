@@ -131,7 +131,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  Formatters.formatAmount(double.parse(widget.amount)),
+                  Formatters.formatAmount(double.parse(widget.amount) / 100),
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: 8),

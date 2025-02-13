@@ -59,7 +59,20 @@ class PaymentSuccess extends StatelessWidget {
             DateTime.now().toString().substring(0, 16),
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 24),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.go('/wallet'),
+              style: ElevatedButton.styleFrom(
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('Done'),
+            ),
+          ),
         ],
       ),
     );

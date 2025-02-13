@@ -128,7 +128,10 @@ class _PaymentDetailsState extends State<PaymentDetails> {
               onPressed: _isFormValid
                   ? () => context.go(
                         '/payment_amount',
-                        extra: _publicKeyController.text,
+                        extra: <String, String>{
+                          'publicKey': _publicKeyController.text,
+                          'source': '/payment_details',
+                        },
                       )
                   : null,
               style: ElevatedButton.styleFrom(
