@@ -232,9 +232,17 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
               TextField(
                 controller: _phraseController,
                 maxLines: 3,
+                style: const TextStyle(
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Recovery Phrase',
                   hintText: 'Enter your 12 or 24 word recovery phrase',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.red,
+                    ),
+                  ),
                   errorText: _phraseController.text.isNotEmpty
                       ? _isFormValid
                           ? null
@@ -246,9 +254,17 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
               TextField(
                 controller: _privateKeyController,
                 maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Private Key',
                   hintText: 'Enter your private key',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.red,
+                    ),
+                  ),
                   errorText:
                       _privateKeyController.text.isNotEmpty && !_isFormValid
                           ? 'Please enter a valid private key'

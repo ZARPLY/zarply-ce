@@ -97,7 +97,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
               child: TextField(
                 controller: _publicKeyController,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Public Key',
@@ -116,7 +116,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
               child: TextField(
                 controller: _descriptionController,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
                 decoration: const InputDecoration(
                   labelText: 'Description (Optional)',
