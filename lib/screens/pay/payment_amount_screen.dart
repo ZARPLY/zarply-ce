@@ -7,11 +7,14 @@ import '../../widgets/shared/amount_input.dart';
 class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
     required this.recipientAddress,
+    required this.source,
+    this.initialAmount,
     super.key,
   });
 
   final String recipientAddress;
-
+  final String? initialAmount;
+  final String source;
   @override
   State<PaymentAmountScreen> createState() => _PaymentAmountScreenState();
 }
@@ -24,6 +27,12 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialAmount != null) {
+      _paymentAmountController.text = widget.initialAmount!;
+      setState(() {
+        _isFormValid = true;
+      });
+    }
     _paymentAmountController.addListener(_updateFormValidity);
   }
 
@@ -73,7 +82,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/pay_request'),
+            onTap: () => context.go(widget.source),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),

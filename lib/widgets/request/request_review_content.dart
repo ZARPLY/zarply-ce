@@ -63,7 +63,7 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  Formatters.formatAmount(double.parse(widget.amount)),
+                  Formatters.formatAmount(double.parse(widget.amount) / 100),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 32),
