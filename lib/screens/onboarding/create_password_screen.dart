@@ -114,6 +114,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
             TextField(
               controller: _passwordController,
               obscureText: true,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Password',
               ),
@@ -122,8 +125,16 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
             TextField(
               controller: _confirmPasswordController,
               obscureText: true,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Colors.red,
+                  ),
+                ),
                 errorText: _errorText,
               ),
             ),

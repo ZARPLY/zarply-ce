@@ -115,7 +115,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                 const SizedBox(height: 24),
                 Container(
                   constraints:
-                      const BoxConstraints(minWidth: 200, maxWidth: 300),
+                      const BoxConstraints(minWidth: 250, maxWidth: 350),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEBECEF),
@@ -123,7 +123,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   ),
                   child: Text(
                     widget.recipientAddress,
-                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(
