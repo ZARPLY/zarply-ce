@@ -14,6 +14,7 @@ class Formatters {
     final NumberFormat currencyFormat = NumberFormat.currency(
       symbol: 'R',
       decimalDigits: 2,
+      locale: 'en_US',
     );
     return currencyFormat.format(amount);
   }
@@ -22,6 +23,7 @@ class Formatters {
     final NumberFormat currencyFormat = NumberFormat.currency(
       symbol: 'R',
       decimalDigits: 2,
+      locale: 'en_US',
     );
     return amount < 0
         ? '-${currencyFormat.format(amount)}'

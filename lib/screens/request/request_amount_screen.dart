@@ -5,7 +5,9 @@ import '../../widgets/request/request_review_content.dart';
 import '../../widgets/shared/amount_input.dart';
 
 class RequestAmountScreen extends StatefulWidget {
-  const RequestAmountScreen({super.key});
+  const RequestAmountScreen({
+    super.key,
+  });
 
   @override
   State<RequestAmountScreen> createState() => _RequestAmountScreenState();
@@ -95,20 +97,6 @@ class _RequestAmountScreenState extends State<RequestAmountScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 const Text('Minimum amount is R5'),
-                const SizedBox(height: 24),
-                Container(
-                  constraints:
-                      const BoxConstraints(minWidth: 200, maxWidth: 300),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEBECEF),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: const Text(
-                    'D1f4HnfUPGPqbatYFq8yTd6VzhMuqesTCHRPxUUk9ttC',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
                 const SizedBox(
                   height: 40,
                 ),

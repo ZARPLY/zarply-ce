@@ -129,7 +129,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   ? () => context.go(
                         '/payment_amount',
                         extra: <String, String>{
-                          'publicKey': _publicKeyController.text,
+                          'recipientAddress': _publicKeyController.text,
                           'source': '/payment_details',
                         },
                       )
