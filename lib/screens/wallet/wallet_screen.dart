@@ -288,19 +288,48 @@ class WalletScreenState extends State<WalletScreen> {
             height: 30,
             child: Image(image: AssetImage('images/saflag.png')),
           ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white30,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                'JT',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
+          GestureDetector(
+            onTap: () {
+              showMenu(
+                context: context,
+                position: RelativeRect.fromLTRB(
+                  MediaQuery.of(context).size.width - 100,
+                  kToolbarHeight + MediaQuery.of(context).padding.top,
+                  MediaQuery.of(context).size.width - 20,
+                  0,
+                ),
+                items: <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.logout),
+                        SizedBox(width: 8),
+                        Text('Logout'),
+                      ],
                     ),
+                  ),
+                ],
+              ).then((String? value) {
+                if (value == 'logout') {
+                  context.go('/login');
+                }
+              });
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white30,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  'JT',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                      ),
+                ),
               ),
             ),
           ),
