@@ -26,7 +26,11 @@ class ActivityItem extends StatelessWidget {
             children: <Widget>[
               Text(
                 transferInfo.formattedAmount,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: transferInfo.formattedAmount.startsWith('-')
+                          ? const Color(0xFFFF6B6B) // light red
+                          : const Color(0xFF66BB6A), // light green
+                    ),
               ),
               Text(
                 Formatters.shortenAddress(transferInfo.recipient),

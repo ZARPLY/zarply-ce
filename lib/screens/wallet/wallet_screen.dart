@@ -60,7 +60,7 @@ class WalletScreenState extends State<WalletScreen> {
           await walletSolanaService.getSolBalance(wallet.address);
       final Map<String, List<TransactionDetails?>> transactions =
           await walletSolanaService.getAccountTransactions(
-        walletAddress: wallet.address,
+        walletAddress: tokenAccount.pubkey,
       );
 
       setState(() {
