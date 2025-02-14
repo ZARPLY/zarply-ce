@@ -123,6 +123,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   ),
                   child: Text(
                     widget.recipientAddress,
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(
