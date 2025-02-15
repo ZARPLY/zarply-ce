@@ -372,9 +372,10 @@ class WalletScreenState extends State<WalletScreen> {
       ..sort((String a, String b) => b.compareTo(a));
 
     for (final String monthKey in sortedMonths) {
-      transactionItems.add(<String, String>{
+      transactionItems.add(<String, dynamic>{
         'type': 'header',
         'month': _formatMonthHeader(monthKey),
+        'count': groupedTransactions[monthKey]!.length,
       });
       transactionItems.addAll(groupedTransactions[monthKey]!);
     }
@@ -387,9 +388,20 @@ class WalletScreenState extends State<WalletScreen> {
         if (item is Map && item['type'] == 'header') {
           return Padding(
             padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
-            child: Text(
-              item['month'],
-              style: Theme.of(context).textTheme.bodySmall,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  item['month'],
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  '${item['count']}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
             ),
           );
         }
