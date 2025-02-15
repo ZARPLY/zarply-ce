@@ -1,6 +1,6 @@
 import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
-import 'package:solana/solana.dart';
 
 class TransactionDetailsParser {
   static TransactionTransferInfo? parseTransferDetails(
@@ -9,11 +9,20 @@ class TransactionDetailsParser {
     try {
       final Map<String, dynamic> message =
           transaction.transaction.toJson()['message'];
+      debugPrint('message: $message');
       final List<dynamic> accountKeys = message['accountKeys'];
 
-      final String recipient = accountKeys.last;
-      final int amount = (transaction.meta?.postBalances[0] ?? 0) -
-          (transaction.meta?.preBalances[0] ?? 0);
+      final String recipient = accountKeys[2];
+      final double amount = double.parse(
+            transaction
+                    .meta?.postTokenBalances[0].uiTokenAmount.uiAmountString ??
+                '0',
+          ) -
+          double.parse(
+            transaction
+                    .meta?.preTokenBalances[0].uiTokenAmount.uiAmountString ??
+                '0',
+          );
       final DateTime? date = transaction.blockTime != null
           ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
           : null;
@@ -21,7 +30,7 @@ class TransactionDetailsParser {
       return TransactionTransferInfo(
         sender: 'myself',
         recipient: recipient,
-        amount: amount / lamportsPerSol,
+        amount: amount,
         timestamp: date,
       );
     } catch (e) {
@@ -44,5 +53,11 @@ class TransactionTransferInfo {
   final double amount;
   final DateTime? timestamp;
 
-  String get formattedAmount => '${amount.toStringAsFixed(4)} SOL';
+  String get formattedAmount => formatAmount(amount);
+}
+
+String formatAmount(double amount) {
+  final String sign = amount >= 0 ? '+' : '-';
+  final double absoluteAmount = amount.abs();
+  return '${sign}R${absoluteAmount.toStringAsFixed(2)}';
 }

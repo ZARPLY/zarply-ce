@@ -18,15 +18,4 @@ class Formatters {
     );
     return currencyFormat.format(amount);
   }
-
-  static String formatAmountWithSign(double amount) {
-    final NumberFormat currencyFormat = NumberFormat.currency(
-      symbol: 'R',
-      decimalDigits: 2,
-      locale: 'en_US',
-    );
-    return amount < 0
-        ? '-${currencyFormat.format(amount)}'
-        : currencyFormat.format(amount);
-  }
 }
