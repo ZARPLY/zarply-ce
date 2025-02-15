@@ -28,8 +28,8 @@ class ActivityItem extends StatelessWidget {
                 transferInfo.formattedAmount,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: transferInfo.formattedAmount.startsWith('-')
-                          ? const Color(0xFFFF6B6B) // light red
-                          : const Color(0xFF66BB6A), // light green
+                          ? const Color(0xFFFF6B6B)
+                          : const Color(0xFF66BB6A),
                     ),
               ),
               Text(
@@ -38,22 +38,12 @@ class ActivityItem extends StatelessWidget {
               ),
             ],
           ),
-          Container(
+          Image.asset(
+            transferInfo.formattedAmount.startsWith('-')
+                ? 'images/payed.png'
+                : 'images/received.png',
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF9BA1AC),
-              borderRadius: BorderRadius.circular(80),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.call_received,
-                  color: Colors.white,
-                ),
-              ],
-            ),
           ),
         ],
       ),
