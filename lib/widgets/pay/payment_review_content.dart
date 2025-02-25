@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../provider/wallet_provider.dart';
+import '../../services/transaction_storage_service.dart';
 import '../../services/wallet_solana_service.dart';
 import '../../services/wallet_storage_service.dart';
 import '../../utils/formatters.dart';
@@ -30,6 +32,8 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletStorageService walletStorageService = WalletStorageService();
+  final TransactionStorageService transactionStorageService =
+      TransactionStorageService();
   bool hasPaymentBeenMade = false;
   bool isLoading = false;
 
@@ -47,14 +51,34 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       }
 
       if (widget.recipientAddress != '') {
-        await walletSolanaService.sendTransaction(
+        final String txSignature = await walletSolanaService.sendTransaction(
           senderWallet: wallet,
           recipientAddress: widget.recipientAddress,
-          zarpAmount: double.parse(
-                widget.amount,
-              ) /
-              100,
+          zarpAmount: double.parse(widget.amount) / 100,
         );
+
+        await Future<void>.delayed(const Duration(seconds: 2));
+        final TransactionDetails? txDetails =
+            await walletSolanaService.getTransactionDetails(txSignature);
+
+        if (txDetails != null) {
+          final Map<String, List<TransactionDetails?>> stored =
+              await transactionStorageService.getStoredTransactions();
+
+          final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
+            txDetails.blockTime! * 1000,
+          );
+          final String monthKey =
+              '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+
+          if (!stored.containsKey(monthKey)) {
+            stored[monthKey] = <TransactionDetails?>[];
+          }
+          stored[monthKey]!.insert(0, txDetails);
+
+          await transactionStorageService.storeTransactions(stored);
+        }
+
         setState(() {
           hasPaymentBeenMade = true;
         });

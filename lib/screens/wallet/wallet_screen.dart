@@ -7,6 +7,7 @@ import 'package:solana/solana.dart';
 
 import '../../provider/wallet_provider.dart';
 import '../../services/transaction_parser_service.dart';
+import '../../services/transaction_storage_service.dart';
 import '../../services/wallet_solana_service.dart';
 import '../../services/wallet_storage_service.dart';
 import '../../widgets/wallet/activity_item.dart';
@@ -22,6 +23,8 @@ class WalletScreen extends StatefulWidget {
 
 class WalletScreenState extends State<WalletScreen> {
   final WalletStorageService walletStorageService = WalletStorageService();
+  final TransactionStorageService _transactionStorageService =
+      TransactionStorageService();
 
   final WalletSolanaService walletSolanaService = WalletSolanaService(
     rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
@@ -36,6 +39,7 @@ class WalletScreenState extends State<WalletScreen> {
       <String, List<TransactionDetails?>>{};
   bool _isLoading = true;
   bool _isExpanded = false;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -58,24 +62,79 @@ class WalletScreenState extends State<WalletScreen> {
           await walletSolanaService.getZarpBalance(tokenAccount.pubkey);
       final double solBalance =
           await walletSolanaService.getSolBalance(wallet.address);
+
       final Map<String, List<TransactionDetails?>> transactions =
-          await walletSolanaService.getAccountTransactions(
-        walletAddress: tokenAccount.pubkey,
-      );
+          await _transactionStorageService.getStoredTransactions();
+
+      if (transactions.isEmpty || _isRefreshing) {
+        final String? lastSignature =
+            await _transactionStorageService.getLastTransactionSignature();
+
+        final Map<String, List<TransactionDetails?>> newTransactions =
+            await walletSolanaService.getAccountTransactions(
+          walletAddress: tokenAccount.pubkey,
+          before: lastSignature,
+        );
+
+        final Set<String> existingSignatures = <String>{};
+        for (final List<TransactionDetails?> monthTransactions
+            in transactions.values) {
+          for (final TransactionDetails? tx in monthTransactions) {
+            if (tx != null) {
+              final String sig = tx.transaction.toJson()['signatures'][0];
+              existingSignatures.add(sig);
+            }
+          }
+        }
+
+        bool hasNewTransactions = false;
+        for (final String monthKey in newTransactions.keys) {
+          if (!transactions.containsKey(monthKey)) {
+            transactions[monthKey] = <TransactionDetails?>[];
+          }
+
+          final List<TransactionDetails?> uniqueNewTransactions =
+              newTransactions[monthKey]!.where((TransactionDetails? tx) {
+            if (tx == null) return false;
+            final String sig = tx.transaction.toJson()['signatures'][0];
+            final bool isUnique = !existingSignatures.contains(sig);
+            if (isUnique) {
+              hasNewTransactions = true;
+            }
+            return isUnique;
+          }).toList();
+
+          if (uniqueNewTransactions.isNotEmpty) {
+            transactions[monthKey]!.insertAll(0, uniqueNewTransactions);
+          }
+        }
+
+        if (hasNewTransactions) {
+          await _transactionStorageService.storeTransactions(transactions);
+        }
+      }
 
       setState(() {
         _walletAmount = walletAmount;
         _solBalance = solBalance;
+        _transactions.clear();
         _transactions.addAll(transactions);
         _tokenAccount = tokenAccount;
         _wallet = wallet;
         _isLoading = false;
+        if (_isRefreshing) _isRefreshing = false;
       });
     } else {
       setState(() {
         _isLoading = false;
+        if (_isRefreshing) _isRefreshing = false;
       });
     }
+  }
+
+  Future<void> _refreshWalletData() async {
+    _isRefreshing = true;
+    await _loadWalletData();
   }
 
   @override
@@ -98,16 +157,15 @@ class WalletScreenState extends State<WalletScreen> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               height:
-                  _isExpanded ? 0 : MediaQuery.of(context).size.height * 0.45,
+                  _isExpanded ? 0 : MediaQuery.of(context).size.height * 0.35,
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 opacity: _isExpanded ? 0.0 : 1.0,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
-                      const Spacer(),
+                      const SizedBox(height: 16),
                       BalanceAmount(
                         walletAmount: _walletAmount,
                         walletAddress: _wallet?.address ?? '',
@@ -375,39 +433,64 @@ class WalletScreenState extends State<WalletScreen> {
       transactionItems.add(<String, dynamic>{
         'type': 'header',
         'month': _formatMonthHeader(monthKey),
+        'monthKey': monthKey,
         'count': groupedTransactions[monthKey]!.length,
       });
-      transactionItems.addAll(groupedTransactions[monthKey]!);
+      final List<TransactionDetails?> sortedTransactions =
+          List<TransactionDetails?>.from(groupedTransactions[monthKey]!)
+            ..sort((TransactionDetails? a, TransactionDetails? b) {
+              if (a == null || b == null) return 0;
+              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
+            });
+      transactionItems.addAll(sortedTransactions);
     }
 
-    return ListView.builder(
-      itemCount: transactionItems.length,
-      itemBuilder: (BuildContext context, int index) {
-        final dynamic item = transactionItems[index];
+    return RefreshIndicator(
+      onRefresh: _refreshWalletData,
+      child: ListView.builder(
+        itemCount: transactionItems.length,
+        itemBuilder: (BuildContext context, int index) {
+          final dynamic item = transactionItems[index];
 
-        if (item is Map && item['type'] == 'header') {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  item['month'],
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                Text(
-                  '${item['count']}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
-              ],
-            ),
-          );
-        }
+          if (item is Map && item['type'] == 'header') {
+            // Use the stored monthKey directly
+            final String monthKey = item['monthKey'];
 
-        return _buildTransactionTile(item);
-      },
+            // Count only valid, parseable transactions
+            final int displayedCount =
+                groupedTransactions[monthKey]!.where((TransactionDetails? tx) {
+              if (tx == null) return false;
+              final TransactionTransferInfo? transferInfo =
+                  TransactionDetailsParser.parseTransferDetails(
+                tx,
+                _tokenAccount?.pubkey ?? '',
+              );
+              return transferInfo != null && transferInfo.amount != 0;
+            }).length;
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    item['month'],
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    '$displayedCount',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return _buildTransactionTile(item);
+        },
+      ),
     );
   }
 
@@ -437,9 +520,16 @@ class WalletScreenState extends State<WalletScreen> {
   Widget _buildTransactionTile(TransactionDetails? transaction) {
     if (transaction == null) return const SizedBox.shrink();
     final TransactionTransferInfo? transferInfo =
-        TransactionDetailsParser.parseTransferDetails(transaction);
+        TransactionDetailsParser.parseTransferDetails(
+      transaction,
+      _tokenAccount?.pubkey ?? '',
+    );
 
     if (transferInfo == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (transferInfo.amount == 0) {
       return const SizedBox.shrink();
     }
 
