@@ -39,6 +39,28 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: $HOME/.sonar/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner
         
+  gitleaks:
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Gitleaks
+        run: |
+          curl -sSL https://github.com/zricethezav/gitleaks/releases/download/v8.12.0/gitleaks-linux-amd64.tar.gz | tar -xvzf - -C /usr/local/bin
+          chmod +x /usr/local/bin/gitleaks
+
+      - name: Run Gitleaks scan
+        run: |
+          gitleaks detect --source . --report-path gitleaks-report.json --exit-code 1
+
+      - name: Upload Gitleaks Report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+
   clean_containers:
     needs: flake8-linting
     runs-on: workstation.ubuntu.lts
