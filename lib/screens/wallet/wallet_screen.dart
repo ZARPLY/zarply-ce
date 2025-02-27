@@ -23,9 +23,6 @@ class WalletScreen extends StatefulWidget {
 
 class WalletScreenState extends State<WalletScreen> {
   final WalletStorageService walletStorageService = WalletStorageService();
-  final TransactionStorageService _transactionStorageService =
-      TransactionStorageService();
-
   final WalletSolanaService walletSolanaService = WalletSolanaService(
     rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
@@ -35,11 +32,8 @@ class WalletScreenState extends State<WalletScreen> {
   Wallet? _wallet;
   double _walletAmount = 0;
   double _solBalance = 0;
-  final Map<String, List<TransactionDetails?>> _transactions =
-      <String, List<TransactionDetails?>>{};
   bool _isLoading = true;
   bool _isExpanded = false;
-  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -63,78 +57,32 @@ class WalletScreenState extends State<WalletScreen> {
       final double solBalance =
           await walletSolanaService.getSolBalance(wallet.address);
 
-      final Map<String, List<TransactionDetails?>> transactions =
-          await _transactionStorageService.getStoredTransactions();
-
-      if (transactions.isEmpty || _isRefreshing) {
-        final String? lastSignature =
-            await _transactionStorageService.getLastTransactionSignature();
-
-        final Map<String, List<TransactionDetails?>> newTransactions =
-            await walletSolanaService.getAccountTransactions(
-          walletAddress: tokenAccount.pubkey,
-          before: lastSignature,
-        );
-
-        final Set<String> existingSignatures = <String>{};
-        for (final List<TransactionDetails?> monthTransactions
-            in transactions.values) {
-          for (final TransactionDetails? tx in monthTransactions) {
-            if (tx != null) {
-              final String sig = tx.transaction.toJson()['signatures'][0];
-              existingSignatures.add(sig);
-            }
-          }
-        }
-
-        bool hasNewTransactions = false;
-        for (final String monthKey in newTransactions.keys) {
-          if (!transactions.containsKey(monthKey)) {
-            transactions[monthKey] = <TransactionDetails?>[];
-          }
-
-          final List<TransactionDetails?> uniqueNewTransactions =
-              newTransactions[monthKey]!.where((TransactionDetails? tx) {
-            if (tx == null) return false;
-            final String sig = tx.transaction.toJson()['signatures'][0];
-            final bool isUnique = !existingSignatures.contains(sig);
-            if (isUnique) {
-              hasNewTransactions = true;
-            }
-            return isUnique;
-          }).toList();
-
-          if (uniqueNewTransactions.isNotEmpty) {
-            transactions[monthKey]!.insertAll(0, uniqueNewTransactions);
-          }
-        }
-
-        if (hasNewTransactions) {
-          await _transactionStorageService.storeTransactions(transactions);
-        }
-      }
-
       setState(() {
         _walletAmount = walletAmount;
         _solBalance = solBalance;
-        _transactions.clear();
-        _transactions.addAll(transactions);
         _tokenAccount = tokenAccount;
         _wallet = wallet;
         _isLoading = false;
-        if (_isRefreshing) _isRefreshing = false;
       });
     } else {
       setState(() {
         _isLoading = false;
-        if (_isRefreshing) _isRefreshing = false;
       });
     }
   }
 
-  Future<void> _refreshWalletData() async {
-    _isRefreshing = true;
-    await _loadWalletData();
+  Future<void> _refreshBalances() async {
+    if (_tokenAccount != null && _wallet != null) {
+      final double walletAmount =
+          await walletSolanaService.getZarpBalance(_tokenAccount!.pubkey);
+      final double solBalance =
+          await walletSolanaService.getSolBalance(_wallet!.address);
+
+      setState(() {
+        _walletAmount = walletAmount;
+        _solBalance = solBalance;
+      });
+    }
   }
 
   @override
@@ -225,7 +173,11 @@ class WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                       Expanded(
-                        child: buildTransactionsList(_transactions),
+                        child: TransactionsList(
+                          tokenAccount: _tokenAccount,
+                          walletSolanaService: walletSolanaService,
+                          onRefreshStarted: _refreshBalances,
+                        ),
                       ),
                     ],
                   ),
@@ -420,78 +372,107 @@ class WalletScreenState extends State<WalletScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+}
 
-  Widget buildTransactionsList(
-    Map<String, List<TransactionDetails?>> groupedTransactions,
-  ) {
-    final List<dynamic> transactionItems = <dynamic>[];
+class TransactionsList extends StatefulWidget {
+  const TransactionsList({
+    required this.tokenAccount,
+    required this.walletSolanaService,
+    required this.onRefreshStarted,
+    super.key,
+  });
 
-    final List<String> sortedMonths = groupedTransactions.keys.toList()
-      ..sort((String a, String b) => b.compareTo(a));
+  final ProgramAccount? tokenAccount;
+  final WalletSolanaService walletSolanaService;
+  final Future<void> Function() onRefreshStarted;
 
-    for (final String monthKey in sortedMonths) {
-      transactionItems.add(<String, dynamic>{
-        'type': 'header',
-        'month': _formatMonthHeader(monthKey),
-        'monthKey': monthKey,
-        'count': groupedTransactions[monthKey]!.length,
-      });
-      final List<TransactionDetails?> sortedTransactions =
-          List<TransactionDetails?>.from(groupedTransactions[monthKey]!)
-            ..sort((TransactionDetails? a, TransactionDetails? b) {
-              if (a == null || b == null) return 0;
-              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
-            });
-      transactionItems.addAll(sortedTransactions);
+  @override
+  TransactionsListState createState() => TransactionsListState();
+}
+
+class TransactionsListState extends State<TransactionsList> {
+  final TransactionStorageService _transactionStorageService =
+      TransactionStorageService();
+  final Map<String, List<TransactionDetails?>> _transactions =
+      <String, List<TransactionDetails?>>{};
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
+  Future<void> _loadTransactions() async {
+    if (widget.tokenAccount == null) return;
+
+    final Map<String, List<TransactionDetails?>> transactions =
+        await _transactionStorageService.getStoredTransactions();
+
+    if (transactions.isEmpty || _isRefreshing) {
+      final String? lastSignature =
+          await _transactionStorageService.getLastTransactionSignature();
+
+      final Map<String, List<TransactionDetails?>> newTransactions =
+          await widget.walletSolanaService.getAccountTransactions(
+        walletAddress: widget.tokenAccount!.pubkey,
+        before: lastSignature,
+      );
+
+      final Set<String> existingSignatures = <String>{};
+      for (final List<TransactionDetails?> monthTransactions
+          in transactions.values) {
+        for (final TransactionDetails? tx in monthTransactions) {
+          if (tx != null) {
+            final String sig = tx.transaction.toJson()['signatures'][0];
+            existingSignatures.add(sig);
+          }
+        }
+      }
+
+      bool hasNewTransactions = false;
+      for (final String monthKey in newTransactions.keys) {
+        if (!transactions.containsKey(monthKey)) {
+          transactions[monthKey] = <TransactionDetails?>[];
+        }
+
+        final List<TransactionDetails?> uniqueNewTransactions =
+            newTransactions[monthKey]!.where((TransactionDetails? tx) {
+          if (tx == null) return false;
+          final String sig = tx.transaction.toJson()['signatures'][0];
+          final bool isUnique = !existingSignatures.contains(sig);
+          if (isUnique) {
+            hasNewTransactions = true;
+          }
+          return isUnique;
+        }).toList();
+
+        if (uniqueNewTransactions.isNotEmpty) {
+          transactions[monthKey]!.insertAll(0, uniqueNewTransactions);
+        }
+      }
+
+      if (hasNewTransactions) {
+        await _transactionStorageService.storeTransactions(transactions);
+      }
     }
 
-    return RefreshIndicator(
-      onRefresh: _refreshWalletData,
-      child: ListView.builder(
-        itemCount: transactionItems.length,
-        itemBuilder: (BuildContext context, int index) {
-          final dynamic item = transactionItems[index];
+    setState(() {
+      _transactions.clear();
+      _transactions.addAll(transactions);
+      if (_isRefreshing) _isRefreshing = false;
+    });
+  }
 
-          if (item is Map && item['type'] == 'header') {
-            // Use the stored monthKey directly
-            final String monthKey = item['monthKey'];
+  Future<void> _refreshTransactions() async {
+    setState(() {
+      _isRefreshing = true;
+    });
 
-            // Count only valid, parseable transactions
-            final int displayedCount =
-                groupedTransactions[monthKey]!.where((TransactionDetails? tx) {
-              if (tx == null) return false;
-              final TransactionTransferInfo? transferInfo =
-                  TransactionDetailsParser.parseTransferDetails(
-                tx,
-                _tokenAccount?.pubkey ?? '',
-              );
-              return transferInfo != null && transferInfo.amount != 0;
-            }).length;
-
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    item['month'],
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  Text(
-                    '$displayedCount',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return _buildTransactionTile(item);
-        },
-      ),
-    );
+    await Future.wait(<Future<void>>[
+      widget.onRefreshStarted(),
+      _loadTransactions(),
+    ]);
   }
 
   String _formatMonthHeader(String monthKey) {
@@ -522,19 +503,84 @@ class WalletScreenState extends State<WalletScreen> {
     final TransactionTransferInfo? transferInfo =
         TransactionDetailsParser.parseTransferDetails(
       transaction,
-      _tokenAccount?.pubkey ?? '',
+      widget.tokenAccount?.pubkey ?? '',
     );
 
-    if (transferInfo == null) {
-      return const SizedBox.shrink();
-    }
-
-    if (transferInfo.amount == 0) {
+    if (transferInfo == null || transferInfo.amount == 0) {
       return const SizedBox.shrink();
     }
 
     return ActivityItem(
       transferInfo: transferInfo,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<dynamic> transactionItems = <dynamic>[];
+
+    final List<String> sortedMonths = _transactions.keys.toList()
+      ..sort((String a, String b) => b.compareTo(a));
+
+    for (final String monthKey in sortedMonths) {
+      transactionItems.add(<String, dynamic>{
+        'type': 'header',
+        'month': _formatMonthHeader(monthKey),
+        'monthKey': monthKey,
+        'count': _transactions[monthKey]!.length,
+      });
+      final List<TransactionDetails?> sortedTransactions =
+          List<TransactionDetails?>.from(_transactions[monthKey]!)
+            ..sort((TransactionDetails? a, TransactionDetails? b) {
+              if (a == null || b == null) return 0;
+              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
+            });
+      transactionItems.addAll(sortedTransactions);
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshTransactions,
+      child: ListView.builder(
+        itemCount: transactionItems.length,
+        itemBuilder: (BuildContext context, int index) {
+          final dynamic item = transactionItems[index];
+
+          if (item is Map && item['type'] == 'header') {
+            final String monthKey = item['monthKey'];
+            final int displayedCount =
+                _transactions[monthKey]!.where((TransactionDetails? tx) {
+              if (tx == null) return false;
+              final TransactionTransferInfo? transferInfo =
+                  TransactionDetailsParser.parseTransferDetails(
+                tx,
+                widget.tokenAccount?.pubkey ?? '',
+              );
+              return transferInfo != null && transferInfo.amount != 0;
+            }).length;
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    item['month'],
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    '$displayedCount',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return _buildTransactionTile(item);
+        },
+      ),
     );
   }
 }

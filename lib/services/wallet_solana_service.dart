@@ -185,7 +185,7 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 10,
+    int limit = 30,
     String? before,
   }) async {
     try {

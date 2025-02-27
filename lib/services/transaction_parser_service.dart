@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/foundation.dart';
 import 'package:solana/dto.dart';
 
 class TransactionDetailsParser {
@@ -11,6 +12,19 @@ class TransactionDetailsParser {
           transaction.transaction.toJson()['message'];
       final List<dynamic> accountKeys = message['accountKeys'];
 
+      debugPrint('accountKeys: $accountKeys');
+      debugPrint(
+        'preTokenBalances[0]: ${transaction.meta!.preTokenBalances[0].uiTokenAmount.uiAmountString}',
+      );
+      debugPrint(
+        'preTokenBalances[1]: ${transaction.meta!.preTokenBalances[1].uiTokenAmount.uiAmountString}',
+      );
+      debugPrint(
+        'postTokenBalances[0]: ${transaction.meta!.postTokenBalances[0].uiTokenAmount.uiAmountString}',
+      );
+      debugPrint(
+        'postTokenBalances[1]: ${transaction.meta!.postTokenBalances[1].uiTokenAmount.uiAmountString}',
+      );
       double preBalance = 0;
 
       if (transaction.meta!.preTokenBalances.isNotEmpty) {
@@ -47,6 +61,7 @@ class TransactionDetailsParser {
                     .meta!.postTokenBalances[1].uiTokenAmount.uiAmountString ??
                 '0',
           );
+          debugPrint('initialFunding: $initialFunding');
           amount = initialFunding;
         }
       }
