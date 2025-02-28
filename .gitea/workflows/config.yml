@@ -81,14 +81,14 @@ jobs:
           pid=$(sudo lsof -t -i:8001) || true
           sudo kill $pid || true
 
-  build-and-test-mac:
-    runs-on: workstation.mac
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # build-and-test-mac:
+  #   runs-on: workstation.mac
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: print test
-        run: echo "This is a test message"
+  #     - name: print test
+  #       run: echo "This is a test message"
 
 # example of testing pipline 
   # flutter_test:
