@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/secure_storage_service.dart';
+import 'onboarding/welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final SecureStorageService _secureStorage = SecureStorageService();
   String _errorMessage = '';
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSplashTimer();
+  }
+
+  void _startSplashTimer() {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
+  }
 
   Future<void> _validatePassword() async {
     try {
@@ -39,52 +57,113 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Center(
-              child: Column(
-                children: <Widget>[
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter your password to continue',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+      body: Column(
+        children: <Widget>[
+          Stack(
+            children: <Widget>[
+              ClipPath(
+                clipper: SteeperCurvedBottomClipper(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.53,
+                  color: const Color(0xFF4169E1).withOpacity(0.3),
+                ),
               ),
-            ),
-            const SizedBox(height: 40),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.red,
+              ClipPath(
+                clipper: CurvedBottomClipper(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.50,
+                  color: const Color(0xFF4169E1),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 300,
+                      height: 300,
+                      child: Image(
+                        image: AssetImage('images/splash.png'),
+                        fit: BoxFit.contain,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                errorText: _errorMessage.isNotEmpty ? _errorMessage : null,
               ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+            child: Stack(
+              children: <Widget>[
+                // Login Form
+                AnimatedOpacity(
+                  opacity: _showSplash ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 500),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Welcome Back!',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 40),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        style: const TextStyle(
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Enter your password',
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
+                          errorText:
+                              _errorMessage.isNotEmpty ? _errorMessage : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Splash RichText
+                AnimatedOpacity(
+                  opacity: _showSplash ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 500),
+                  child: RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        height: 1.2,
+                      ),
+                      children: <InlineSpan>[
+                        TextSpan(text: 'ZARPLY the '),
+                        TextSpan(
+                          text: 'Rand\nstable-coin\nwallet',
+                          style: TextStyle(
+                            color: Color(0xFF1F75DC),
+                          ),
+                        ),
+                        TextSpan(text: ' on Solana.'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const Spacer(),
-            SizedBox(
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+            child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () async {
-                  await _validatePassword();
-                },
+                onPressed: _showSplash
+                    ? null
+                    : () async {
+                        await _validatePassword();
+                      },
                 style: ElevatedButton.styleFrom(
                   textStyle: const TextStyle(
                     fontSize: 18,
@@ -94,8 +173,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text('Login'),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
