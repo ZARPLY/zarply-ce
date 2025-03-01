@@ -28,8 +28,8 @@ class ActivityItem extends StatelessWidget {
                 transferInfo.formattedAmount,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: transferInfo.formattedAmount.startsWith('-')
-                          ? const Color(0xFFFF6B6B)
-                          : const Color(0xFF66BB6A),
+                          ? Colors.black
+                          : Colors.blue,
                     ),
               ),
               Text(
