@@ -3,6 +3,8 @@ import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
+import 'transaction_storage_service.dart';
+
 class WalletSolanaServiceException implements Exception {
   WalletSolanaServiceException(this.message);
   final String message;
@@ -20,6 +22,8 @@ class WalletSolanaService {
           websocketUrl: Uri.parse(websocketUrl),
         );
   final SolanaClient _client;
+  final TransactionStorageService _transactionStorageService =
+      TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
@@ -181,7 +185,7 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 10,
+    int limit = 30,
     String? before,
   }) async {
     try {
@@ -190,17 +194,28 @@ class WalletSolanaService {
         walletAddress,
         limit: limit,
         before: before,
+        commitment: Commitment.confirmed,
       );
+
+      if (signatures.isEmpty) {
+        return <String, List<TransactionDetails?>>{};
+      }
+
+      if (signatures.isNotEmpty && before == null) {
+        await _transactionStorageService.storeLastTransactionSignature(
+          signatures.first.signature,
+        );
+      }
 
       final List<TransactionDetails?> transactions = await Future.wait(
         signatures.map((TransactionSignatureInformation sig) async {
           return await _client.rpcClient.getTransaction(
             sig.signature,
+            commitment: Commitment.confirmed,
           );
         }),
       );
 
-      // Group transactions by month
       final Map<String, List<TransactionDetails?>> groupedTransactions =
           <String, List<TransactionDetails?>>{};
 
@@ -211,7 +226,6 @@ class WalletSolanaService {
             ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
             : DateTime.now();
 
-        // Format month as 'YYYY-MM'
         final String monthKey =
             '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
 
@@ -225,6 +239,16 @@ class WalletSolanaService {
     } catch (e) {
       throw WalletSolanaServiceException(
         'Error fetching transactions by signatures: $e',
+      );
+    }
+  }
+
+  Future<TransactionDetails?> getTransactionDetails(String signature) async {
+    try {
+      return await _client.rpcClient.getTransaction(signature);
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction details: $e',
       );
     }
   }
