@@ -2,10 +2,15 @@ name: app Build
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    types: [ opened ]
+    branches:  
+      - '**'   ### this is done to prevent config runs when tagging
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     types: [ opened ]
 
 jobs:
   android_apk_build:
@@ -26,21 +31,32 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      
+      # - name: Decode Android Key Store
+      #   run: |
+      #     echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
+      
+      # - name: Create key.properties
+      #   run: |
+      #     printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+      #       $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+      
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
 
-      - name: Decode Android Key Store
+      - name: Get Project Dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --dart-define-from-file=.env --debug
+
+      - name: Create zip file with correct timestamps
         run: |
-          echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
-
-      - name: Create key.properties
-        run: |
-          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
-            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
-
-      - name: Build and Export QA App Files
-        run: ./tools/build.sh qa
+          cd build/app/outputs/flutter-apk
+          zip -r artifact.zip app-release.apk
 
       - name: Store Test Results
         uses: actions/upload-artifact@v3
         with:
-          name: zarply-apk
-          path: qa_export/**
+          name: qa-zarply
+          path: build/app/outputs/flutter-apk/artifact.zip
