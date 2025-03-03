@@ -61,8 +61,6 @@ jobs:
           name: qa-zarply
           path: build/app/outputs/flutter-apk/artifact.zip
 
-
-jobs:
   ios_build:
     name: ios Build
     runs-on: workstation.mac
