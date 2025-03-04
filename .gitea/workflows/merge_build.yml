@@ -15,9 +15,9 @@ on:
 jobs:
   android_apk_build:
     name: Android APK Build
-    runs-on: workstation.ubuntu.lts
-    container:
-      image: gitea.cyber-mint.com/pumppay/pp-flutter:v3.27.3
+    runs-on: workstation.mac
+    # container:
+    #   image: gitea.cyber-mint.com/pumppay/pp-flutter:v3.27.3
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
