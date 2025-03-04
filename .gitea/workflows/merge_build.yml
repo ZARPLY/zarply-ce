@@ -105,4 +105,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: qa-zarply
-          path: build/app/outputs/flutter-apk/artifact.zip
+          path: build/ios/iphoneos/artifact.zip
