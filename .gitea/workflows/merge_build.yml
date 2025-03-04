@@ -98,8 +98,8 @@ jobs:
 
       - name: Create zip file with correct timestamps
         run: |
-          cd build/app/outputs/flutter-apk
-          zip -r artifact.zip app-debug.apk
+          cd build/ios/iphoneos
+          zip -r artifact.zip Runner.app
 
       - name: Store Test Results
         uses: actions/upload-artifact@v3
