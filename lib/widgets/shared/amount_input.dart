@@ -23,7 +23,9 @@ class _AmountInputState extends State<AmountInput> {
     _displayController = TextEditingController();
     if (widget.controller.text.isNotEmpty) {
       _displayController.text =
-          Formatters.formatAmount(double.parse(widget.controller.text));
+          Formatters.formatAmount(double.parse(widget.controller.text) / 100)
+              .replaceAll('R', '')
+              .trim();
     }
   }
 

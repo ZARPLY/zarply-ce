@@ -1,3 +1,5 @@
+import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
@@ -185,15 +187,15 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 30,
-    String? before,
+    int limit = 100,
+    String? afterSignature,
   }) async {
     try {
       final List<TransactionSignatureInformation> signatures =
           await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
         limit: limit,
-        before: before,
+        until: afterSignature,
         commitment: Commitment.confirmed,
       );
 
@@ -201,7 +203,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty && before == null) {
+      if (signatures.isNotEmpty && afterSignature == null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );
@@ -254,8 +256,7 @@ class WalletSolanaService {
   }
 
   bool isValidMnemonic(String mnemonic) {
-    final List<String> words = mnemonic.trim().split(' ');
-    return words.length == 12 || words.length == 24;
+    return bip39.validateMnemonic(mnemonic);
   }
 
   bool isValidPrivateKey(String privateKey) {

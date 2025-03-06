@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import '../services/secure_storage_service.dart';
 import 'onboarding/welcome_screen.dart';
@@ -11,14 +14,24 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  late StreamSubscription<bool> keyboardSubscription;
   final TextEditingController _passwordController = TextEditingController();
   final SecureStorageService _secureStorage = SecureStorageService();
   String _errorMessage = '';
   bool _showSplash = true;
+  bool isKeyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
+    final KeyboardVisibilityController keyboardVisibilityController =
+        KeyboardVisibilityController();
+    keyboardSubscription =
+        keyboardVisibilityController.onChange.listen((bool visible) {
+      setState(() {
+        isKeyboardVisible = visible;
+      });
+    });
     _startSplashTimer();
   }
 
@@ -64,14 +77,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ClipPath(
                 clipper: SteeperCurvedBottomClipper(),
                 child: Container(
-                  height: MediaQuery.of(context).size.height * 0.53,
+                  height: MediaQuery.of(context).size.height * 0.43,
                   color: const Color(0xFF4169E1).withOpacity(0.3),
                 ),
               ),
               ClipPath(
                 clipper: CurvedBottomClipper(),
                 child: Container(
-                  height: MediaQuery.of(context).size.height * 0.50,
+                  height: MediaQuery.of(context).size.height * 0.40,
                   color: const Color(0xFF4169E1),
                   child: const Center(
                     child: SizedBox(
@@ -154,26 +167,27 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _showSplash
-                    ? null
-                    : () async {
-                        await _validatePassword();
-                      },
-                style: ElevatedButton.styleFrom(
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+          if (!isKeyboardVisible)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _showSplash
+                      ? null
+                      : () async {
+                          await _validatePassword();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  child: const Text('Login'),
                 ),
-                child: const Text('Login'),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -182,6 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _passwordController.dispose();
+    keyboardSubscription.cancel();
     super.dispose();
   }
 }
