@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:flutter/foundation.dart';
 import 'package:solana/dto.dart';
 
 class TransactionDetailsParser {

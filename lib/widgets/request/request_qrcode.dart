@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:qr/qr.dart';
 import 'package:share_plus/share_plus.dart';
@@ -144,13 +145,21 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: OutlinedButton(
                     onPressed: _shareQRCode,
-                    style: ElevatedButton.styleFrom(
+                    style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.all(16),
                       textStyle: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                      ),
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(
+                        color: Colors.blue,
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                     child: const Row(
@@ -158,12 +167,27 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                       children: <Widget>[
                         Text('Share Barcode'),
                         SizedBox(width: 8),
-                        Icon(Icons.ios_share),
+                        Icon(Icons.share, color: Colors.blue),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.go('/wallet'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('Done'),
+                  ),
+                ),
+                const SizedBox(height: 40),
               ],
             ),
           )

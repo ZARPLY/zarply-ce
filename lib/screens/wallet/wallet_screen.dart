@@ -416,16 +416,18 @@ class TransactionsListState extends State<TransactionsList> {
       final Map<String, List<TransactionDetails?>> newTransactions =
           await widget.walletSolanaService.getAccountTransactions(
         walletAddress: widget.tokenAccount!.pubkey,
-        before: lastSignature,
+        afterSignature: lastSignature,
       );
 
       final Set<String> existingSignatures = <String>{};
-      for (final List<TransactionDetails?> monthTransactions
-          in transactions.values) {
-        for (final TransactionDetails? tx in monthTransactions) {
-          if (tx != null) {
-            final String sig = tx.transaction.toJson()['signatures'][0];
-            existingSignatures.add(sig);
+      if (lastSignature != null) {
+        for (final List<TransactionDetails?> monthTransactions
+            in transactions.values) {
+          for (final TransactionDetails? tx in monthTransactions) {
+            if (tx != null) {
+              final String sig = tx.transaction.toJson()['signatures'][0];
+              existingSignatures.add(sig);
+            }
           }
         }
       }
