@@ -1,5 +1,4 @@
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
