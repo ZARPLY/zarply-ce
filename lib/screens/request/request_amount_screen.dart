@@ -36,7 +36,7 @@ class _RequestAmountScreenState extends State<RequestAmountScreen> {
             _paymentAmountController.text,
           ) ??
           0;
-      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 5;
+      _isFormValid = _paymentAmountController.text.isNotEmpty && amount >= 500;
     });
   }
 

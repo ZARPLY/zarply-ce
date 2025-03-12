@@ -63,14 +63,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ClipPath(
                 clipper: SteeperCurvedBottomClipper(),
                 child: Container(
-                  height: MediaQuery.of(context).size.height * 0.53,
+                  height: MediaQuery.of(context).size.height * 0.43,
                   color: const Color(0xFF4169E1).withOpacity(0.3),
                 ),
               ),
               ClipPath(
                 clipper: CurvedBottomClipper(),
                 child: Container(
-                  height: MediaQuery.of(context).size.height * 0.50,
+                  height: MediaQuery.of(context).size.height * 0.40,
                   color: const Color(0xFF4169E1),
                   child: const Center(
                     child: SizedBox(
