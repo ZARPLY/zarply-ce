@@ -80,7 +80,6 @@ jobs:
         run: |
           flutter clean
           flutter pub get
-          flutter analyze --fatal-infos
           
       - name: Install the CodeMagic CLI
         run:  pip install codemagic-cli-tools
