@@ -81,10 +81,13 @@ jobs:
           flutter clean
           flutter pub get
   
-      - name: Install Python using Homebrew
-        run: |
-          brew install python
-          python3 -m ensurepip --upgrade
+      # - name: Install Python using Homebrew
+      #   run: |
+      #     brew install python
+      #     python3 -m ensurepip --upgrade
+
+      - name: Install the CodeMagic CLI
+        run:  pip install codemagic-cli-tools
 
       - name: Initialize keychain
         run: keychain initialize
