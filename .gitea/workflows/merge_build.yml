@@ -80,6 +80,14 @@ jobs:
         run: |
           flutter clean
           flutter pub get
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.12' # Replace with the desired Python version
+  
+      - name: Install pip
+        run: python -m ensurepip --upgrade      
           
       - name: Install the CodeMagic CLI
         run:  pip install codemagic-cli-tools
