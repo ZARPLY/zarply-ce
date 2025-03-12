@@ -61,48 +61,63 @@ jobs:
           name: qa-zarply
           path: build/app/outputs/flutter-apk/artifact.zip
 
-  ios_build:
-    name: ios Build
+  ios_deployment:
     runs-on: workstation.mac
     env:
-      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
-      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
-      GITEA_USERNAME: ${{ secrets.USERNAME }}
-      GITEA_PASSWORD: ${{ secrets.PASSWORD }}
-      GITEA_SERVER: ${{ secrets.SERVER }}
-      MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
+      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+      APP_STORE_APP_ID: ${{ secrets.APP_STORE_APP_ID }}
+      DISTRIBUTION_CERTIFICATE: ${{ secrets.DIST_CERTIFICATE_BASE64 }}
+      DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DIST_CERTIFICATE_PASSWORD }}
+      PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      
-      # - name: Decode Android Key Store
-      #   run: |
-      #     echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
-      
-      # - name: Create key.properties
-      #   run: |
-      #     printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
-      #       $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
-      
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
-      - name: Get Project Dependencies
-        run: flutter pub get
-
-      - name: Build ios
-        run: flutter build ios --dart-define-from-file=.env --debug
-
-      - name: Create zip file with correct timestamps
+      - name: Install dependencies & Lint check
         run: |
-          cd build/ios/iphoneos
-          zip -r artifact.zip Runner.app
+          flutter clean
+          flutter pub get
+          flutter analyze --fatal-infos
+          
+      - name: Install the CodeMagic CLI
+        run:  pip install codemagic-cli-tools
 
-      - name: Store Test Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: qa-zarply
-          path: build/ios/iphoneos/artifact.zip
+      - name: Initialize keychain
+        run: keychain initialize
+
+      - name: Set up Provisioning Profile
+        run: |
+          PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_HOME"
+          PROFILE_PATH="$(mktemp "$PROFILES_HOME"/$(uuidgen).mobileprovision)"
+          echo ${PROVISIONING_PROFILE} | base64 --decode > "$PROFILE_PATH"
+          echo "Saved provisioning profile $PROFILE_PATH"   
+
+      - name: Set up Distribution Certificate
+        run: |
+          echo $DISTRIBUTION_CERTIFICATE | base64 --decode > /tmp/certificate.p12
+          keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password $DISTRIBUTION_CERTIFICATE_PASSWORD
+
+      - name: Set up Code signing settings on Xcode project
+        run: xcode-project use-profiles
+
+      - name: Build IPA for Distribution
+        run: |
+          file='VERSION'
+          fileData=`cat $file`
+          IFS='.'
+          read -a versionValue <<< "$fileData"
+          buildNumber=$(( ${versionValue[0]} * 1000000 + ${versionValue[1]} * 10000 + ${{ gitea.run_number }} ))
+          IFS=''
+          buildName="${versionValue[0]}.${versionValue[1]}.${{ gitea.run_number }}"
+          echo "Uploading build $buildName"
+          flutter build ipa --release --build-number=$buildNumber --build-name=$buildName --export-options-plist=$HOME/export_options.plist
+
+      - name: Upload IPA to App Store Connect
+        run: |
+          APP_FILE=$(find $(pwd) -name "*.ipa")
+          app-store-connect publish \
+          --path "$APP_FILE" 
