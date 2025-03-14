@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/payment_request.dart';
+
 class RequestAmountViewModel extends ChangeNotifier {
   RequestAmountViewModel() {
     paymentAmountController.addListener(_updateFormValidity);
@@ -20,5 +22,16 @@ class RequestAmountViewModel extends ChangeNotifier {
         0;
     isFormValid = paymentAmountController.text.isNotEmpty && amount >= 500;
     notifyListeners();
+  }
+
+  PaymentRequest createPaymentRequest(String walletAddress) {
+    if (!isFormValid) {
+      throw Exception('Cannot create payment request: form is invalid');
+    }
+
+    return PaymentRequest(
+      amount: paymentAmountController.text,
+      walletAddress: walletAddress,
+    );
   }
 }

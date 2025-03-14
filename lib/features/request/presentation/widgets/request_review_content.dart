@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../request/domain/entities/payment_request.dart';
 import 'request_qrcode.dart';
 
 class RequestReviewContent extends StatefulWidget {
   const RequestReviewContent({
-    required this.amount,
+    required this.paymentRequest,
     required this.onCancel,
     super.key,
   });
-  final String amount;
+
+  final PaymentRequest paymentRequest;
   final VoidCallback onCancel;
 
   @override
@@ -63,8 +65,23 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  Formatters.formatAmount(double.parse(widget.amount) / 100),
+                  Formatters.formatAmount(
+                    double.parse(widget.paymentRequest.amount) / 100,
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    widget.paymentRequest.walletAddress,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -104,6 +121,6 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
               ],
             ),
           )
-        : RequestQRCode(amount: widget.amount);
+        : RequestQRCode(paymentRequest: widget.paymentRequest);
   }
 }

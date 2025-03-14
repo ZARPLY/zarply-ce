@@ -5,15 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 
-class RequestQRCodeViewModel extends ChangeNotifier {
-  RequestQRCodeViewModel({required this.amount, required this.walletAddress});
+import '../../domain/entities/payment_request.dart';
 
-  final String amount;
-  final String walletAddress;
+class RequestQRCodeViewModel extends ChangeNotifier {
+  RequestQRCodeViewModel({required this.paymentRequest});
+
+  final PaymentRequest paymentRequest;
   bool isQRCodeShared = false;
   Future<ui.Image>? _loadImageFuture;
 
   Future<ui.Image>? get loadImageFuture => _loadImageFuture;
+
+  String get amount => paymentRequest.amount;
+  String get walletAddress => paymentRequest.walletAddress;
 
   void init() {
     _loadImageFuture = _loadImage();
@@ -32,8 +36,7 @@ class RequestQRCodeViewModel extends ChangeNotifier {
     return completer.future;
   }
 
-  String get qrCodeData =>
-      'zarply:payment:$amount:$walletAddress:${DateTime.now().millisecondsSinceEpoch}';
+  String get qrCodeData => paymentRequest.qrCodeData;
 
   Future<void> shareQRCode(GlobalKey qrKey) async {
     final RenderRepaintBoundary boundary =

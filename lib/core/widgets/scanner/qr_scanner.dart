@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../features/request/domain/entities/payment_request.dart';
+
 class QRScanner extends StatefulWidget {
   const QRScanner({super.key});
 
@@ -27,6 +29,12 @@ class _QRScannerState extends State<QRScanner> {
             final String walletAddress = parts[3];
             final int timestamp = int.parse(parts[4]);
 
+            final PaymentRequest paymentRequest = PaymentRequest(
+              amount: amount,
+              walletAddress: walletAddress,
+              timestamp: timestamp,
+            );
+
             final bool isExpired =
                 DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
 
@@ -46,8 +54,8 @@ class _QRScannerState extends State<QRScanner> {
               context.go(
                 '/payment_amount',
                 extra: <String, String>{
-                  'amount': amount,
-                  'recipientAddress': walletAddress,
+                  'amount': paymentRequest.amount,
+                  'recipientAddress': paymentRequest.walletAddress,
                   'source': '/scan',
                 },
               );
@@ -99,6 +107,12 @@ class _QRScannerState extends State<QRScanner> {
             final String walletAddress = parts[3];
             final int timestamp = int.parse(parts[4]);
 
+            final PaymentRequest paymentRequest = PaymentRequest(
+              amount: amount,
+              walletAddress: walletAddress,
+              timestamp: timestamp,
+            );
+
             final bool isExpired =
                 DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
 
@@ -118,8 +132,8 @@ class _QRScannerState extends State<QRScanner> {
               context.go(
                 '/payment_amount',
                 extra: <String, String>{
-                  'amount': amount,
-                  'recipientAddress': walletAddress,
+                  'amount': paymentRequest.amount,
+                  'recipientAddress': paymentRequest.walletAddress,
                   'source': '/scan',
                 },
               );

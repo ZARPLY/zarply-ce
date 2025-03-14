@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/formatters.dart';
+import '../../../request/domain/entities/payment_request.dart';
 
 class RequestCompleted extends StatelessWidget {
   const RequestCompleted({
-    required this.amount,
+    required this.paymentRequest,
     super.key,
   });
-  final String amount;
+
+  final PaymentRequest paymentRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class RequestCompleted extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            Formatters.formatAmount(double.parse(amount)),
+            Formatters.formatAmount(double.parse(paymentRequest.amount)),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 32),
@@ -56,7 +58,9 @@ class RequestCompleted extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            DateTime.now().toString().substring(0, 16),
+            DateTime.fromMillisecondsSinceEpoch(paymentRequest.timestamp)
+                .toString()
+                .substring(0, 16),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const Spacer(),

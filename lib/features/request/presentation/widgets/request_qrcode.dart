@@ -4,18 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:qr/qr.dart';
 
-import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../domain/entities/payment_request.dart';
 import '../models/request_qrcode_view_model.dart';
 import 'request_completed.dart';
 
 class RequestQRCode extends StatefulWidget {
   const RequestQRCode({
-    required this.amount,
+    required this.paymentRequest,
     super.key,
   });
 
-  final String amount;
+  final PaymentRequest paymentRequest;
 
   @override
   State<RequestQRCode> createState() => _RequestQRCodeState();
@@ -32,14 +32,10 @@ class _RequestQRCodeState extends State<RequestQRCode> {
 
   @override
   Widget build(BuildContext context) {
-    final WalletProvider walletProvider = Provider.of<WalletProvider>(context);
-    final String walletAddress = walletProvider.wallet?.address ?? '';
-
     return ChangeNotifierProvider<RequestQRCodeViewModel>(
       create: (_) {
         _viewModel = RequestQRCodeViewModel(
-          amount: widget.amount,
-          walletAddress: walletAddress,
+          paymentRequest: widget.paymentRequest,
         );
         _viewModel.init();
         return _viewModel;
@@ -107,7 +103,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                       const SizedBox(height: 32),
                       Text(
                         Formatters.formatAmount(
-                          double.parse(widget.amount) / 100,
+                          double.parse(widget.paymentRequest.amount) / 100,
                         ),
                         style: Theme.of(context).textTheme.headlineLarge,
                       ),
@@ -167,7 +163,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                     ],
                   ),
                 )
-              : RequestCompleted(amount: widget.amount);
+              : RequestCompleted(paymentRequest: widget.paymentRequest);
         },
       ),
     );

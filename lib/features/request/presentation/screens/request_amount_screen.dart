@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
+import '../../domain/entities/payment_request.dart';
 import '../models/request_amount_view_model.dart';
 import '../widgets/request_review_content.dart';
 
@@ -16,6 +18,9 @@ class RequestAmountScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
+        final WalletProvider walletProvider =
+            Provider.of<WalletProvider>(context);
+        final String walletAddress = walletProvider.wallet?.address ?? '';
         return Container(
           height: MediaQuery.of(context).size.height * 0.90,
           decoration: const BoxDecoration(
@@ -23,7 +28,10 @@ class RequestAmountScreen extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: RequestReviewContent(
-            amount: amount,
+            paymentRequest: PaymentRequest(
+              amount: amount,
+              walletAddress: walletAddress,
+            ),
             onCancel: () => Navigator.pop(context),
           ),
         );
