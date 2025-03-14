@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../../core/services/transaction_storage_service.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../wallet/data/services/wallet_solana_service.dart';
+import '../models/payment_review_content_view_model.dart';
 import 'payment_success.dart';
 
 class PaymentReviewContent extends StatefulWidget {
@@ -26,168 +23,136 @@ class PaymentReviewContent extends StatefulWidget {
 }
 
 class _PaymentReviewContentState extends State<PaymentReviewContent> {
-  final WalletSolanaService walletSolanaService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
-  final TransactionStorageService transactionStorageService =
-      TransactionStorageService();
-  bool hasPaymentBeenMade = false;
-  bool isLoading = false;
+  late final PaymentReviewContentViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = PaymentReviewContentViewModel();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
 
   Future<void> _makeTransaction() async {
-    setState(() {
-      isLoading = true;
-    });
+    final Wallet? wallet =
+        Provider.of<WalletProvider>(context, listen: false).wallet;
 
-    try {
-      final Wallet? wallet =
-          Provider.of<WalletProvider>(context, listen: false).wallet;
-
-      if (wallet == null) {
-        throw Exception('Wallet not found');
-      }
-
-      if (widget.recipientAddress != '') {
-        final String txSignature = await walletSolanaService.sendTransaction(
-          senderWallet: wallet,
-          recipientAddress: widget.recipientAddress,
-          zarpAmount: double.parse(widget.amount) / 100,
-        );
-
-        await Future<void>.delayed(const Duration(seconds: 2));
-        final TransactionDetails? txDetails =
-            await walletSolanaService.getTransactionDetails(txSignature);
-
-        if (txDetails != null) {
-          final Map<String, List<TransactionDetails?>> stored =
-              await transactionStorageService.getStoredTransactions();
-
-          final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
-            txDetails.blockTime! * 1000,
-          );
-          final String monthKey =
-              '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
-
-          if (!stored.containsKey(monthKey)) {
-            stored[monthKey] = <TransactionDetails?>[];
-          }
-          stored[monthKey]!.insert(0, txDetails);
-
-          await transactionStorageService.storeTransactions(stored);
-        }
-
-        setState(() {
-          hasPaymentBeenMade = true;
-        });
-      } else {
-        setState(() {
-          hasPaymentBeenMade = false;
-        });
-        throw Exception('Wallet or recipient address not found');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+    if (wallet == null) {
+      // Handle error
+      return;
     }
+
+    await _viewModel.makeTransaction(
+      wallet: wallet,
+      recipientAddress: widget.recipientAddress,
+      amount: widget.amount,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return !hasPaymentBeenMade
-        ? Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (BuildContext context, _) {
+        return !_viewModel.hasPaymentBeenMade
+            ? Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      'Payment Review',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Payment Review',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        TextButton(
+                          onPressed: widget.onCancel,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: widget.onCancel,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.blue,
+                    const SizedBox(height: 40),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF9BA1AC),
                       ),
-                      child: const Text('Cancel'),
+                      child: const Icon(
+                        Icons.call_made,
+                        size: 50,
+                        color: Colors.white,
+                      ),
                     ),
+                    const SizedBox(height: 48),
+                    Text(
+                      Formatters.formatAmount(
+                        double.parse(
+                              widget.amount,
+                            ) /
+                            100,
+                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 32),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF6F7F8),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Text(
+                        Formatters.shortenAddress(widget.recipientAddress),
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Review the details before making a payment. Once complete, this payment cannot be reversed. Confirm to proceed.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            _viewModel.isLoading ? null : _makeTransaction,
+                        style: ElevatedButton.styleFrom(
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: _viewModel.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Text('Confirm Payment'),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF9BA1AC),
-                  ),
-                  child: const Icon(
-                    Icons.call_made,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                Text(
-                  Formatters.formatAmount(
-                    double.parse(
-                          widget.amount,
-                        ) /
-                        100,
-                  ),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF6F7F8),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Text(
-                    Formatters.shortenAddress(widget.recipientAddress),
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'Review the details before making a payment. Once complete, this payment cannot be reversed. Confirm to proceed.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _makeTransaction,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text('Confirm Payment'),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          )
-        : PaymentSuccess(amount: widget.amount);
+              )
+            : PaymentSuccess(amount: widget.amount);
+      },
+    );
   }
 }

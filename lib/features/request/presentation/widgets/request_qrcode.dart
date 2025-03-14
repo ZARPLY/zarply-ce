@@ -1,15 +1,12 @@
-import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:qr/qr.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../models/request_qrcode_view_model.dart';
 import 'request_completed.dart';
 
 class RequestQRCode extends StatefulWidget {
@@ -25,49 +22,12 @@ class RequestQRCode extends StatefulWidget {
 }
 
 class _RequestQRCodeState extends State<RequestQRCode> {
-  bool isQRCodeShared = false;
-  Future<ui.Image>? _loadImageFuture;
   final GlobalKey _qrKey = GlobalKey();
+  late RequestQRCodeViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _loadImageFuture = _loadImage();
-  }
-
-  Future<ui.Image> _loadImage() async {
-    final Completer<ui.Image> completer = Completer<ui.Image>();
-    const AssetImage imageProvider = AssetImage('images/qr-code-logo.png');
-    final ImageStream stream = imageProvider.resolve(ImageConfiguration.empty);
-    final ImageStreamListener listener = ImageStreamListener(
-      (ImageInfo info, bool _) => completer.complete(info.image),
-      onError: (Object error, _) => completer.completeError(error),
-    );
-
-    stream.addListener(listener);
-    return completer.future;
-  }
-
-  Future<void> _shareQRCode() async {
-    final RenderRepaintBoundary boundary =
-        _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
-    final ui.Image image = await boundary.toImage();
-    final ByteData? byteData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-    final ShareResult result = await Share.shareXFiles(
-      <XFile>[
-        XFile.fromData(pngBytes, mimeType: 'image/png', name: 'qr_code.png'),
-      ],
-      subject: 'ZARPLY Payment Request',
-    );
-
-    if (result.status == ShareResultStatus.success) {
-      setState(() {
-        isQRCodeShared = true;
-      });
-    }
   }
 
   @override
@@ -75,123 +35,142 @@ class _RequestQRCodeState extends State<RequestQRCode> {
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context);
     final String walletAddress = walletProvider.wallet?.address ?? '';
 
-    return !isQRCodeShared
-        ? Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        'Request Sent',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w400,
+    return ChangeNotifierProvider<RequestQRCodeViewModel>(
+      create: (_) {
+        _viewModel = RequestQRCodeViewModel(
+          amount: widget.amount,
+          walletAddress: walletAddress,
+        );
+        _viewModel.init();
+        return _viewModel;
+      },
+      child: Consumer<RequestQRCodeViewModel>(
+        builder: (BuildContext context, RequestQRCodeViewModel viewModel, _) {
+          return !viewModel.isQRCodeShared
+              ? Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              'Request Sent',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      RepaintBoundary(
+                        key: _qrKey,
+                        child: FutureBuilder<ui.Image>(
+                          future: viewModel.loadImageFuture,
+                          builder: (
+                            BuildContext context,
+                            AsyncSnapshot<ui.Image> snapshot,
+                          ) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              if (snapshot.hasError) {
+                                return const Text('Error loading image');
+                              }
+                              return CustomPaint(
+                                size: const Size(300, 300),
+                                painter: QRPainter(
+                                  data: viewModel.qrCodeData,
+                                  version: 4,
+                                  color: Colors.blue,
+                                  emptyColor: Colors.white,
+                                  gapless: true,
+                                  embeddedImageSize: const Size(60, 60),
+                                  loadedImage: snapshot.data,
+                                ),
+                              );
+                            } else {
+                              return const CircularProgressIndicator();
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        Formatters.formatAmount(
+                          double.parse(widget.amount) / 100,
+                        ),
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Valid for 24 hours',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.blue,
                             ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                RepaintBoundary(
-                  key: _qrKey,
-                  child: FutureBuilder<ui.Image>(
-                    future: _loadImageFuture,
-                    builder: (
-                      BuildContext context,
-                      AsyncSnapshot<ui.Image> snapshot,
-                    ) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        if (snapshot.hasError) {
-                          return const Text('Error loading image');
-                        }
-                        return CustomPaint(
-                          size: const Size(300, 300),
-                          painter: QRPainter(
-                            data:
-                                'zarply:payment:${widget.amount}:$walletAddress:${DateTime.now().millisecondsSinceEpoch}',
-                            version: 4,
-                            color: Colors.blue,
-                            emptyColor: Colors.white,
-                            gapless: true,
-                            embeddedImageSize: const Size(60, 60),
-                            loadedImage: snapshot.data,
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => viewModel.shareQRCode(_qrKey),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.all(16),
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            foregroundColor: Colors.blue,
+                            side: const BorderSide(
+                              color: Colors.blue,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
-                        );
-                      } else {
-                        return const CircularProgressIndicator();
-                      }
-                    },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text('Share Barcode'),
+                              SizedBox(width: 8),
+                              Icon(Icons.share, color: Colors.blue),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => context.go('/wallet'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.all(16),
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          child: const Text('Done'),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  Formatters.formatAmount(double.parse(widget.amount) / 100),
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Valid for 24 hours',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.blue,
-                      ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _shareQRCode,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      foregroundColor: Colors.blue,
-                      side: const BorderSide(
-                        color: Colors.blue,
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text('Share Barcode'),
-                        SizedBox(width: 8),
-                        Icon(Icons.share, color: Colors.blue),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/wallet'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    child: const Text('Done'),
-                  ),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          )
-        : RequestCompleted(amount: widget.amount);
+                )
+              : RequestCompleted(amount: widget.amount);
+        },
+      ),
+    );
   }
 }
 
