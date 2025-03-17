@@ -48,7 +48,7 @@ class RequestCompleted extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            Formatters.formatAmount(double.parse(paymentRequest.amount)),
+            Formatters.formatAmount(double.parse(paymentRequest.amount) / 100),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 32),

@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../wallet/data/services/wallet_solana_service.dart';
-import '../../../wallet/data/services/wallet_storage_service.dart';
+import '../../data/repositories/restore_wallet_repository_impl.dart';
+import '../../domain/repositories/restore_wallet_repository.dart';
 
 class RestoreWalletViewModel extends ChangeNotifier {
-  RestoreWalletViewModel() {
+  RestoreWalletViewModel({RestoreWalletRepository? repository})
+      : _repository = repository ?? RestoreWalletRepositoryImpl() {
     phraseController.addListener(_updateFormValidity);
     privateKeyController.addListener(_updateFormValidity);
   }
   final TextEditingController phraseController = TextEditingController();
   final TextEditingController privateKeyController = TextEditingController();
-  final WalletStorageService storageService = WalletStorageService();
-  final WalletSolanaService walletService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
+  final RestoreWalletRepository _repository;
 
   bool isFormValid = false;
   String selectedRestoreMethod = 'Seed Phrase';
@@ -42,10 +37,10 @@ class RestoreWalletViewModel extends ChangeNotifier {
   void _updateFormValidity() {
     if (selectedRestoreMethod == 'Seed Phrase') {
       isFormValid = phraseController.text.trim().isNotEmpty &&
-          walletService.isValidMnemonic(phraseController.text.trim());
+          _repository.isValidMnemonic(phraseController.text.trim());
     } else {
       isFormValid = privateKeyController.text.trim().isNotEmpty &&
-          walletService.isValidPrivateKey(privateKeyController.text.trim());
+          _repository.isValidPrivateKey(privateKeyController.text.trim());
     }
     notifyListeners();
   }
@@ -54,40 +49,22 @@ class RestoreWalletViewModel extends ChangeNotifier {
     try {
       Wallet wallet;
       if (selectedRestoreMethod == 'Seed Phrase') {
-        wallet = await walletService.restoreWalletFromMnemonic(
+        wallet = await _repository.restoreWalletFromMnemonic(
           phraseController.text.trim(),
         );
       } else {
-        wallet = await walletService.restoreWalletFromPrivateKey(
+        wallet = await _repository.restoreWalletFromPrivateKey(
           privateKeyController.text.trim(),
         );
       }
 
-      await walletProvider.storeWallet(wallet);
-      await storageService.saveWalletPrivateKey(wallet);
-      await storageService.saveWalletPublicKey(wallet);
+      await _repository.storeWallet(wallet, walletProvider);
 
       return wallet;
     } catch (e) {
       errorMessage = 'Failed to restore wallet: ${e.toString()}';
       notifyListeners();
       return null;
-    }
-  }
-
-  Future<void> _restoreAssociatedTokenAccount(
-    Wallet wallet,
-    WalletProvider walletProvider,
-  ) async {
-    try {
-      final ProgramAccount? tokenAccount =
-          await walletService.getAssociatedTokenAccount(wallet);
-      if (tokenAccount == null) return;
-      await walletProvider.storeAssociatedTokenAccount(tokenAccount);
-    } catch (e) {
-      throw WalletStorageException(
-        'Failed to restore associated token account: $e',
-      );
     }
   }
 
@@ -105,12 +82,11 @@ class RestoreWalletViewModel extends ChangeNotifier {
         return false;
       }
 
-      await _restoreAssociatedTokenAccount(wallet, walletProvider);
+      await _repository.restoreAssociatedTokenAccount(wallet, walletProvider);
 
       importComplete = true;
       notifyListeners();
 
-      // Delay to show success state
       await Future<void>.delayed(const Duration(seconds: 2));
 
       return true;
@@ -121,12 +97,4 @@ class RestoreWalletViewModel extends ChangeNotifier {
       return false;
     }
   }
-}
-
-class WalletStorageException implements Exception {
-  WalletStorageException(this.message);
-  final String message;
-
-  @override
-  String toString() => message;
 }

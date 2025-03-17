@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
-import '../../../../core/services/transaction_storage_service.dart';
-import '../../../wallet/data/services/wallet_solana_service.dart';
+import '../../data/repositories/payment_review_content_repository_impl.dart';
+import '../../domain/repositories/payment_review_content_repository.dart';
 
 class PaymentReviewContentViewModel extends ChangeNotifier {
-  final WalletSolanaService walletSolanaService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
-  final TransactionStorageService transactionStorageService =
-      TransactionStorageService();
+  PaymentReviewContentViewModel({
+    PaymentReviewContentRepository? repository,
+  }) : _repository = repository ?? PaymentReviewContentRepositoryImpl();
+  final PaymentReviewContentRepository _repository;
 
   bool _hasPaymentBeenMade = false;
   bool get hasPaymentBeenMade => _hasPaymentBeenMade;
@@ -30,32 +27,18 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
 
     try {
       if (recipientAddress.isNotEmpty) {
-        final String txSignature = await walletSolanaService.sendTransaction(
-          senderWallet: wallet,
+        final String txSignature = await _repository.makeTransaction(
+          wallet: wallet,
           recipientAddress: recipientAddress,
-          zarpAmount: double.parse(amount) / 100,
+          amount: double.parse(amount),
         );
 
         await Future<void>.delayed(const Duration(seconds: 2));
         final TransactionDetails? txDetails =
-            await walletSolanaService.getTransactionDetails(txSignature);
+            await _repository.getTransactionDetails(txSignature);
 
         if (txDetails != null) {
-          final Map<String, List<TransactionDetails?>> stored =
-              await transactionStorageService.getStoredTransactions();
-
-          final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
-            txDetails.blockTime! * 1000,
-          );
-          final String monthKey =
-              '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
-
-          if (!stored.containsKey(monthKey)) {
-            stored[monthKey] = <TransactionDetails?>[];
-          }
-          stored[monthKey]!.insert(0, txDetails);
-
-          await transactionStorageService.storeTransactions(stored);
+          await _repository.storeTransactionDetails(txDetails);
         }
 
         _hasPaymentBeenMade = true;

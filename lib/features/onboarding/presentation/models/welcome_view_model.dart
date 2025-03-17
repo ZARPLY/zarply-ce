@@ -1,19 +1,16 @@
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../wallet/data/services/wallet_solana_service.dart';
-import '../../../wallet/data/services/wallet_storage_service.dart';
+import '../../data/repositories/welcome_repository_impl.dart';
+import '../../domain/repositories/welcome_repository.dart';
 
 class WelcomeViewModel extends ChangeNotifier {
-  final WalletSolanaService _walletService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
-  final WalletStorageService _storageService = WalletStorageService();
+  WelcomeViewModel({WelcomeRepository? repository})
+      : _repository = repository ?? WelcomeRepositoryImpl();
+
+  final WelcomeRepository _repository;
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
@@ -23,19 +20,16 @@ class WelcomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final String recoveryPhrase = bip39.generateMnemonic();
-
-      walletProvider.setRecoveryPhrase(recoveryPhrase);
-
-      final Wallet wallet =
-          await _walletService.createWalletFromMnemonic(recoveryPhrase);
-      await Future<void>.delayed(const Duration(seconds: 2));
-      final ProgramAccount tokenAccount =
-          await _walletService.createAssociatedTokenAccount(wallet);
-
-      await _storageService.saveWalletPrivateKey(wallet);
-      await _storageService.saveWalletPublicKey(wallet);
-      await _storageService.saveAssociatedTokenAccountPublicKey(tokenAccount);
+      final ({
+        String recoveryPhrase,
+        ProgramAccount tokenAccount,
+        Wallet wallet
+      }) result = await _repository.createWallet();
+      walletProvider.setRecoveryPhrase(result.recoveryPhrase);
+      await _repository.storeWalletKeys(
+        wallet: result.wallet,
+        tokenAccount: result.tokenAccount,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();

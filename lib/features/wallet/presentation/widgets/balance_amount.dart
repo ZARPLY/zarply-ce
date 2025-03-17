@@ -64,7 +64,7 @@ class _BalanceAmountState extends State<BalanceAmount> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
-                    Formatters.shortenAddress(widget.walletAddress),
+                    widget.walletAddress,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import '../../../wallet/data/services/wallet_storage_service.dart';
+import '../../data/repositories/new_wallet_repository_impl.dart';
+import '../../domain/repositories/new_wallet_repository.dart';
 
 class NewWalletViewModel extends ChangeNotifier {
   NewWalletViewModel() {
     getWalletAddresses();
   }
-  final WalletStorageService _storageService = WalletStorageService();
+
+  final NewWalletRepository _repository = NewWalletRepositoryImpl();
   String? walletAddress;
   String? tokenAccountAddress;
   bool isLoading = true;
@@ -16,20 +17,15 @@ class NewWalletViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    walletAddress = await _storageService.retrieveWalletPublicKey();
+    walletAddress = await _repository.getWalletPublicKey();
     tokenAccountAddress =
-        await _storageService.retrieveAssociatedTokenAccountPublicKey();
+        await _repository.getAssociatedTokenAccountPublicKey();
 
     isLoading = false;
     notifyListeners();
   }
 
   Future<void> copyToClipboard(String text, BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Address copied to clipboard')),
-      );
-    }
+    await _repository.copyToClipboard(text, context);
   }
 }

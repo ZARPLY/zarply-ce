@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/services/secure_storage_service.dart';
+import '../../data/repositories/create_password_repository_impl.dart';
+import '../../domain/repositories/create_password_repository.dart';
 
 class CreatePasswordViewModel extends ChangeNotifier {
-  CreatePasswordViewModel() {
+  CreatePasswordViewModel({CreatePasswordRepository? repository})
+      : _repository = repository ?? CreatePasswordRepositoryImpl() {
     passwordController.addListener(_validateForm);
     confirmPasswordController.addListener(_validateForm);
   }
+
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  final SecureStorageService _secureStorage = SecureStorageService();
+  final CreatePasswordRepository _repository;
 
   bool _isChecked = false;
   bool _isFormValid = false;
@@ -50,12 +52,6 @@ class CreatePasswordViewModel extends ChangeNotifier {
 
   Future<bool> createPassword() async {
     if (!_isFormValid) return false;
-
-    try {
-      await _secureStorage.savePin(passwordController.text);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return await _repository.savePassword(passwordController.text);
   }
 }
