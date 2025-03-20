@@ -56,6 +56,7 @@ class _BalanceAmountState extends State<BalanceAmount> {
             onTap: () => _copyToClipboard(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              constraints: const BoxConstraints(maxWidth: 300),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
@@ -63,12 +64,16 @@ class _BalanceAmountState extends State<BalanceAmount> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Text(
-                    widget.walletAddress,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.white),
+                  Flexible(
+                    child: Text(
+                      widget.walletAddress,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.white),
+                      softWrap: true,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   AnimatedSwitcher(
