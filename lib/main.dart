@@ -4,9 +4,9 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'provider/wallet_provider.dart';
-import 'router/app_router.dart';
-import 'theme/app_theme.dart';
+import 'core/provider/wallet_provider.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
