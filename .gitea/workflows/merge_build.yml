@@ -80,13 +80,13 @@ jobs:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Generate Dart Files
-        run: |
-          flutter pub run build_runner build --release \
-            --delete-conflicting-outputs \
-            --config prod
-      - name: Generate Launcher Icons
-        run: dart run flutter_launcher_icons
+      # - name: Generate Dart Files
+      #   run: |
+      #     flutter pub run build_runner build --release \
+      #       --delete-conflicting-outputs \
+      #       --config prod
+      # - name: Generate Launcher Icons
+      #   run: dart run flutter_launcher_icons
       - name: Build iOS IPA
         run: |
           flutter build ipa --release \
