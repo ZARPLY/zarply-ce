@@ -61,67 +61,41 @@ jobs:
           name: qa-zarply
           path: build/app/outputs/flutter-apk/artifact.zip
 
-  ios_deployment:
+  ios_build:
+    name: iOS IPA Build & Upload
     runs-on: workstation.mac
     env:
-      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-      APP_STORE_APP_ID: ${{ secrets.APP_STORE_APP_ID }}
-      DISTRIBUTION_CERTIFICATE: ${{ secrets.DIST_CERTIFICATE_BASE64 }}
-      DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DIST_CERTIFICATE_PASSWORD }}
-      PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
-
+      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
-      - name: Install dependencies & Lint check
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Get iOS Dependencies
         run: |
-          flutter clean
-          flutter pub get
-  
-      # - name: Install Python using Homebrew
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Generate Dart Files
+        run: |
+          flutter pub run build_runner build --release \
+            --delete-conflicting-outputs \
+            --config prod
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
+      - name: Build iOS IPA
+        run: |
+          flutter build ipa --release \
+            --no-pub \
+            --obfuscate \
+            --codesign \
+            --split-debug-info=split_debug_info/ \
+            --dart-define-from-file=.env.prod
+      # - name: Upload to TestFlight
       #   run: |
-      #     brew install python
-      #     python3 -m ensurepip --upgrade
-
-      - name: Install the CodeMagic CLI
-        run:  pip install codemagic-cli-tools
-
-      - name: Initialize keychain
-        run: keychain initialize
-
-      - name: Set up Provisioning Profile
-        run: |
-          PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_HOME"
-          PROFILE_PATH="$(mktemp "$PROFILES_HOME"/$(uuidgen).mobileprovision)"
-          echo ${PROVISIONING_PROFILE} | base64 --decode > "$PROFILE_PATH"
-          echo "Saved provisioning profile $PROFILE_PATH"   
-
-      - name: Set up Distribution Certificate
-        run: |
-          echo $DISTRIBUTION_CERTIFICATE | base64 --decode > /tmp/certificate.p12
-          keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password $DISTRIBUTION_CERTIFICATE_PASSWORD
-
-      - name: Set up Code signing settings on Xcode project
-        run: xcode-project use-profiles
-
-      - name: Build IPA for Distribution
-        run: |
-          file='VERSION'
-          fileData=`cat $file`
-          IFS='.'
-          read -a versionValue <<< "$fileData"
-          buildNumber=$(( ${versionValue[0]} * 1000000 + ${versionValue[1]} * 10000 + ${{ gitea.run_number }} ))
-          IFS=''
-          buildName="${versionValue[0]}.${versionValue[1]}.${{ gitea.run_number }}"
-          echo "Uploading build $buildName"
-          flutter build ipa --release --build-number=$buildNumber --build-name=$buildName --export-options-plist=$HOME/export_options.plist
-
-      - name: Upload IPA to App Store Connect
-        run: |
-          APP_FILE=$(find $(pwd) -name "*.ipa")
-          app-store-connect publish \
-          --path "$APP_FILE" 
+      #     cd ios
+      #     fastlane beta
