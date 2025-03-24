@@ -292,87 +292,75 @@ class WalletSolanaService {
     bool Function()? isCancelled,
   }) async {
     try {
-      const int rateLimit = 10;
       const int maxRetries = 3;
-      const Duration initialWaitTime = Duration(seconds: 12);
+      const Duration rateLimitWaitTime = Duration(seconds: 11);
+      const Duration initialWaitTime = Duration(seconds: 2);
       const Duration maxWaitTime = Duration(seconds: 60);
 
-      int consecutiveFailures = 0;
-      Duration currentWaitTime = initialWaitTime;
+      // Process transactions one by one to better handle rate limits
+      final List<TransactionDetails?> currentBatch = <TransactionDetails?>[];
 
-      for (int i = 0; i < signatures.length; i += rateLimit) {
+      for (int i = 0; i < signatures.length; i++) {
         if (isCancelled != null && isCancelled()) {
           return;
         }
 
-        if (consecutiveFailures > 0) {
-          final Duration backoffTime = Duration(
-            seconds:
-                currentWaitTime.inSeconds * (1 << (consecutiveFailures - 1)),
-          );
-          await Future<void>.delayed(
-            backoffTime > maxWaitTime ? maxWaitTime : backoffTime,
-          );
-        }
-
-        final int end = (i + rateLimit < signatures.length)
-            ? i + rateLimit
-            : signatures.length;
-        final List<String> currentBatch = signatures.sublist(i, end);
-
-        List<TransactionDetails?>? batchResults;
+        final String signature = signatures[i];
+        TransactionDetails? transactionDetails;
         int retryCount = 0;
+        bool isRateLimited = false;
 
-        while (retryCount < maxRetries && batchResults == null) {
+        while (retryCount < maxRetries && transactionDetails == null) {
           if (isCancelled != null && isCancelled()) {
             break;
           }
 
+          if (isRateLimited) {
+            debugPrint(
+              'Rate limit hit, waiting for $rateLimitWaitTime before retry...',
+            );
+            await Future<void>.delayed(rateLimitWaitTime);
+            isRateLimited = false;
+          }
+
           try {
-            final List<Future<TransactionDetails?>> transactionFutures =
-                currentBatch.map((String signature) {
-              return _client.rpcClient
-                  .getTransaction(
-                signature,
-                commitment: Commitment.confirmed,
-              )
-                  .catchError((Object error) {
-                debugPrint('Error fetching transaction $signature: $error');
-                return null;
-              });
-            }).toList();
-
-            batchResults = await Future.wait(transactionFutures);
-            consecutiveFailures = 0;
-            currentWaitTime = initialWaitTime;
+            transactionDetails = await _client.rpcClient.getTransaction(
+              signature,
+              commitment: Commitment.confirmed,
+            );
           } catch (e) {
-            retryCount++;
-            consecutiveFailures++;
-
-            if (retryCount >= maxRetries) {
-              batchResults = List<TransactionDetails?>.generate(
-                currentBatch.length,
-                (_) => null,
-              );
+            if (e
+                .toString()
+                .contains('Too many requests for a specific RPC call')) {
+              isRateLimited = true;
+              retryCount++;
             } else {
-              final Duration retryDelay = Duration(
-                seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
-              );
-              await Future<void>.delayed(
-                retryDelay > maxWaitTime ? maxWaitTime : retryDelay,
-              );
+              debugPrint('Error fetching transaction $signature: $e');
+              retryCount++;
+
+              // For non-rate-limit errors, use exponential backoff
+              if (retryCount < maxRetries) {
+                final Duration retryDelay = Duration(
+                  seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
+                );
+                await Future<void>.delayed(
+                  retryDelay > maxWaitTime ? maxWaitTime : retryDelay,
+                );
+              }
             }
           }
         }
 
-        if (isCancelled != null && isCancelled()) {
-          return;
-        }
+        currentBatch.add(transactionDetails);
 
-        onBatchLoaded(batchResults!);
+        // When we have enough transactions or reached the end, deliver the batch
+        if (currentBatch.length == 10 || i == signatures.length - 1) {
+          if (isCancelled != null && isCancelled()) {
+            return;
+          }
 
-        if (i + rateLimit < signatures.length) {
-          await Future<void>.delayed(currentWaitTime);
+          onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
+          currentBatch.clear();
         }
       }
     } catch (e) {
