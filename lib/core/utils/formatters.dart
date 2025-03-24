@@ -6,6 +6,10 @@ class Formatters {
     return '${address.substring(0, 20)}...';
   }
 
+  static String formatDate(DateTime dateTime) {
+    return DateFormat('dd MMM yyyy HH:mm').format(dateTime);
+  }
+
   static String formatDateTime(DateTime dateTime) {
     return DateFormat('dd').format(dateTime);
   }

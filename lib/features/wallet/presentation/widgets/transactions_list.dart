@@ -4,7 +4,7 @@ import 'package:solana/dto.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../models/wallet_view_model.dart';
-import 'activity_item.dart';
+import 'transaction_item.dart';
 
 class TransactionsList extends StatelessWidget {
   const TransactionsList({
@@ -24,7 +24,7 @@ class TransactionsList extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return ActivityItem(
+    return TransactionItem(
       transferInfo: transferInfo,
     );
   }
