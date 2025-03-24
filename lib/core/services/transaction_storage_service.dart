@@ -6,6 +6,7 @@ class TransactionStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String _transactionsKey = 'wallet_transactions';
   final String _lastTransactionKey = 'last_transaction_signature';
+  final String _transactionCountKey = 'transaction_count';
 
   Future<void> storeTransactions(
     Map<String, List<TransactionDetails?>> transactions,
@@ -73,6 +74,27 @@ class TransactionStorageService {
       return await _secureStorage.read(key: _lastTransactionKey);
     } catch (e) {
       throw Exception('Failed to get last transaction signature: $e');
+    }
+  }
+
+  Future<void> storeTransactionCount(int count) async {
+    try {
+      await _secureStorage.write(
+        key: _transactionCountKey,
+        value: count.toString(),
+      );
+    } catch (e) {
+      throw Exception('Failed to store transaction count: $e');
+    }
+  }
+
+  Future<int?> getStoredTransactionCount() async {
+    try {
+      final String? count =
+          await _secureStorage.read(key: _transactionCountKey);
+      return count != null ? int.parse(count) : null;
+    } catch (e) {
+      throw Exception('Failed to retrieve transaction count: $e');
     }
   }
 }
