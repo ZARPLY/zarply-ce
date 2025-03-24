@@ -89,7 +89,7 @@ class _TransactionsListState extends State<TransactionsList> {
             ),
           ),
           Text(
-            'Loading more transactions... ${widget.viewModel.loadedTransactions} loaded',
+            'Loading more transactions...',
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
@@ -101,6 +101,9 @@ class _TransactionsListState extends State<TransactionsList> {
         child: Center(
           child: TextButton(
             onPressed: widget.viewModel.loadMoreTransactions,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue,
+            ),
             child: const Text('Load More Transactions'),
           ),
         ),

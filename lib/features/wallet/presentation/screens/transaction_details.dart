@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+
+import '../../../../core/utils/formatters.dart';
 
 class TransactionDetailsScreen extends StatelessWidget {
   const TransactionDetailsScreen({
@@ -68,14 +69,14 @@ class TransactionDetailsScreen extends StatelessWidget {
       child: Column(
         children: <Widget>[
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            Formatters.formatAmount(amount),
             style: theme.textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            DateFormat('MMMM dd, yyyy • hh:mm a').format(timestamp),
+            Formatters.formatDate(timestamp),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),
