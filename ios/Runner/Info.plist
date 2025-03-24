@@ -49,5 +49,11 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to scan RTP QR codes</string>
+	<key>PushNotificationsEnabled</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
