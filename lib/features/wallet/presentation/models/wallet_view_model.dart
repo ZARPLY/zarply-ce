@@ -237,7 +237,6 @@ class WalletViewModel extends ChangeNotifier {
       ..sort((String a, String b) => b.compareTo(a));
 
     for (final String monthKey in sortedMonths) {
-      // Count displayed transactions
       final int displayedCount =
           transactions[monthKey]!.where((TransactionDetails? tx) {
         final TransactionTransferInfo? transferInfo = parseTransferDetails(tx);
@@ -246,7 +245,7 @@ class WalletViewModel extends ChangeNotifier {
 
       transactionItems.add(<String, dynamic>{
         'type': 'header',
-        'month': monthKey, // Will be formatted in the view
+        'month': monthKey,
         'monthKey': monthKey,
         'count': displayedCount,
       });

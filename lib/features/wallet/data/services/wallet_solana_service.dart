@@ -297,7 +297,6 @@ class WalletSolanaService {
       const Duration initialWaitTime = Duration(seconds: 2);
       const Duration maxWaitTime = Duration(seconds: 60);
 
-      // Process transactions one by one to better handle rate limits
       final List<TransactionDetails?> currentBatch = <TransactionDetails?>[];
 
       for (int i = 0; i < signatures.length; i++) {
@@ -353,7 +352,6 @@ class WalletSolanaService {
 
         currentBatch.add(transactionDetails);
 
-        // When we have enough transactions or reached the end, deliver the batch
         if (currentBatch.length == 10 || i == signatures.length - 1) {
           if (isCancelled != null && isCancelled()) {
             return;

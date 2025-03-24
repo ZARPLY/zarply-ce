@@ -179,21 +179,6 @@ class _QRScannerState extends State<QRScanner> {
             onPressed: _uploadQRCode,
             tooltip: 'Upload QR Code',
           ),
-          // IconButton(
-          //   color: Colors.white,
-          //   icon: ValueListenableBuilder<bool>(
-          //     valueListenable: controller.torchEnabled,
-          //     builder: (BuildContext context, bool state, Widget? child) {
-          //       switch (state) {
-          //         case false:
-          //           return const Icon(Icons.flash_off, color: Colors.grey);
-          //         case true:
-          //           return const Icon(Icons.flash_on, color: Colors.yellow);
-          //       }
-          //     },
-          //   ),
-          //   onPressed: () => controller.toggleTorch(),
-          // ),
         ],
       ),
       body: MobileScanner(
