@@ -6,7 +6,7 @@ import '../../../../core/utils/formatters.dart';
 import '../models/wallet_view_model.dart';
 import 'transaction_item.dart';
 
-class TransactionsList extends StatelessWidget {
+class TransactionsList extends StatefulWidget {
   const TransactionsList({
     required this.viewModel,
     super.key,
@@ -14,11 +14,25 @@ class TransactionsList extends StatelessWidget {
 
   final WalletViewModel viewModel;
 
+  @override
+  State<TransactionsList> createState() => _TransactionsListState();
+}
+
+class _TransactionsListState extends State<TransactionsList> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.refreshIndicatorKey = _refreshIndicatorKey;
+  }
+
   Widget _buildTransactionTile(TransactionDetails? transaction) {
     if (transaction == null) return const SizedBox.shrink();
 
     final TransactionTransferInfo? transferInfo =
-        viewModel.parseTransferDetails(transaction);
+        widget.viewModel.parseTransferDetails(transaction);
 
     if (transferInfo == null || transferInfo.amount == 0) {
       return const SizedBox.shrink();
@@ -32,10 +46,12 @@ class TransactionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<dynamic> transactionItems =
-        viewModel.getSortedTransactionItems();
+        widget.viewModel.getSortedTransactionItems();
 
     return RefreshIndicator(
-      onRefresh: viewModel.refreshTransactions,
+      key: _refreshIndicatorKey,
+      color: Colors.blue,
+      onRefresh: widget.viewModel.refreshTransactions,
       child: transactionItems.isEmpty
           ? const Center(
               child: Text('No transactions found'),
@@ -63,26 +79,28 @@ class TransactionsList extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    if (viewModel.isLoadingMore) {
+    if (widget.viewModel.isLoadingMore) {
       return Column(
         children: <Widget>[
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(
+              color: Colors.blue,
+            ),
           ),
           Text(
-            'Loading more transactions... ${viewModel.loadedTransactions} loaded',
+            'Loading more transactions... ${widget.viewModel.loadedTransactions} loaded',
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
         ],
       );
-    } else if (viewModel.hasMoreTransactionsToLoad) {
+    } else if (widget.viewModel.hasMoreTransactionsToLoad) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Center(
           child: TextButton(
-            onPressed: viewModel.loadMoreTransactions,
+            onPressed: widget.viewModel.loadMoreTransactions,
             child: const Text('Load More Transactions'),
           ),
         ),

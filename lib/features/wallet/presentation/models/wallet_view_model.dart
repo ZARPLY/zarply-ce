@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -25,6 +27,8 @@ class WalletViewModel extends ChangeNotifier {
 
   bool hasMoreTransactionsToLoad = false;
   String? oldestLoadedSignature;
+
+  GlobalKey<RefreshIndicatorState>? refreshIndicatorKey;
 
   void toggleExpanded() {
     isExpanded = !isExpanded;
@@ -199,6 +203,10 @@ class WalletViewModel extends ChangeNotifier {
     if (hasNewTransactions) {
       await _walletRepository.storeTransactions(storedTransactions);
     }
+  }
+
+  Future<void> refreshTransactionsFromButton() async {
+    unawaited(refreshIndicatorKey?.currentState?.show());
   }
 
   Future<void> refreshTransactions() async {

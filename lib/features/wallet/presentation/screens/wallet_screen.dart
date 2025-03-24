@@ -95,22 +95,48 @@ class WalletScreenState extends State<WalletScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                GestureDetector(
-                                  onTap: () => viewModel.toggleExpanded(),
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFEBECEF),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      viewModel.isExpanded
-                                          ? Icons.keyboard_arrow_down
-                                          : Icons.keyboard_arrow_up,
-                                      color: Colors.black,
-                                      size: 20,
-                                    ),
+                                SizedBox(
+                                  width: 90,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      GestureDetector(
+                                        onTap: () => viewModel.toggleExpanded(),
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFFEBECEF),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            viewModel.isExpanded
+                                                ? Icons.keyboard_arrow_down
+                                                : Icons.keyboard_arrow_up,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => viewModel
+                                            .refreshTransactionsFromButton(),
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFFEBECEF),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.refresh,
+                                            color: Colors.blue,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Text(
