@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../domain/repositories/create_password_repository.dart';
 
@@ -13,8 +12,7 @@ class CreatePasswordRepositoryImpl implements CreatePasswordRepository {
       await _secureStorage.savePin(password);
       return true;
     } catch (e) {
-      debugPrint('Error saving password: $e');
-      return false;
+      throw Exception('Error saving password: $e');
     }
   }
 }

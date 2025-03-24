@@ -327,4 +327,10 @@ class WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _viewModel.cancelOperations();
+    super.dispose();
+  }
 }

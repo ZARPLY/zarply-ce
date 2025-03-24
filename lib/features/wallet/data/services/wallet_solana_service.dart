@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
@@ -188,6 +191,9 @@ class WalletSolanaService {
     required String walletAddress,
     int limit = 100,
     String? afterSignature,
+    String? beforeSignature,
+    Function(List<TransactionDetails?>)? onBatchLoaded,
+    bool Function()? isCancelled,
   }) async {
     try {
       final List<TransactionSignatureInformation> signatures =
@@ -195,6 +201,7 @@ class WalletSolanaService {
         walletAddress,
         limit: limit,
         until: afterSignature,
+        before: beforeSignature,
         commitment: Commitment.confirmed,
       );
 
@@ -208,19 +215,54 @@ class WalletSolanaService {
         );
       }
 
-      final List<TransactionDetails?> transactions = await Future.wait(
-        signatures.map((TransactionSignatureInformation sig) async {
-          return await _client.rpcClient.getTransaction(
-            sig.signature,
-            commitment: Commitment.confirmed,
-          );
-        }),
-      );
+      final StreamController<List<TransactionDetails?>>
+          transactionStreamController =
+          StreamController<List<TransactionDetails?>>();
+
+      if (isCancelled != null && isCancelled()) {
+        await transactionStreamController.close();
+        return <String, List<TransactionDetails?>>{};
+      }
+
+      await _fetchTransactionsWithCircuitBreaker(
+        signatures
+            .map((TransactionSignatureInformation sig) => sig.signature)
+            .toList(),
+        onBatchLoaded: (List<TransactionDetails?> batch) {
+          if (isCancelled != null && isCancelled()) {
+            return;
+          }
+
+          transactionStreamController.add(batch);
+          if (onBatchLoaded != null) {
+            onBatchLoaded(batch);
+          }
+        },
+        isCancelled: isCancelled,
+      ).then((_) {
+        transactionStreamController.close();
+      }).catchError((Object e) {
+        transactionStreamController.addError(e);
+        transactionStreamController.close();
+      });
+
+      final List<TransactionDetails?> allTransactions = <TransactionDetails?>[];
+      await for (final List<TransactionDetails?> batch
+          in transactionStreamController.stream) {
+        if (isCancelled != null && isCancelled()) {
+          break;
+        }
+        allTransactions.addAll(batch);
+      }
+
+      if (isCancelled != null && isCancelled()) {
+        return <String, List<TransactionDetails?>>{};
+      }
 
       final Map<String, List<TransactionDetails?>> groupedTransactions =
           <String, List<TransactionDetails?>>{};
 
-      for (final TransactionDetails? transaction in transactions) {
+      for (final TransactionDetails? transaction in allTransactions) {
         if (transaction == null) continue;
 
         final DateTime transactionDate = transaction.blockTime != null
@@ -244,12 +286,118 @@ class WalletSolanaService {
     }
   }
 
+  Future<void> _fetchTransactionsWithCircuitBreaker(
+    List<String> signatures, {
+    required Function(List<TransactionDetails?>) onBatchLoaded,
+    bool Function()? isCancelled,
+  }) async {
+    try {
+      const int rateLimit = 10;
+      const int maxRetries = 3;
+      const Duration initialWaitTime = Duration(seconds: 12);
+      const Duration maxWaitTime = Duration(seconds: 60);
+
+      int consecutiveFailures = 0;
+      Duration currentWaitTime = initialWaitTime;
+
+      for (int i = 0; i < signatures.length; i += rateLimit) {
+        if (isCancelled != null && isCancelled()) {
+          return;
+        }
+
+        if (consecutiveFailures > 0) {
+          final Duration backoffTime = Duration(
+            seconds:
+                currentWaitTime.inSeconds * (1 << (consecutiveFailures - 1)),
+          );
+          await Future<void>.delayed(
+            backoffTime > maxWaitTime ? maxWaitTime : backoffTime,
+          );
+        }
+
+        final int end = (i + rateLimit < signatures.length)
+            ? i + rateLimit
+            : signatures.length;
+        final List<String> currentBatch = signatures.sublist(i, end);
+
+        List<TransactionDetails?>? batchResults;
+        int retryCount = 0;
+
+        while (retryCount < maxRetries && batchResults == null) {
+          if (isCancelled != null && isCancelled()) {
+            break;
+          }
+
+          try {
+            final List<Future<TransactionDetails?>> transactionFutures =
+                currentBatch.map((String signature) {
+              return _client.rpcClient
+                  .getTransaction(
+                signature,
+                commitment: Commitment.confirmed,
+              )
+                  .catchError((Object error) {
+                debugPrint('Error fetching transaction $signature: $error');
+                return null;
+              });
+            }).toList();
+
+            batchResults = await Future.wait(transactionFutures);
+            consecutiveFailures = 0;
+            currentWaitTime = initialWaitTime;
+          } catch (e) {
+            retryCount++;
+            consecutiveFailures++;
+
+            if (retryCount >= maxRetries) {
+              batchResults = List<TransactionDetails?>.generate(
+                currentBatch.length,
+                (_) => null,
+              );
+            } else {
+              final Duration retryDelay = Duration(
+                seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
+              );
+              await Future<void>.delayed(
+                retryDelay > maxWaitTime ? maxWaitTime : retryDelay,
+              );
+            }
+          }
+        }
+
+        if (isCancelled != null && isCancelled()) {
+          return;
+        }
+
+        onBatchLoaded(batchResults!);
+
+        if (i + rateLimit < signatures.length) {
+          await Future<void>.delayed(currentWaitTime);
+        }
+      }
+    } catch (e) {
+      throw WalletSolanaServiceException('Error in transaction processing: $e');
+    }
+  }
+
   Future<TransactionDetails?> getTransactionDetails(String signature) async {
     try {
       return await _client.rpcClient.getTransaction(signature);
     } catch (e) {
       throw WalletSolanaServiceException(
         'Error fetching transaction details: $e',
+      );
+    }
+  }
+
+  Future<int> getTransactionCount(String address) async {
+    try {
+      final List<TransactionSignatureInformation> signatures =
+          await _client.rpcClient.getSignaturesForAddress(address);
+      return signatures.length;
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction count: $e',
       );
     }
   }

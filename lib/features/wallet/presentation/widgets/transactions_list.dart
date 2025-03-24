@@ -36,35 +36,87 @@ class TransactionsList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: viewModel.refreshTransactions,
-      child: ListView.builder(
-        itemCount: transactionItems.length,
-        itemBuilder: (BuildContext context, int index) {
-          final dynamic item = transactionItems[index];
+      child: transactionItems.isEmpty
+          ? const Center(
+              child: Text('No transactions found'),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.only(bottom: 80),
+              itemCount: transactionItems.length + 1,
+              itemBuilder: (BuildContext context, int index) {
+                if (index == transactionItems.length) {
+                  return _buildFooter(context);
+                }
 
-          if (item is Map && item['type'] == 'header') {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    Formatters.formatMonthHeader(item['month']),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  Text(
-                    '${item['count']}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
-              ),
-            );
-          }
+                final dynamic item = transactionItems[index];
 
-          return _buildTransactionTile(item);
-        },
+                if (item is Map<String, dynamic> && item['type'] == 'header') {
+                  return _buildMonthHeader(context, item);
+                } else if (item is TransactionDetails) {
+                  return _buildTransactionItem(context, item);
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    if (viewModel.isLoadingMore) {
+      return Column(
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: CircularProgressIndicator(),
+          ),
+          Text(
+            'Loading more transactions... ${viewModel.loadedTransactions} loaded',
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    } else if (viewModel.hasMoreTransactionsToLoad) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: TextButton(
+            onPressed: viewModel.loadMoreTransactions,
+            child: const Text('Load More Transactions'),
+          ),
+        ),
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildMonthHeader(BuildContext context, Map<String, dynamic> header) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(
+            Formatters.formatMonthHeader(header['month']),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          Text(
+            '${header['count']}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildTransactionItem(
+    BuildContext context,
+    TransactionDetails transaction,
+  ) {
+    return _buildTransactionTile(transaction);
   }
 }

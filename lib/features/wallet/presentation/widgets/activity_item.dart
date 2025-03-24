@@ -33,7 +33,9 @@ class ActivityItem extends StatelessWidget {
                     ),
               ),
               Text(
-                Formatters.shortenAddress(transferInfo.recipient),
+                transferInfo.formattedAmount.startsWith('-')
+                    ? Formatters.shortenAddress(transferInfo.recipient)
+                    : Formatters.shortenAddress(transferInfo.sender),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
