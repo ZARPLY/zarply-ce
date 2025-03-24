@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 
@@ -50,7 +49,8 @@ class _TransactionsListState extends State<TransactionsList> {
         widget.viewModel.getSortedTransactionItems();
 
     debugPrint(
-        'isLoadingTransactions: ${widget.viewModel.isLoadingTransactions}');
+      'isLoadingTransactions: ${widget.viewModel.isLoadingTransactions}',
+    );
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,
