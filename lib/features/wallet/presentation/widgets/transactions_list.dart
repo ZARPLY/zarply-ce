@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 
@@ -48,33 +49,42 @@ class _TransactionsListState extends State<TransactionsList> {
     final List<dynamic> transactionItems =
         widget.viewModel.getSortedTransactionItems();
 
+    debugPrint(
+        'isLoadingTransactions: ${widget.viewModel.isLoadingTransactions}');
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,
       onRefresh: widget.viewModel.refreshTransactions,
-      child: transactionItems.isEmpty
+      child: widget.viewModel.isLoadingTransactions
           ? const Center(
-              child: Text('No transactions found'),
+              child: CircularProgressIndicator(
+                color: Colors.blue,
+              ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80),
-              itemCount: transactionItems.length + 1,
-              itemBuilder: (BuildContext context, int index) {
-                if (index == transactionItems.length) {
-                  return _buildFooter(context);
-                }
+          : transactionItems.isEmpty
+              ? const Center(
+                  child: Text('No transactions found'),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: transactionItems.length + 1,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == transactionItems.length) {
+                      return _buildFooter(context);
+                    }
 
-                final dynamic item = transactionItems[index];
+                    final dynamic item = transactionItems[index];
 
-                if (item is Map<String, dynamic> && item['type'] == 'header') {
-                  return _buildMonthHeader(context, item);
-                } else if (item is TransactionDetails) {
-                  return _buildTransactionItem(context, item);
-                }
+                    if (item is Map<String, dynamic> &&
+                        item['type'] == 'header') {
+                      return _buildMonthHeader(context, item);
+                    } else if (item is TransactionDetails) {
+                      return _buildTransactionItem(context, item);
+                    }
 
-                return const SizedBox.shrink();
-              },
-            ),
+                    return const SizedBox.shrink();
+                  },
+                ),
     );
   }
 

@@ -16,6 +16,7 @@ class WalletViewModel extends ChangeNotifier {
   double walletAmount = 0;
   double solBalance = 0;
   bool isLoading = true;
+  bool isLoadingTransactions = false;
   bool isExpanded = false;
   bool isRefreshing = false;
   bool isLoadingMore = false;
@@ -53,9 +54,11 @@ class WalletViewModel extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
 
+      isLoadingTransactions = true;
       await loadTransactions();
     } else {
       isLoading = false;
+      isLoadingTransactions = false;
       notifyListeners();
     }
   }
@@ -104,6 +107,7 @@ class WalletViewModel extends ChangeNotifier {
           afterSignature: lastSignature,
           onBatchLoaded: (List<TransactionDetails?> batch) {
             if ((_walletRepository as WalletRepositoryImpl).isCancelled) {
+              isLoadingTransactions = false;
               return;
             }
 
@@ -115,6 +119,7 @@ class WalletViewModel extends ChangeNotifier {
                 Map<String, List<TransactionDetails?>>.from(storedTransactions);
 
             _updateOldestSignature(storedTransactions);
+            isLoadingTransactions = false;
 
             notifyListeners();
           },
