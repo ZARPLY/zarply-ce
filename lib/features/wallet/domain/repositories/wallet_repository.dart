@@ -12,7 +12,10 @@ abstract class WalletRepository {
   /// Get transactions for a wallet account
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
+    int limit = 100,
     String? afterSignature,
+    String? beforeSignature,
+    Function(List<TransactionDetails?>)? onBatchLoaded,
   });
 
   /// Store transactions in local storage
@@ -31,4 +34,13 @@ abstract class WalletRepository {
     TransactionDetails? transaction,
     String accountPubkey,
   );
+
+  /// Get the total transaction count for a token address
+  Future<int> getTransactionCount(String tokenAddress);
+
+  /// Store the transaction count locally
+  Future<void> storeTransactionCount(int count);
+
+  /// Retrieve the stored transaction count
+  Future<int?> getStoredTransactionCount();
 }

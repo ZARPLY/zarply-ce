@@ -14,6 +14,7 @@ import '../../features/pay/presentation/screens/pay_request_screen.dart';
 import '../../features/pay/presentation/screens/payment_amount_screen.dart';
 import '../../features/pay/presentation/screens/payment_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
+import '../../features/wallet/presentation/screens/transaction_details.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/wallet_provider.dart';
 import '../widgets/scanner/qr_scanner.dart';
@@ -79,6 +80,23 @@ GoRouter createRouter(WalletProvider walletProvider) {
             path: '/wallet',
             builder: (BuildContext context, GoRouterState state) =>
                 const WalletScreen(),
+          ),
+          GoRoute(
+            path: '/transaction_details',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, String?> extra =
+                  state.extra as Map<String, String?>;
+              final String sender = extra['sender'] ?? '';
+              final String receiver = extra['receiver'] ?? '';
+              final String timestamp = extra['timestamp'] ?? '';
+              final String amount = extra['amount'] ?? '';
+              return TransactionDetailsScreen(
+                sender: sender,
+                receiver: receiver,
+                timestamp: DateTime.parse(timestamp),
+                amount: double.parse(amount),
+              );
+            },
           ),
           GoRoute(
             path: '/pay_request',

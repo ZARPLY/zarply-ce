@@ -7,12 +7,31 @@ import '../../domain/repositories/wallet_repository.dart';
 import '../services/wallet_solana_service.dart';
 
 class WalletRepositoryImpl implements WalletRepository {
-  final WalletSolanaService _walletSolanaService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
-  final TransactionStorageService _transactionStorageService =
-      TransactionStorageService();
+  factory WalletRepositoryImpl() => _instance;
+
+  WalletRepositoryImpl._internal()
+      : _walletSolanaService = WalletSolanaService(
+          rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
+          websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
+        ),
+        _transactionStorageService = TransactionStorageService();
+  static final WalletRepositoryImpl _instance =
+      WalletRepositoryImpl._internal();
+
+  final WalletSolanaService _walletSolanaService;
+  final TransactionStorageService _transactionStorageService;
+
+  bool _isCancelled = false;
+
+  void cancelTransactions() {
+    _isCancelled = true;
+  }
+
+  void resetCancellation() {
+    _isCancelled = false;
+  }
+
+  bool get isCancelled => _isCancelled;
 
   @override
   Future<double> getZarpBalance(String address) {
@@ -28,10 +47,24 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
     String? afterSignature,
+    String? beforeSignature,
+    Function(List<TransactionDetails?>)? onBatchLoaded,
+    int limit = 100,
   }) {
     return _walletSolanaService.getAccountTransactions(
       walletAddress: walletAddress,
       afterSignature: afterSignature,
+      beforeSignature: beforeSignature,
+      onBatchLoaded: (List<TransactionDetails?> batch) {
+        if (_isCancelled) {
+          return;
+        }
+        if (onBatchLoaded != null) {
+          onBatchLoaded(batch);
+        }
+      },
+      isCancelled: () => _isCancelled,
+      limit: limit,
     );
   }
 
@@ -39,6 +72,9 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<void> storeTransactions(
     Map<String, List<TransactionDetails?>> transactions,
   ) {
+    if (_isCancelled) {
+      return Future<void>.value();
+    }
     return _transactionStorageService.storeTransactions(transactions);
   }
 
@@ -63,5 +99,20 @@ class WalletRepositoryImpl implements WalletRepository {
       transaction,
       accountPubkey,
     );
+  }
+
+  @override
+  Future<int> getTransactionCount(String tokenAddress) {
+    return _walletSolanaService.getTransactionCount(tokenAddress);
+  }
+
+  @override
+  Future<void> storeTransactionCount(int count) {
+    return _transactionStorageService.storeTransactionCount(count);
+  }
+
+  @override
+  Future<int?> getStoredTransactionCount() {
+    return _transactionStorageService.getStoredTransactionCount();
   }
 }
