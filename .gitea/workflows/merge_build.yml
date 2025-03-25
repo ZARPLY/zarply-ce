@@ -1,13 +1,23 @@
-name: Android Build and Upload
+name: app Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:  
+      - '**'   ### this is done to prevent config runs when tagging
 
-android_apk_build:
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     types: [ opened ]
+
+jobs:
+  android_apk_build:
+    name: Android APK Build
     runs-on: workstation.ubuntu.lts
-
+    container:
+      image: gitea.cyber-mint.com/pumppay/pp-flutter:v3.27.3
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
@@ -17,38 +27,41 @@ android_apk_build:
       GITEA_USERNAME: ${{ secrets.USERNAME }}
       GITEA_PASSWORD: ${{ secrets.PASSWORD }}
       GITEA_SERVER: ${{ secrets.SERVER }}
-
+      MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4 
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      
+      # - name: Decode Android Key Store
+      #   run: |
+      #     echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
+      
+      # - name: Create key.properties
+      #   run: |
+      #     printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+      #       $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+      
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
 
-      - name: Decode Android key store
-        run: |
-          echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null          
+      - name: Get Project Dependencies
+        run: flutter pub get
 
-      - name: Create key.properties
-        run: |
-          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
-            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+      - name: Build Android APK
+        run: flutter build apk --dart-define-from-file=.env --debug
 
-      - name: Build Android
-        run: flutter build apk --release
-
-      - name: Upload APK to Gitea
-        run: |
-          REPO_VERSION=steps.meta.outputs.REPO_VERSION
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
-          echo $REPO_VERSION
-          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
-               --upload-file build/app/outputs/flutter-apk/app-release.apk \
-               $GITEA_SERVER/zarply/zarply_apk/$REPO_VERSION/app-release.apk          
-
-      - name: Create a zip file with correct timestamps
+      - name: Create zip file with correct timestamps
         run: |
           cd build/app/outputs/flutter-apk
-          zip -r artifact.zip app-release.apk
+          zip -r artifact.zip app-debug.apk
 
-ios_build:
+      - name: Store Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: qa-zarply
+          path: build/app/outputs/flutter-apk/artifact.zip
+
+  ios_build:
     name: iOS IPA Build & Upload
     runs-on: workstation.mac
     env:
@@ -82,7 +95,7 @@ ios_build:
             --codesign \
             --split-debug-info=split_debug_info/ \
             --dart-define-from-file=.env.prod
-      - name: Upload to TestFlight
-        run: |
-          cd ios
-          fastlane beta
+      # - name: Upload to TestFlight
+      #   run: |
+      #     cd ios
+      #     fastlane beta

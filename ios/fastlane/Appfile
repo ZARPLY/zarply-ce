@@ -1,0 +1,8 @@
+app_identifier("za.co.zarply.ce") # The bundle identifier of your app
+apple_id("+27 79 490 3615") # Your Apple Developer Portal username
+
+itc_team_id("125224508") # App Store Connect Team ID
+team_id("VY7TB3652K") # Developer Portal Team ID
+
+# For more information about the Appfile, see:
+#     https://docs.fastlane.tools/advanced/#appfile

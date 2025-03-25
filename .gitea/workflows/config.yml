@@ -39,6 +39,30 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: $HOME/.sonar/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner
         
+  gitleaks:
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Gitleaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz
+          tar -xzf gitleaks_8.24.0_linux_x64.tar.gz
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run Gitleaks scan
+        run: |
+          gitleaks detect --source . --report-path gitleaks-report.json --exit-code 1
+
+      - name: Upload Gitleaks Report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+
   clean_containers:
     needs: flake8-linting
     runs-on: workstation.ubuntu.lts
@@ -56,6 +80,15 @@ jobs:
           sudo kill $pid || true
           pid=$(sudo lsof -t -i:8001) || true
           sudo kill $pid || true
+
+  # build-and-test-mac:
+  #   runs-on: workstation.mac
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: print test
+  #       run: echo "This is a test message"
 
 # example of testing pipline 
   # flutter_test:

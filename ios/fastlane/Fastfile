@@ -1,0 +1,19 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "TestFlight upload"
+  lane :beta do
+    app_store_connect_api_key(
+      key_id: ENV["FASTLANE_APPLE_API_KEY_ID"],
+      issuer_id: ENV["FASTLANE_APPLE_ISSUER_ID"],
+      key_filepath: ENV["FASTLANE_APPLE_API_KEY_PATH"]
+    )
+
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: "6742784428",
+      ipa: "../build/ios/ipa/zarply.ipa"
+    )
+  end
+end
+
