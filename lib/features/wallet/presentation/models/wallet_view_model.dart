@@ -89,7 +89,7 @@ class WalletViewModel extends ChangeNotifier {
       _updateOldestSignature(storedTransactions);
 
       updateHasMoreTransactions();
-
+      isLoadingTransactions = false;
       notifyListeners();
     }
 
