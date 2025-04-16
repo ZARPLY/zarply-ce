@@ -139,6 +139,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   _viewModel.setRestoreMethod(newValue);
                 }
               },
+              dropdownColor: Colors.white,
             ),
           ),
         ),
