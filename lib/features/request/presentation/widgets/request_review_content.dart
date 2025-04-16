@@ -114,7 +114,7 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Confirm Payment'),
+                    child: const Text('Confirm Request'),
                   ),
                 ),
                 const SizedBox(height: 20),

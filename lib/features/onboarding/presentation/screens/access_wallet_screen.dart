@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../widgets/progress_steps.dart';
 
@@ -12,6 +14,16 @@ class AccessWalletScreen extends StatefulWidget {
 
 class _AccessWalletScreenState extends State<AccessWalletScreen> {
   bool _isAgreementChecked = false;
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not launch URL')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +74,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Radio<bool>(
-                  value: true,
-                  groupValue: _isAgreementChecked,
+                Checkbox(
+                  value: _isAgreementChecked,
                   onChanged: (bool? value) {
                     setState(() {
                       _isAgreementChecked = value ?? false;
@@ -81,16 +92,28 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                     child: RichText(
                       text: TextSpan(
                         style: Theme.of(context).textTheme.bodyMedium,
-                        children: const <TextSpan>[
-                          TextSpan(text: 'I agree to the '),
+                        children: <TextSpan>[
+                          const TextSpan(text: 'I agree to the '),
                           TextSpan(
                             text: 'terms',
-                            style: TextStyle(color: Colors.blue),
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => _launchUrl(
+                                  'https://zarply.co.za/terms-conditions'),
                           ),
-                          TextSpan(text: ' and '),
+                          const TextSpan(text: ' and '),
                           TextSpan(
                             text: 'privacy policy',
-                            style: TextStyle(color: Colors.blue),
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => _launchUrl(
+                                  'https://zarply.co.za/privacy-policy'),
                           ),
                         ],
                       ),
