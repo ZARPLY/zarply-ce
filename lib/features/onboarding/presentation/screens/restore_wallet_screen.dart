@@ -7,6 +7,7 @@ import '../models/restore_wallet_view_model.dart';
 import '../widgets/importing_wallet_modal.dart';
 import '../widgets/restore_wallet_dropdown.dart';
 
+
 class RestoreWalletScreen extends StatefulWidget {
   const RestoreWalletScreen({super.key});
 

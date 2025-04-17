@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 
-// A rounded dropdown for selecting how to restore a wallet.
-// Displays the selectedMethod within a pill-shaped container and notifies onChanged when the user picks a different entry.
 class RestoreMethodDropdown extends StatelessWidget {
-
-  // Creates a restore-method dropdown.
-  // ignore: use_super_parameters
-  const RestoreMethodDropdown({
+  
+    const RestoreMethodDropdown({
     required this.selectedMethod,
     required this.onChanged,
-    Key? key,
-  }) : super(key: key); // constructor
+    super.key,
+  }); 
 
-  // The currently selected restore method (e.g. "Seed Phrase").
   final String selectedMethod;
 
-  // Called whenever the user selects a new method.
   final ValueChanged<String?> onChanged;
 
-  // Hardcoded list of restore methods.
   static const List<String> _methods = <String>['Seed Phrase', 'Private Key'];
 
 
@@ -48,11 +41,11 @@ class RestoreMethodDropdown extends StatelessWidget {
             child: Text(
               method,
               style: Theme.of(context).textTheme.bodyMedium,
-            ), // Text
+            ),
           ); 
-        }).toList(), // items
+        }).toList(), 
         onChanged: onChanged,
       ),
     );
   }
-} // RestoreMethodDropdown
+}
