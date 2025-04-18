@@ -16,11 +16,13 @@ class CreatePasswordViewModel extends ChangeNotifier {
 
   bool _isChecked = false;
   bool _isFormValid = false;
-  String? _errorText;
+  String? _passwordErrorText;
+  String? _confirmErrorText;
 
   bool get isChecked => _isChecked;
   bool get isFormValid => _isFormValid;
-  String? get errorText => _errorText;
+  String? get passwordErrorText => _passwordErrorText;
+  String? get confirmErrorText => _confirmErrorText;
 
   @override
   void dispose() {
@@ -36,15 +38,29 @@ class CreatePasswordViewModel extends ChangeNotifier {
   }
 
   void _validateForm() {
-    if (passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
-      _errorText = null;
+    final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+    if (passwordController.text.isEmpty) {
+      if (confirmPasswordController.text.isNotEmpty) {
+        _passwordErrorText = 'Password cannot be blank';
+      } else {
+        _passwordErrorText = null;
+      }
+        _confirmErrorText = null;
+        _isFormValid = false;
+    } else if(!complexity.hasMatch(passwordController.text)){
+      _passwordErrorText = 'Password must include a letter, number, and special character';
+      _confirmErrorText = null;
+    } else if (confirmPasswordController.text.isEmpty) {
+      _passwordErrorText = null;
+      _confirmErrorText = null;
       _isFormValid = false;
-    } else if (passwordController.text != confirmPasswordController.text) {
-      _errorText = 'Passwords do not match';
+    } else if(passwordController.text != confirmPasswordController.text){
+      _passwordErrorText = null;
+      _confirmErrorText = 'Passwords do not match';
       _isFormValid = false;
     } else {
-      _errorText = null;
+      _passwordErrorText = null;
+      _confirmErrorText = null;
       _isFormValid = _isChecked;
     }
     notifyListeners();

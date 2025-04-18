@@ -24,6 +24,12 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future<bool> validatePassword() async {
+    if (passwordController.text.isEmpty) {
+      errorMessage = 'Password required';
+      notifyListeners();
+      return false;
+    }
+
     try {
       final String storedPin = await _secureStorage.getPin();
       if (passwordController.text == storedPin) {
