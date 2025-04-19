@@ -102,7 +102,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => _launchUrl(
-                                  'https://zarply.co.za/terms-conditions'),
+                                    'https://zarply.co.za/terms-conditions',
+                                  ),
                           ),
                           const TextSpan(text: ' and '),
                           TextSpan(
@@ -113,7 +114,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => _launchUrl(
-                                  'https://zarply.co.za/privacy-policy'),
+                                    'https://zarply.co.za/privacy-policy',
+                                  ),
                           ),
                         ],
                       ),
