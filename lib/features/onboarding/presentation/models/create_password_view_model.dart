@@ -24,6 +24,8 @@ class CreatePasswordViewModel extends ChangeNotifier {
   String? get passwordErrorText => _passwordErrorText;
   String? get confirmErrorText => _confirmErrorText;
 
+  static final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+
   @override
   void dispose() {
     passwordController.dispose();
@@ -38,7 +40,11 @@ class CreatePasswordViewModel extends ChangeNotifier {
   }
 
   void _validateForm() {
-    final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+    
+    _passwordErrorText = null;
+    _confirmErrorText = null;
+    _isFormValid = false;
+
     if (passwordController.text.isEmpty) {
       if (confirmPasswordController.text.isNotEmpty) {
         _passwordErrorText = 'Password cannot be blank';
@@ -47,9 +53,14 @@ class CreatePasswordViewModel extends ChangeNotifier {
       }
         _confirmErrorText = null;
         _isFormValid = false;
+    } else if (passwordController.text.length < 8) {
+      _passwordErrorText = 'Password must be at least 8 characters';
+      _confirmErrorText = null;
+      _isFormValid = false;
     } else if(!complexity.hasMatch(passwordController.text)){
       _passwordErrorText = 'Password must include a letter, number, and special character';
       _confirmErrorText = null;
+      _isFormValid = false;
     } else if (confirmPasswordController.text.isEmpty) {
       _passwordErrorText = null;
       _confirmErrorText = null;
