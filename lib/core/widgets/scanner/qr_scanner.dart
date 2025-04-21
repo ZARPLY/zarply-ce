@@ -24,51 +24,31 @@ class _QRScannerState extends State<QRScanner> {
         final String? code = barcode.rawValue;
         if (code != null && code.startsWith('zarply:payment:')) {
           final List<String> parts = code.split(':');
-          if (parts.length == 5) {
+          if (parts.length >= 4) {
             final String amount = parts[2];
-            final String walletAddress = parts[3];
-            final int timestamp = int.parse(parts[4]);
+            final String recipientAddress = parts[3];
 
-            final PaymentRequest paymentRequest = PaymentRequest(
-              amount: amount,
-              walletAddress: walletAddress,
-              timestamp: timestamp,
-            );
-
-            final bool isExpired =
-                DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
-
-            if (isExpired) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'This QR code has expired. Please request a new one.',
-                  ),
-                ),
-              );
-              return;
-            }
-
-            if (mounted) {
+            if (context.mounted) {
               context.go(
-                '/payment_amount',
-                extra: <String, String>{
-                  'amount': paymentRequest.amount,
-                  'recipientAddress': paymentRequest.walletAddress,
-                  'source': '/scan',
+                '/payment_request_details',
+                extra: <String, dynamic>{
+                  'amount': amount,
+                  'recipientAddress': recipientAddress,
                 },
               );
             }
-            break;
           }
         }
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error processing QR code')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid QR code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

@@ -13,6 +13,7 @@ import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../features/pay/presentation/screens/pay_request_screen.dart';
 import '../../features/pay/presentation/screens/payment_amount_screen.dart';
 import '../../features/pay/presentation/screens/payment_details_screen.dart';
+import '../../features/payment/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
@@ -132,6 +133,17 @@ GoRouter createRouter(WalletProvider walletProvider) {
             path: '/scan',
             builder: (BuildContext context, GoRouterState state) =>
                 const QRScanner(),
+          ),
+          GoRoute(
+            path: '/payment_request_details',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extra =
+                  state.extra as Map<String, dynamic>;
+              return PaymentRequestDetailsScreen(
+                amount: extra['amount'] as String,
+                recipientAddress: extra['recipientAddress'] as String,
+              );
+            },
           ),
         ],
       ),
