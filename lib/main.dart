@@ -12,30 +12,29 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   usePathUrlStrategy();
-  runApp(MyApp());
+
+  final WalletProvider walletProvider = WalletProvider();
+  await walletProvider.initialize();
+  runApp(
+    ChangeNotifierProvider<WalletProvider>.value(
+      value: walletProvider, 
+      child: const MyApp(),
+      ),
+      );
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
-  final WalletProvider walletProvider = WalletProvider();
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<WalletProvider>(
-      create: (BuildContext context) => walletProvider,
-      child: Builder(
-        builder: (BuildContext context) {
-          final WalletProvider walletProvider =
-              Provider.of<WalletProvider>(context, listen: false);
-          final GoRouter router = createRouter(walletProvider);
+    final wp = Provider.of<WalletProvider>(context, listen: false);
+    final GoRouter router = createRouter(wp);
 
           return MaterialApp.router(
             title: 'ZARPLY',
             theme: AppTheme.lightTheme,
             routerConfig: router,
           );
-        },
-      ),
-    );
   }
 }

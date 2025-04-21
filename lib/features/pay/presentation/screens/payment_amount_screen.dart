@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
@@ -36,6 +37,8 @@ class PaymentAmountScreen extends StatelessWidget {
           amount: amount,
           recipientAddress: recipientAddress,
           onCancel: () => Navigator.pop(context),
+          walletBalance: Provider.of<WalletProvider>(context, listen: false)
+              .walletBalance,
         ),
       ),
     );

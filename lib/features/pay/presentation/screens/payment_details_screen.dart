@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/solana.dart';
+import '../../../../core/provider/wallet_provider.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
@@ -16,7 +18,9 @@ class _PaymentDetailsState extends State<PaymentDetails> {
   @override
   void initState() {
     super.initState();
-    _viewModel = PaymentDetailsViewModel();
+    final Ed25519HDKeyPair? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
+    final String ownPubKey = wallet?.address ?? '';
+    _viewModel = PaymentDetailsViewModel(ownPublicKey: ownPubKey);
   }
 
   @override
@@ -31,6 +35,14 @@ class _PaymentDetailsState extends State<PaymentDetails> {
       value: _viewModel,
       child: Consumer<PaymentDetailsViewModel>(
         builder: (BuildContext context, PaymentDetailsViewModel viewModel, _) {
+          Color borderColor;
+          if (viewModel.accountExists == null) {
+            borderColor = Colors.grey;
+          } else if (viewModel.accountExists == true) {
+            borderColor = Theme.of(context).primaryColor;
+          } else {
+            borderColor = Colors.red;
+          }
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
@@ -81,28 +93,35 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                     width: 250,
                     child: TextField(
                       controller: viewModel.publicKeyController,
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
                       decoration: InputDecoration(
                         labelText: 'Public Key',
-                        border: const OutlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: Colors.red,
+                            color: borderColor
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: borderColor,
                           ),
                         ),
                         errorText: viewModel.publicKeyError,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  if (viewModel.accountExists == false) ...[
+                    const Text(
+                      'Account not found on Solana',
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   SizedBox(
                     width: 250,
                     child: TextField(
                       controller: viewModel.descriptionController,
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
                       decoration: const InputDecoration(
                         labelText: 'Description (Optional)',
                       ),
@@ -110,7 +129,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: viewModel.isFormValid
+                    onPressed: viewModel.canContinue
                         ? () => context.go(
                               '/payment_amount',
                               extra: <String, String>{
@@ -126,16 +145,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: viewModel.isFormValid
-                            ? Colors.white
-                            : Colors.grey[600],
-                      ),
+                    child: const Text('Continue'),
                     ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),

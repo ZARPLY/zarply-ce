@@ -13,6 +13,8 @@ class WalletProvider extends ChangeNotifier {
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
 
+  double _zarpBalance = 0.0;
+  double _solBalance = 0.0;
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
@@ -26,6 +28,10 @@ class WalletProvider extends ChangeNotifier {
   String? get recoveryPhrase => _recoveryPhrase;
 
   bool get hasRecoveryPhrase => _recoveryPhrase != null;
+
+  double get walletBalance => _zarpBalance;
+
+  double get solBalance => _solBalance;
 
   void setRecoveryPhrase(String phrase) {
     _recoveryPhrase = phrase;
@@ -47,12 +53,23 @@ class WalletProvider extends ChangeNotifier {
 
       _userTokenAccount =
           await _walletSolanaService.getAssociatedTokenAccount(_wallet!);
+          if (_userTokenAccount == null) {
+            _zarpBalance = 0.0;
+          } else {
+            _zarpBalance = await _walletSolanaService.getZarpBalance(
+              _userTokenAccount!.pubkey,
+            );
+          }
+          _solBalance = await _walletSolanaService.getSolBalance(_wallet!.address);
+
       notifyListeners();
 
       return true;
     } catch (e) {
       _wallet = null;
       _userTokenAccount = null;
+      _zarpBalance = 0.0;
+      _solBalance = 0.0;
       notifyListeners();
       return false;
     }

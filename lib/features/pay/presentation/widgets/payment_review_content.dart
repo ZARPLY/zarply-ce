@@ -12,12 +12,13 @@ class PaymentReviewContent extends StatefulWidget {
     required this.amount,
     required this.recipientAddress,
     required this.onCancel,
+    required this.walletBalance,
     super.key,
   });
   final String amount;
   final String recipientAddress;
   final VoidCallback onCancel;
-
+  final double walletBalance;
   @override
   State<PaymentReviewContent> createState() => _PaymentReviewContentState();
 }
@@ -42,7 +43,11 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
-      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Wallet not found'),
+        ),
+      );
       return;
     }
 
@@ -55,11 +60,20 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
 
   @override
   Widget build(BuildContext context) {
+    final double tokenAmount = (double.tryParse(widget.amount) ?? 0) / 100;
+    final bool insufficientTokens = tokenAmount > widget.walletBalance;
+
+    final double solBalance = Provider.of<WalletProvider>(context).solBalance;
+    const double minSolForFree = 0.001;
+    final bool insufficientSol = solBalance < minSolForFree;
+
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (BuildContext context, _) {
-        return !_viewModel.hasPaymentBeenMade
-            ? Padding(
+        if (_viewModel.hasPaymentBeenMade) {
+          return PaymentSuccess(amount: widget.amount);
+        }
+        return Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -95,12 +109,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     ),
                     const SizedBox(height: 48),
                     Text(
-                      Formatters.formatAmount(
-                        double.parse(
-                              widget.amount,
-                            ) /
-                            100,
-                      ),
+                      Formatters.formatAmount(tokenAmount),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 32),
@@ -122,11 +131,30 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 20),
+                    if (insufficientTokens) ...[
+                      Text(
+                        'Insufficient funds (Balance: ${Formatters.formatAmount(widget.walletBalance)})',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+                    if (insufficientSol)...[
+                      Text(
+                        'Insufficient SOL for fees. You need at least '
+                        '${minSolForFree.toStringAsFixed(3)} SOL but have '
+                        '${solBalance.toStringAsPrecision(3)} SOL.',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed:
-                            _viewModel.isLoading ? null : _makeTransaction,
+                            (_viewModel.isLoading || 
+                            insufficientTokens || 
+                            insufficientSol)
+                            ? null : _makeTransaction,
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(
                             fontSize: 18,
@@ -150,8 +178,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     const SizedBox(height: 20),
                   ],
                 ),
-              )
-            : PaymentSuccess(amount: widget.amount);
+              );
       },
     );
   }
