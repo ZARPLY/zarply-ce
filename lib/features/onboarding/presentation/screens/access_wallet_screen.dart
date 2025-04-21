@@ -71,58 +71,73 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 32),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Checkbox(
-                  value: _isAgreementChecked,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _isAgreementChecked = value ?? false;
-                    });
-                  },
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
+            SizedBox(
+              width: double.infinity,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Checkbox(
+                    value: _isAgreementChecked,
+                    activeColor: Colors.blue,
+                    checkColor: Colors.white,
+                    fillColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return Colors.blue;
+                        }
+                        return Colors.grey;
+                      },
+                    ),
+                    onChanged: (bool? value) {
                       setState(() {
-                        _isAgreementChecked = !_isAgreementChecked;
+                        _isAgreementChecked = value ?? false;
                       });
                     },
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        children: <TextSpan>[
-                          const TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'terms',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isAgreementChecked = !_isAgreementChecked;
+                        });
+                      },
+                      child: RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          children: <TextSpan>[
+                            const TextSpan(text: 'I agree to the '),
+                            TextSpan(
+                              text: 'terms',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.blue,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () => _launchUrl(
+                                      'https://zarply.co.za/terms-conditions',
+                                    ),
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => _launchUrl(
-                                    'https://zarply.co.za/terms-conditions',
-                                  ),
-                          ),
-                          const TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'privacy policy',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
+                            const TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'privacy policy',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.blue,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () => _launchUrl(
+                                      'https://zarply.co.za/privacy-policy',
+                                    ),
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => _launchUrl(
-                                    'https://zarply.co.za/privacy-policy',
-                                  ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const Spacer(),
             const SizedBox(

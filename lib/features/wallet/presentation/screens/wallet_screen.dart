@@ -44,7 +44,9 @@ class WalletScreenState extends State<WalletScreen> {
             return const Scaffold(
               backgroundColor: Colors.white,
               body: Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: Colors.blue,
+                ),
               ),
             );
           }
