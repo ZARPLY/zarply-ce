@@ -39,7 +39,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
         title: const Padding(
           padding: EdgeInsets.only(right: 24),
           child: ProgressSteps(
-            currentStep: 2,
+            currentStep: 3,
             totalSteps: 3,
           ),
         ),

@@ -88,7 +88,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/welcome'),
+            onTap: () => context.go('/welcome'),  
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),
@@ -107,7 +107,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
         title: const Padding(
           padding: EdgeInsets.only(right: 24),
           child: ProgressSteps(
-            currentStep: 0,
+            currentStep: 1,
             totalSteps: 3,
           ),
         ),
