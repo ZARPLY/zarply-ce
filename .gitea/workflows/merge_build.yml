@@ -1,16 +1,16 @@
 name: app Build
 
-on:
-  push:
-    branches:  
-      - '**'   ### this is done to prevent config runs when tagging
-
 # on:
 #   push:
-#     branches:
-#       - main
-#   pull_request:
-#     types: [ opened ]
+#     branches:  
+#       - '**'   ### this is done to prevent config runs when tagging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [ opened ]
 
 jobs:
   android_apk_build:
