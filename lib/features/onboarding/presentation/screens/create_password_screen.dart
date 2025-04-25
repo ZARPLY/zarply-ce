@@ -130,6 +130,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                       Radio<bool>(
                         value: true,
                         groupValue: viewModel.isChecked,
+                        activeColor: Color(0xFF4169E1),
                         onChanged: (bool? value) {
                           viewModel.setChecked(value: value ?? false);
                         },
