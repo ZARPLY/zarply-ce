@@ -94,7 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               decoration: InputDecoration(
                                 labelText: 'Enter your password',
-                                border: const OutlineInputBorder(
+                                border: const OutlineInputBorder(),
+                                errorBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
                                     color: Colors.red,
                                   ),

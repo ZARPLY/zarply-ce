@@ -11,6 +11,8 @@ class LoginViewModel extends ChangeNotifier {
   bool showSplash = true;
   bool isKeyboardVisible = false;
 
+  static final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+
   void _startSplashTimer() {
     Future<void>.delayed(const Duration(seconds: 2), () {
       showSplash = false;
@@ -24,6 +26,22 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future<bool> validatePassword() async {
+    if (passwordController.text.isEmpty) {
+      errorMessage = 'Password required';
+      notifyListeners();
+      return false;
+    }
+    if (passwordController.text.length < 8) {
+      errorMessage = 'Password must be at least 8 characters';
+      notifyListeners();
+      return false;
+    }
+    if (!complexity.hasMatch(passwordController.text)) {
+      errorMessage = 'Password must include a letter, number, and special character';
+      notifyListeners();
+      return false;
+    }
+
     try {
       final String storedPin = await _secureStorage.getPin();
       if (passwordController.text == storedPin) {
