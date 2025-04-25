@@ -37,7 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       clipper: SteeperCurvedBottomClipper(),
                       child: Container(
                         height: MediaQuery.of(context).size.height * 0.43,
-                        color: const Color(0xFF4169E1).withOpacity(0.3),
+                        color: const Color(0xFF4169E1).withValues(alpha: 0.3),
                       ),
                     ),
                     ClipPath(
@@ -114,7 +114,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: Color(0xFF4169E1),
                                     strokeWidth: 2,
                                   ),
                                 )
