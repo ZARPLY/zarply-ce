@@ -80,7 +80,10 @@ class PaymentAmountScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   const SizedBox(height: 40),
-                  AmountInput(controller: viewModel.paymentAmountController),
+                  AmountInput(
+                    controller: viewModel.paymentAmountController,
+                    readOnly: initialAmount != null,
+                  ),
                   const SizedBox(height: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,

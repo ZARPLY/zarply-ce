@@ -1,4 +1,7 @@
 # zarply
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zarply-mobile-wallet&metric=alert_status&token=3efe7a082cacce81a57c6e5175f76a4eb88fe842)](https://sonarcloud.io/summary/new_code?id=zarply-mobile-wallet)
+
 ![zarply](images/banner.png)
 
 > A ZARP <img src="./images/zarp.png" width="15"> stable coin wallet

@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       clipper: SteeperCurvedBottomClipper(),
                       child: Container(
                         height: MediaQuery.of(context).size.height * 0.43,
-                        color: const Color(0xFF4169E1).withOpacity(0.3),
+                        color: const Color(0xFF4169E1).withValues(alpha: 0.3),
                       ),
                     ),
                     ClipPath(

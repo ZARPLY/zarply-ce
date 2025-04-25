@@ -78,7 +78,7 @@ class TransactionDetailsScreen extends StatelessWidget {
           Text(
             Formatters.formatDate(timestamp),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -91,7 +91,7 @@ class TransactionDetailsScreen extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
       ),
       color: const Color(0xFFEBECEF),
       child: Padding(
@@ -107,10 +107,10 @@ class TransactionDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildDetailRow('From', sender, theme),
-            Divider(color: theme.dividerColor.withOpacity(0.5)),
+            Divider(color: theme.dividerColor.withValues(alpha: 0.5)),
             _buildDetailRow('To', receiver, theme),
             if (transactionId != null) ...<Widget>[
-              Divider(color: theme.dividerColor.withOpacity(0.5)),
+              Divider(color: theme.dividerColor.withValues(alpha: 0.5)),
               _buildDetailRow('Transaction ID', transactionId!, theme),
             ],
           ],
@@ -131,7 +131,7 @@ class TransactionDetailsScreen extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
