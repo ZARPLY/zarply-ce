@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
@@ -22,6 +23,8 @@ class PaymentRequestDetailsScreen extends StatefulWidget {
 class _PaymentRequestDetailsScreenState
     extends State<PaymentRequestDetailsScreen> {
   bool _isProcessing = false;
+  bool _showCheckmarkFrom = false;
+  bool _showCheckmarkTo = false;
 
   Future<void> _handlePaymentConfirmation() async {
     setState(() {
@@ -82,6 +85,92 @@ class _PaymentRequestDetailsScreenState
     );
   }
 
+  Future<void> _copyToClipboard(
+      BuildContext context, String text, bool isFrom) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Address copied to clipboard')),
+      );
+      setState(() {
+        if (isFrom) {
+          _showCheckmarkFrom = true;
+        } else {
+          _showCheckmarkTo = true;
+        }
+      });
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            if (isFrom) {
+              _showCheckmarkFrom = false;
+            } else {
+              _showCheckmarkTo = false;
+            }
+          });
+        }
+      });
+    }
+  }
+
+  Widget _buildCopyableAddress(String label, String address, bool isFrom) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: () => _copyToClipboard(context, address, isFrom),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    address,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    softWrap: true,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: (isFrom ? _showCheckmarkFrom : _showCheckmarkTo)
+                      ? Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.grey.withOpacity(0.8),
+                          key: const ValueKey<String>('check'),
+                        )
+                      : Icon(
+                          Icons.copy,
+                          size: 14,
+                          color: Colors.grey.withOpacity(0.8),
+                          key: const ValueKey<String>('copy'),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double amountInRands = double.parse(widget.amount) / 100;
@@ -111,6 +200,7 @@ class _PaymentRequestDetailsScreenState
               padding: const EdgeInsets.all(24),
               color: Colors.blue,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     "You're about to pay",
@@ -153,11 +243,12 @@ class _PaymentRequestDetailsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailItem('To account', widget.recipientAddress),
+                  _buildCopyableAddress(
+                      'From account', wallet?.address ?? '', true),
                   const SizedBox(height: 24),
-                  _buildDetailItem(
-                      'Account Number', tokenAccount?.pubkey ?? ''),
-                  const SizedBox(height: 24),
+                  _buildCopyableAddress(
+                      'To account', widget.recipientAddress, false),
+                  const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -180,29 +271,6 @@ class _PaymentRequestDetailsScreenState
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDetailItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
