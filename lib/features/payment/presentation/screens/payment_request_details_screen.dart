@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
 
 class PaymentRequestDetailsScreen extends StatefulWidget {
@@ -83,6 +85,9 @@ class _PaymentRequestDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final double amountInRands = double.parse(widget.amount) / 100;
+    final walletProvider = Provider.of<WalletProvider>(context);
+    final wallet = walletProvider.wallet;
+    final tokenAccount = walletProvider.userTokenAccount;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,7 +109,7 @@ class _PaymentRequestDetailsScreenState
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              color: Theme.of(context).primaryColor,
+              color: Colors.blue,
               child: Column(
                 children: [
                   const Text(
@@ -116,8 +121,16 @@ class _PaymentRequestDetailsScreenState
                   ),
                   const SizedBox(height: 8),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(
+                        Formatters.formatAmount(amountInRands),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       Container(
                         width: 48,
                         height: 48,
@@ -130,15 +143,6 @@ class _PaymentRequestDetailsScreenState
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Text(
-                        Formatters.formatAmount(amountInRands),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -149,20 +153,11 @@ class _PaymentRequestDetailsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailItem('From', 'Pump Pay Account'),
+                  _buildDetailItem('To account', widget.recipientAddress),
                   const SizedBox(height: 24),
-                  _buildDetailItem('To account', 'Test A'),
+                  _buildDetailItem(
+                      'Account Number', tokenAccount?.pubkey ?? ''),
                   const SizedBox(height: 24),
-                  _buildDetailItem('Bank', 'Standard Bank'),
-                  const SizedBox(height: 24),
-                  _buildDetailItem('Branch Code', '051001'),
-                  const SizedBox(height: 24),
-                  _buildDetailItem('Account Number', '1234567890'),
-                  const SizedBox(height: 24),
-                  _buildDetailItem('Your reference', 'Our reference'),
-                  const SizedBox(height: 24),
-                  _buildDetailItem('Beneficiary reference', 'Testing'),
-                  const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
