@@ -201,6 +201,7 @@ class _PaymentRequestDetailsScreenState
               color: Colors.blue,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
                     "You're about to pay",
@@ -212,6 +213,7 @@ class _PaymentRequestDetailsScreenState
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         Formatters.formatAmount(amountInRands),
@@ -224,6 +226,7 @@ class _PaymentRequestDetailsScreenState
                       Container(
                         width: 48,
                         height: 48,
+                        margin: const EdgeInsets.only(top: 2),
                         decoration: const BoxDecoration(
                           color: Colors.white24,
                           shape: BoxShape.circle,
@@ -241,13 +244,17 @@ class _PaymentRequestDetailsScreenState
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildCopyableAddress(
-                      'From account', wallet?.address ?? '', true),
+                  Center(
+                    child: _buildCopyableAddress(
+                        'From account', wallet?.address ?? '', true),
+                  ),
                   const SizedBox(height: 24),
-                  _buildCopyableAddress(
-                      'To account', widget.recipientAddress, false),
+                  Center(
+                    child: _buildCopyableAddress(
+                        'To account', widget.recipientAddress, false),
+                  ),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
