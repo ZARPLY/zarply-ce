@@ -58,7 +58,7 @@ class _BalanceAmountState extends State<BalanceAmount> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               constraints: const BoxConstraints(maxWidth: 300),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -82,13 +82,13 @@ class _BalanceAmountState extends State<BalanceAmount> {
                         ? Icon(
                             Icons.check,
                             size: 14,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             key: const ValueKey<String>('check'),
                           )
                         : Icon(
                             Icons.copy,
                             size: 14,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             key: const ValueKey<String>('copy'),
                           ),
                   ),
