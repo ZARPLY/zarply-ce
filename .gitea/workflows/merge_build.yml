@@ -95,7 +95,7 @@ jobs:
             --codesign \
             --split-debug-info=split_debug_info/ \
             --dart-define-from-file=.env.prod
-      # - name: Upload to TestFlight
-      #   run: |
-      #     cd ios
-      #     fastlane beta
+      - name: Upload to TestFlight
+        run: |
+          cd ios
+          fastlane beta
