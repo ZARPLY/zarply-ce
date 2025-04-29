@@ -203,30 +203,35 @@ class _PaymentRequestDetailsScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "You're about to pay",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        Formatters.formatAmount(amountInRands),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "You're about to pay",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              Formatters.formatAmount(amountInRands),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Container(
                         width: 48,
                         height: 48,
-                        margin: const EdgeInsets.only(top: 2),
                         decoration: const BoxDecoration(
                           color: Colors.white24,
                           shape: BoxShape.circle,
