@@ -86,7 +86,8 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                                 size: const Size(300, 300),
                                 painter: QRPainter(
                                   data: viewModel.qrCodeData,
-                                  version: 4,
+                                  version: 10,
+                                  errorCorrectionLevel: QrErrorCorrectLevel.H,
                                   color: Colors.blue,
                                   emptyColor: Colors.white,
                                   gapless: true,
@@ -173,8 +174,8 @@ class _RequestQRCodeState extends State<RequestQRCode> {
 class QRPainter extends CustomPainter {
   QRPainter({
     required this.data,
-    this.version = 1,
-    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
+    this.version = 10,
+    this.errorCorrectionLevel = QrErrorCorrectLevel.H,
     this.color = Colors.black,
     this.emptyColor = Colors.white,
     this.gapless = false,
