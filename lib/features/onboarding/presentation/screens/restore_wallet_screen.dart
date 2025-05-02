@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../models/restore_wallet_view_model.dart';
 import '../widgets/importing_wallet_modal.dart';
+import '../widgets/restore_wallet_dropdown.dart';
+
 
 class RestoreWalletScreen extends StatefulWidget {
   const RestoreWalletScreen({super.key});
@@ -110,36 +112,14 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
         ),
         title: Align(
           alignment: Alignment.centerRight,
-          child: Container(
-            width: 200,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: DropdownButton<String>(
-              value: _viewModel.selectedRestoreMethod,
-              isExpanded: true,
-              isDense: true,
-              iconSize: 20,
-              alignment: AlignmentDirectional.centerEnd,
-              underline: Container(),
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(
-                  value: 'Seed Phrase',
-                  child: Text('Seed Phrase'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'Private Key',
-                  child: Text('Private Key'),
-                ),
-              ],
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  _viewModel.setRestoreMethod(newValue);
-                }
-              },
-            ),
+          child: RestoreMethodDropdown(
+            selectedMethod: _viewModel.selectedRestoreMethod,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                _viewModel.setRestoreMethod(newValue);
+                setState(() {}); 
+              }
+            },
           ),
         ),
       ),

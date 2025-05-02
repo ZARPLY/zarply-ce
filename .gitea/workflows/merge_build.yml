@@ -1,23 +1,23 @@
 name: app Build
 
-on:
-  push:
-    branches:  
-      - '**'   ### this is done to prevent config runs when tagging
-
 # on:
 #   push:
-#     branches:
-#       - main
-#   pull_request:
-#     types: [ opened ]
+#     branches:  
+#       - '**'   ### this is done to prevent config runs when tagging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [ opened ]
 
 jobs:
   android_apk_build:
     name: Android APK Build
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/pumppay/pp-flutter:v3.27.3
+      image: gitea.cyber-mint.com/pumppay/pp-flutter:3.27.3
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
@@ -95,7 +95,7 @@ jobs:
             --codesign \
             --split-debug-info=split_debug_info/ \
             --dart-define-from-file=.env.prod
-      # - name: Upload to TestFlight
-      #   run: |
-      #     cd ios
-      #     fastlane beta
+      - name: Upload to TestFlight
+        run: |
+          cd ios
+          fastlane beta

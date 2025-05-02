@@ -92,8 +92,17 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Password',
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 2),
+                      ),
+                      errorText: viewModel.passwordErrorText,
+                      errorMaxLines: 2,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -105,20 +114,23 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     ),
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      border: const OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.red,
-                        ),
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
                       ),
-                      errorText: viewModel.errorText,
+                      focusedErrorBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red, width: 2),
+                      ),
+                      errorText: viewModel.confirmErrorText,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 24),
                   Row(
                     children: <Widget>[
                       Radio<bool>(
                         value: true,
                         groupValue: viewModel.isChecked,
+                        activeColor: Color(0xFF4169E1),
                         onChanged: (bool? value) {
                           viewModel.setChecked(value: value ?? false);
                         },

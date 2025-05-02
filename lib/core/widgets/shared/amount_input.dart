@@ -5,10 +5,12 @@ import '../../utils/formatters.dart';
 class AmountInput extends StatefulWidget {
   const AmountInput({
     required this.controller,
+    this.readOnly = false,
     super.key,
   });
 
   final TextEditingController controller;
+  final bool readOnly;
 
   @override
   State<AmountInput> createState() => _AmountInputState();
@@ -43,6 +45,7 @@ class _AmountInputState extends State<AmountInput> {
     return TextField(
       controller: _displayController,
       keyboardType: TextInputType.number,
+      readOnly: widget.readOnly,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly,
         TextInputFormatter.withFunction(

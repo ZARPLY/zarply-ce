@@ -67,7 +67,7 @@ class RequestAmountScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              title: const Text('Pay'),
+              title: const Text('Request'),
             ),
             body: Padding(
               padding: const EdgeInsets.all(8),
