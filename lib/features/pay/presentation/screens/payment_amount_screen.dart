@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
+import '../../../../core/widgets/previously_paid_info.dart';
 
 class PaymentAmountScreen extends StatelessWidget {
   const PaymentAmountScreen({
@@ -45,9 +48,9 @@ class PaymentAmountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
-        recipientAddress: recipientAddress,
-        initialAmount: initialAmount,
-      ),
+          recipientAddress: recipientAddress,
+          initialAmount: initialAmount,
+          currentWalletAddress: recipientAddress),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
           return Scaffold(
@@ -82,7 +85,7 @@ class PaymentAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: initialAmount != null,
+                    readOnly: false,
                   ),
                   const SizedBox(height: 16),
                   Column(
@@ -110,20 +113,9 @@ class PaymentAmountScreen extends StatelessWidget {
                       const SizedBox(
                         height: 12,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                            child: const Text('R43,134.78'),
-                          ),
-                          const SizedBox(width: 16),
-                          const Text('2024-12-22'),
-                        ],
+                      PreviouslyPaidInfo(
+                        viewModel: viewModel,
+                        recipientAddress: recipientAddress,
                       ),
                     ],
                   ),

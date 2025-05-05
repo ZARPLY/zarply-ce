@@ -12,8 +12,8 @@ import '../../features/onboarding/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../features/pay/presentation/screens/pay_request_screen.dart';
 import '../../features/pay/presentation/screens/payment_amount_screen.dart';
-import '../../features/pay/presentation/screens/payment_details_screen.dart';
-import '../../features/payment/presentation/screens/payment_request_details_screen.dart';
+import '../../features/request/presentation/screens/payment_details_screen.dart';
+import '../../features/request/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
@@ -115,7 +115,7 @@ GoRouter createRouter(WalletProvider walletProvider) {
               final Map<String, String> extra =
                   state.extra as Map<String, String>;
               final String publicKey = extra['recipientAddress'] ?? '';
-              final String amount = extra['amount'] ?? '';
+              final String? amount = extra['amount'];
               final String source = extra['source'] ?? '/pay_request';
               return PaymentAmountScreen(
                 recipientAddress: publicKey,

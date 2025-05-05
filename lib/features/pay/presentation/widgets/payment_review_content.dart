@@ -50,6 +50,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       wallet: wallet,
       recipientAddress: widget.recipientAddress,
       amount: widget.amount,
+      context: context,
     );
   }
 

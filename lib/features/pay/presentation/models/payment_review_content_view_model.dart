@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../data/repositories/payment_review_content_repository_impl.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
 
@@ -21,6 +23,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
     required Wallet wallet,
     required String recipientAddress,
     required String amount,
+    required BuildContext context,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -39,6 +42,11 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
 
         if (txDetails != null) {
           await _repository.storeTransactionDetails(txDetails);
+
+          // Refresh transactions in the wallet provider
+          final walletProvider =
+              Provider.of<WalletProvider>(context, listen: false);
+          await walletProvider.refreshTransactions();
         }
 
         _hasPaymentBeenMade = true;
