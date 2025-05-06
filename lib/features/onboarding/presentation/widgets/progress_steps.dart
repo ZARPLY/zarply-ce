@@ -16,7 +16,7 @@ class ProgressSteps extends StatelessWidget {
         totalSteps,
         (int index) {
           final int stepNumber = index + 1;
-          final bool isActive = stepNumber == currentStep;
+          final bool isActive = stepNumber <= currentStep;
           return Expanded(
             child: Container(
               height: 4,
