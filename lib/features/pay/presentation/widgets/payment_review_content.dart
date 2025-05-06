@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
-
-import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../models/payment_review_content_view_model.dart';
 import 'payment_success.dart';
 
@@ -19,6 +17,7 @@ class PaymentReviewContent extends StatefulWidget {
   final String recipientAddress;
   final VoidCallback onCancel;
   final double walletBalance;
+
   @override
   State<PaymentReviewContent> createState() => _PaymentReviewContentState();
 }
@@ -39,23 +38,12 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
   }
 
   Future<void> _makeTransaction() async {
-    final Wallet? wallet =
-        Provider.of<WalletProvider>(context, listen: false).wallet;
-
-    if (wallet == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Wallet not found'),
-        ),
-      );
-      return;
-    }
-
+    final Wallet wallet = AppInitializer.of(context).wallet;
     await _viewModel.makeTransaction(
-      wallet: wallet,
-      recipientAddress: widget.recipientAddress,
+      wallet: wallet, 
+      recipientAddress: widget.recipientAddress, 
       amount: widget.amount,
-    );
+      );
   }
 
   @override
@@ -63,7 +51,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     final double tokenAmount = (double.tryParse(widget.amount) ?? 0) / 100;
     final bool insufficientTokens = tokenAmount > widget.walletBalance;
 
-    final double solBalance = Provider.of<WalletProvider>(context).solBalance;
+    final double solBalance = AppInitializer.of(context).solBalance;
     const double minSolForFree = 0.001;
     final bool insufficientSol = solBalance < minSolForFree;
 

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
-import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../models/payment_details_view_model.dart';
 
+
 class PaymentDetails extends StatefulWidget {
-  const PaymentDetails({super.key});
+  const PaymentDetails({Key? key}) : super(key: key);
 
   @override
   State<PaymentDetails> createState() => _PaymentDetailsState();
@@ -14,13 +15,17 @@ class PaymentDetails extends StatefulWidget {
 
 class _PaymentDetailsState extends State<PaymentDetails> {
   late PaymentDetailsViewModel _viewModel;
+  bool _didInitializeViewModel = false;
 
   @override
-  void initState() {
-    super.initState();
-    final Ed25519HDKeyPair? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
-    final String ownPubKey = wallet?.address ?? '';
-    _viewModel = PaymentDetailsViewModel(ownPublicKey: ownPubKey);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInitializeViewModel) {
+      return;
+    }
+    final Wallet wallet = AppInitializer.of(context).wallet;
+    _viewModel = PaymentDetailsViewModel(ownPublicKey: wallet.address);
+    _didInitializeViewModel = true;
   }
 
   @override
@@ -34,9 +39,9 @@ class _PaymentDetailsState extends State<PaymentDetails> {
     return ChangeNotifierProvider<PaymentDetailsViewModel>.value(
       value: _viewModel,
       child: Consumer<PaymentDetailsViewModel>(
-        builder: (BuildContext context, PaymentDetailsViewModel viewModel, _) {
+        builder: (BuildContext context, PaymentDetailsViewModel viewModel, Widget? childWidget) {
           Color borderColor;
-          if (viewModel.accountExists == null) {
+          if (_viewModel.accountExists == null) {
             borderColor = Colors.grey;
           } else if (viewModel.accountExists == true) {
             borderColor = Theme.of(context).primaryColor;
@@ -76,7 +81,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                     child: Column(
                       children: <Widget>[
                         Text(
-                          'Paste recipients public key',
+                          'Paste recipient\'s public key',
                           style: Theme.of(context).textTheme.headlineLarge,
                           textAlign: TextAlign.center,
                         ),
@@ -97,8 +102,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                         labelText: 'Public Key',
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: borderColor
-                          ),
+                            color: borderColor),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -155,5 +159,5 @@ class _PaymentDetailsState extends State<PaymentDetails> {
         },
       ),
     );
-  }
+  } 
 }

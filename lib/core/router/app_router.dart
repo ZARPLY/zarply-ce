@@ -17,7 +17,9 @@ import '../../features/request/presentation/screens/request_amount_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/wallet_provider.dart';
+import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
+
 
 GoRouter createRouter(WalletProvider walletProvider) {
   return GoRouter(
@@ -29,11 +31,12 @@ GoRouter createRouter(WalletProvider walletProvider) {
             const SplashScreen(),
       ),
       ShellRoute(
-        builder: (BuildContext context, GoRouterState state, Widget child) {
-          return ListenableBuilder(
-            listenable: walletProvider,
-            builder: (BuildContext context, _) => child,
-          );
+        builder: (
+          BuildContext context, 
+          GoRouterState state, 
+          Widget child,
+        ) {
+          return AppInitializer(child: child);
         },
         routes: <RouteBase>[
           GoRoute(

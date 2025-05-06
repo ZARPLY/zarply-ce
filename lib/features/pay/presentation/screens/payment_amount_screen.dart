@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
@@ -19,7 +19,9 @@ class PaymentAmountScreen extends StatelessWidget {
   final String? initialAmount;
   final String source;
 
-  void _showPaymentReviewModal(BuildContext context, String amount) {
+  void _showPaymentReviewModal(BuildContext context, String enteredAmount) {
+    double availableBalance = AppInitializer.of(context).walletBalance;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -27,20 +29,21 @@ class PaymentAmountScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (BuildContext context) => Container(
+      builder: (BuildContext sheetContext) {
+        return Container(
         height: MediaQuery.of(context).size.height * 0.90,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: PaymentReviewContent(
-          amount: amount,
+          amount: enteredAmount,
           recipientAddress: recipientAddress,
           onCancel: () => Navigator.pop(context),
-          walletBalance: Provider.of<WalletProvider>(context, listen: false)
-              .walletBalance,
+          walletBalance: availableBalance,
         ),
-      ),
+      );
+      },
     );
   }
 
@@ -85,7 +88,7 @@ class PaymentAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: initialAmount != null,
+                    readOnly: initialAmount != null && initialAmount!.isNotEmpty,
                   ),
                   const SizedBox(height: 16),
                   Column(
