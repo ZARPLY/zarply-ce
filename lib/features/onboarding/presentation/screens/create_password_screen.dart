@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/password_input.dart';
 import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
 
@@ -86,51 +87,24 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 32),
-                  TextField(
+                  PasswordInput(
                     controller: viewModel.passwordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      fontSize: 14,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red, width: 2),
-                      ),
-                      errorText: viewModel.passwordErrorText,
-                      errorMaxLines: 2,
-                    ),
+                    labelText: 'Password',
+                    errorText: viewModel.passwordErrorText,
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  PasswordInput(
                     controller: viewModel.confirmPasswordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      fontSize: 14,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.red, width: 2),
-                      ),
-                      errorText: viewModel.confirmErrorText,
-                      ),
-                    ),
+                    labelText: 'Confirm Password',
+                    errorText: viewModel.confirmErrorText,
+                  ),
                   const SizedBox(height: 24),
                   Row(
                     children: <Widget>[
                       Radio<bool>(
                         value: true,
                         groupValue: viewModel.isChecked,
-                        activeColor: Color(0xFF4169E1),
+                        activeColor: const Color(0xFF4169E1),
                         onChanged: (bool? value) {
                           viewModel.setChecked(value: value ?? false);
                         },
