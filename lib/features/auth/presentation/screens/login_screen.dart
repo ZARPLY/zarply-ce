@@ -5,6 +5,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
 
@@ -86,24 +87,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 40),
-                            TextField(
+                            PasswordInput(
                               controller: viewModel.passwordController,
-                              obscureText: true,
-                              style: const TextStyle(
-                                fontSize: 14,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: 'Enter your password',
-                                border: const OutlineInputBorder(),
-                                errorBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorText: viewModel.errorMessage.isNotEmpty
-                                    ? viewModel.errorMessage
-                                    : null,
-                              ),
+                              labelText: 'Enter your password',
+                              errorText: viewModel.errorMessage.isNotEmpty
+                                  ? viewModel.errorMessage
+                                  : null,
                             ),
                           ],
                         ),
