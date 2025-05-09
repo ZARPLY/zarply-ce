@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/provider/wallet_provider.dart';
+import 'core/provider/auth_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -37,18 +38,24 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
+
   final WalletProvider walletProvider = WalletProvider();
+  final AuthProvider authProvider = AuthProvider();
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<WalletProvider>(
-      create: (BuildContext context) => walletProvider,
+    return MultiProvider(
+      providers: <ChangeNotifierProvider<dynamic>>[
+        ChangeNotifierProvider<WalletProvider>.value(value: walletProvider),
+        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+      ],
       child: Builder(
         builder: (BuildContext context) {
-          final WalletProvider walletProvider =
-              Provider.of<WalletProvider>(context, listen: false);
-          final GoRouter router = createRouter(walletProvider);
-
+          final GoRouter router = createRouter(
+            walletProvider,
+            Provider.of<AuthProvider>(context),
+          );
+          
           return MaterialApp.router(
             title: 'ZARPLY',
             theme: AppTheme.lightTheme,

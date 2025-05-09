@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../models/wallet_view_model.dart';
 import '../widgets/balance_amount.dart';
@@ -299,8 +300,9 @@ class WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                       ],
-                    ).then((String? value) {
+                    ).then((String? value) async{
                       if (value == 'logout') {
+                        await Provider.of<AuthProvider>(context, listen: false).logout();
                         context.go('/login');
                       }
                     });

@@ -5,6 +5,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
@@ -138,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 final bool success =
                                     await viewModel.validatePassword();
                                 if (success && mounted) {
+                                  await Provider.of<AuthProvider>(context, listen: false).login();
                                   context.go('/wallet');
                                 }
                               },

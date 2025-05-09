@@ -153,7 +153,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
               child: TextButton(
                 onPressed: _isAgreementChecked
                     ? () {
-                        context.go('/wallet');
+                        context.go('/wallet', extra: '/create_password');
                       }
                     : null,
                 child: Text(
