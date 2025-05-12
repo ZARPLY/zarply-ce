@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/formatters.dart';
+import '../clear_icon_button.dart';
 
 class AmountInput extends StatefulWidget {
   const AmountInput({
@@ -29,6 +30,7 @@ class _AmountInputState extends State<AmountInput> {
               .replaceAll('R', '')
               .trim();
     }
+    _displayController.addListener(() => setState(() {}));
   }
 
   @override
@@ -81,6 +83,7 @@ class _AmountInputState extends State<AmountInput> {
           'R ',
           style: TextStyle(fontSize: 14),
         ),
+        suffixIcon: ClearIconButton(controller: _displayController),
         border: const OutlineInputBorder(),
         enabledBorder: const OutlineInputBorder(
           borderSide: BorderSide(
