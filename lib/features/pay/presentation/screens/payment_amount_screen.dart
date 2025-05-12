@@ -82,7 +82,7 @@ class PaymentAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: initialAmount != null,
+                    readOnly: initialAmount != null && initialAmount!.isNotEmpty,
                   ),
                   const SizedBox(height: 16),
                   Column(
