@@ -16,6 +16,9 @@ class CreatePasswordScreen extends StatefulWidget {
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   late CreatePasswordViewModel _viewModel;
 
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +27,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 
   @override
   void dispose() {
+    _passwordFocus.dispose();
+    _confirmFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -41,8 +46,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<CreatePasswordViewModel>(
-      create: (_) => _viewModel,
+    return ChangeNotifierProvider<CreatePasswordViewModel>.value(
+      value: _viewModel,
       child: Consumer<CreatePasswordViewModel>(
         builder: (BuildContext context, CreatePasswordViewModel viewModel, _) {
           return Scaffold(
@@ -91,12 +96,18 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     controller: viewModel.passwordController,
                     labelText: 'Password',
                     errorText: viewModel.passwordErrorText,
+                    focusNode: _passwordFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => _confirmFocus.requestFocus(),
                   ),
                   const SizedBox(height: 16),
                   PasswordInput(
                     controller: viewModel.confirmPasswordController,
                     labelText: 'Confirm Password',
                     errorText: viewModel.confirmErrorText,
+                    focusNode: _confirmFocus,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleContinue(),
                   ),
                   const SizedBox(height: 24),
                   Row(
