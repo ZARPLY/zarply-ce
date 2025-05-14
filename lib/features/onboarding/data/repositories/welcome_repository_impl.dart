@@ -27,9 +27,11 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
     final String recoveryPhrase = bip39.generateMnemonic();
     final Wallet wallet =
         await _walletService.createWalletFromMnemonic(recoveryPhrase);
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(seconds: 20));
     final ProgramAccount tokenAccount =
         await _walletService.createAssociatedTokenAccount(wallet);
+
+    await _walletService.requestZARP(wallet);
 
     return (
       recoveryPhrase: recoveryPhrase,

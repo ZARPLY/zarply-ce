@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -41,10 +43,7 @@ class WalletSolanaService {
         );
       }
 
-      await requestAirdrop(
-        wallet.address,
-        50000000, // SOL 0.05
-      );
+      await _requestSOL(wallet);
 
       return wallet;
     } catch (e) {
@@ -62,10 +61,7 @@ class WalletSolanaService {
       );
     }
 
-    await requestAirdrop(
-      wallet.address,
-      50000000, // SOL 0.05
-    );
+    await _requestSOL(wallet);
 
     return wallet;
   }
@@ -121,18 +117,6 @@ class WalletSolanaService {
       return wallet;
     } catch (e) {
       throw WalletSolanaServiceException('Failed to restore wallet: $e');
-    }
-  }
-
-  Future<String> requestAirdrop(String address, int lamports) async {
-    try {
-      final String signature = await _client.requestAirdrop(
-        address: Ed25519HDPublicKey(base58decode(address)),
-        lamports: lamports,
-      );
-      return signature;
-    } catch (e) {
-      throw WalletSolanaServiceException('Airdrop failed: $e');
     }
   }
 
@@ -286,6 +270,59 @@ class WalletSolanaService {
     }
   }
 
+  Future<String> requestZARP(Wallet wallet) async {
+    // call ZARPLY faucet
+    final http.Response response = await http.post(
+      Uri.parse('https://faucet.zarply.co.za/api/faucet'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'pubkey': wallet.address,
+      }),
+    );
+
+    debugPrint('requestZARP response: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw WalletSolanaServiceException(
+        'Faucet request failed: ${response.body}',
+      );
+    }
+
+    return response.body;
+  }
+
+  Future<TransactionDetails?> getTransactionDetails(String signature) async {
+    try {
+      return await _client.rpcClient.getTransaction(signature);
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction details: $e',
+      );
+    }
+  }
+
+  Future<int> getTransactionCount(String address) async {
+    try {
+      final List<TransactionSignatureInformation> signatures =
+          await _client.rpcClient.getSignaturesForAddress(address);
+      return signatures.length;
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction count: $e',
+      );
+    }
+  }
+
+  bool isValidMnemonic(String mnemonic) {
+    return bip39.validateMnemonic(mnemonic);
+  }
+
+  bool isValidPrivateKey(String privateKey) {
+    return privateKey.length == 64;
+  }
+
   Future<void> _fetchTransactionsWithCircuitBreaker(
     List<String> signatures, {
     required Function(List<TransactionDetails?>) onBatchLoaded,
@@ -366,33 +403,25 @@ class WalletSolanaService {
     }
   }
 
-  Future<TransactionDetails?> getTransactionDetails(String signature) async {
-    try {
-      return await _client.rpcClient.getTransaction(signature);
-    } catch (e) {
+  Future<String> _requestSOL(Wallet wallet) async {
+    // call ZARPLY faucet
+    final http.Response response = await http.post(
+      Uri.parse('https://faucet.zarply.co.za/api/faucet'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'pubkey': wallet.address,
+        'sol_only': true,
+      }),
+    );
+
+    if (response.statusCode != 200) {
       throw WalletSolanaServiceException(
-        'Error fetching transaction details: $e',
+        'Faucet request failed: ${response.body}',
       );
     }
-  }
 
-  Future<int> getTransactionCount(String address) async {
-    try {
-      final List<TransactionSignatureInformation> signatures =
-          await _client.rpcClient.getSignaturesForAddress(address);
-      return signatures.length;
-    } catch (e) {
-      throw WalletSolanaServiceException(
-        'Error fetching transaction count: $e',
-      );
-    }
-  }
-
-  bool isValidMnemonic(String mnemonic) {
-    return bip39.validateMnemonic(mnemonic);
-  }
-
-  bool isValidPrivateKey(String privateKey) {
-    return privateKey.length == 64;
+    return response.body;
   }
 }
