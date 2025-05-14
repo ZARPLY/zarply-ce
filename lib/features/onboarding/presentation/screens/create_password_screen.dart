@@ -18,6 +18,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
+  final FocusNode _checkboxFocus = FocusNode();
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   void dispose() {
     _passwordFocus.dispose();
     _confirmFocus.dispose();
+    _checkboxFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -107,26 +109,46 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     errorText: viewModel.confirmErrorText,
                     focusNode: _confirmFocus,
                     textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _handleContinue(),
+                    onSubmitted: (_) {
+                      FocusScope.of(context).unfocus();
+                      _checkboxFocus.requestFocus();
+                    },
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: <Widget>[
-                      Radio<bool>(
-                        value: true,
-                        groupValue: viewModel.isChecked,
-                        activeColor: const Color(0xFF4169E1),
-                        onChanged: (bool? value) {
-                          viewModel.setChecked(value: value ?? false);
-                        },
-                      ),
-                      Expanded(
-                        child: Text(
-                          'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
-                          style: Theme.of(context).textTheme.bodySmall,
+                  Focus(
+                    focusNode: _checkboxFocus,
+                    child: Builder(builder:(context) {
+                      final bool hasFocus = Focus.of(context).hasFocus;
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: hasFocus ? Colors.blue : Colors.transparent,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(8)
                         ),
-                      ),
-                    ],
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          children: <Widget>[
+                            Radio<bool>(
+                              value: true,
+                              groupValue: viewModel.isChecked,
+                              activeColor: const Color(0xFF4169E1),
+                              onChanged: (bool? value) {
+                                viewModel.setChecked(value: value ?? false);
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
+                                style: Theme.of(context).textTheme.bodySmall,
+                               ),
+                              ),
+                             ],
+                            ),
+                           );
+                    },
+                    ),
                   ),
                   const Spacer(),
                   SizedBox(
