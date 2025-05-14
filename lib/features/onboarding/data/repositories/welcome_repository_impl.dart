@@ -22,22 +22,37 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   final WalletStorageService _storageService;
 
   @override
-  Future<({String recoveryPhrase, Wallet wallet, ProgramAccount tokenAccount})>
-      createWallet() async {
-    final String recoveryPhrase = bip39.generateMnemonic();
-    final Wallet wallet =
-        await _walletService.createWalletFromMnemonic(recoveryPhrase);
-    await Future<void>.delayed(const Duration(seconds: 20));
-    final ProgramAccount tokenAccount =
-        await _walletService.createAssociatedTokenAccount(wallet);
+  Future<
+      ({
+        String? recoveryPhrase,
+        Wallet? wallet,
+        ProgramAccount? tokenAccount,
+        String? errorMessage
+      })> createWallet() async {
+    try {
+      final String recoveryPhrase = bip39.generateMnemonic();
+      final Wallet wallet =
+          await _walletService.createWalletFromMnemonic(recoveryPhrase);
+      await Future<void>.delayed(const Duration(seconds: 20));
+      final ProgramAccount tokenAccount =
+          await _walletService.createAssociatedTokenAccount(wallet);
 
-    await _walletService.requestZARP(wallet);
+      await _walletService.requestZARP(wallet);
 
-    return (
-      recoveryPhrase: recoveryPhrase,
-      wallet: wallet,
-      tokenAccount: tokenAccount,
-    );
+      return (
+        recoveryPhrase: recoveryPhrase,
+        wallet: wallet,
+        tokenAccount: tokenAccount,
+        errorMessage: null,
+      );
+    } catch (e) {
+      return (
+        recoveryPhrase: null,
+        wallet: null,
+        tokenAccount: null,
+        errorMessage: 'Could not create wallet. Please try again later.',
+      );
+    }
   }
 
   @override
