@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/widgets/clear_icon_button.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
@@ -86,6 +87,9 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                       ),
                       decoration: InputDecoration(
                         labelText: 'Public Key',
+                        suffixIcon: ClearIconButton(
+                          controller: viewModel.publicKeyController,
+                          ),
                         border: const OutlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.red,
@@ -103,8 +107,11 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                       style: const TextStyle(
                         fontSize: 14,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Description (Optional)',
+                        suffixIcon: ClearIconButton(
+                          controller: viewModel.descriptionController, 
+                          ),
                       ),
                     ),
                   ),

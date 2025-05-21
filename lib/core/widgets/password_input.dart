@@ -22,6 +22,11 @@ class _PasswordInputState extends State<PasswordInput> {
   bool _obscureText = true;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextField(
       controller: widget.controller,
@@ -41,15 +46,20 @@ class _PasswordInputState extends State<PasswordInput> {
         ),
         errorText: widget.errorText,
         errorMaxLines: 2,
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscureText ? Icons.visibility : Icons.visibility_off,
-          ),
-          onPressed: () {
-            setState(() {
-              _obscureText = !_obscureText;
-            });
-          },
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            IconButton(
+              icon: Icon(
+                _obscureText ? Icons.visibility : Icons.visibility_off,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureText = !_obscureText;
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
