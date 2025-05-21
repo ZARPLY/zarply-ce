@@ -1,4 +1,5 @@
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -33,9 +34,12 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
       final String recoveryPhrase = bip39.generateMnemonic();
       final Wallet wallet =
           await _walletService.createWalletFromMnemonic(recoveryPhrase);
+      debugPrint('Wallet created: ${wallet.publicKey}');
       await Future<void>.delayed(const Duration(seconds: 20));
+      debugPrint('Creating token account');
       final ProgramAccount tokenAccount =
           await _walletService.createAssociatedTokenAccount(wallet);
+      debugPrint('Token account created: ${tokenAccount.pubkey}');
 
       await _walletService.requestZARP(wallet);
 
@@ -46,6 +50,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
         errorMessage: null,
       );
     } catch (e) {
+      debugPrint('Error creating wallet: $e');
       return (
         recoveryPhrase: null,
         wallet: null,

@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../widgets/progress_steps.dart';
 
 class AccessWalletScreen extends StatefulWidget {
@@ -80,9 +82,9 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                     value: _isAgreementChecked,
                     activeColor: Colors.blue,
                     checkColor: Colors.white,
-                    fillColor: MaterialStateProperty.resolveWith<Color>(
-                      (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.selected)) {
+                    fillColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.selected)) {
                           return Colors.blue;
                         }
                         return Colors.grey;
@@ -152,8 +154,13 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
               width: double.infinity,
               child: TextButton(
                 onPressed: _isAgreementChecked
-                    ? () {
-                        context.go('/wallet');
+                    ? () async {
+                        final WalletProvider walletProvider =
+                            Provider.of<WalletProvider>(context, listen: false);
+                        await walletProvider.initialize();
+                        if (context.mounted) {
+                          context.go('/wallet');
+                        }
                       }
                     : null,
                 child: Text(
