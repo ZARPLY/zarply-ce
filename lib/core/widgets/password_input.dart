@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'clear_icon_button.dart';
 
 class PasswordInput extends StatefulWidget {
   const PasswordInput({
@@ -25,7 +24,6 @@ class _PasswordInputState extends State<PasswordInput> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(() => setState(() {}));
   }
 
   @override
@@ -51,7 +49,6 @@ class _PasswordInputState extends State<PasswordInput> {
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ClearIconButton(controller: widget.controller),
             IconButton(
               icon: Icon(
                 _obscureText ? Icons.visibility : Icons.visibility_off,
