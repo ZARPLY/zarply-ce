@@ -193,7 +193,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty && until != null) {
+      if (signatures.isNotEmpty) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );
@@ -203,7 +203,6 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      debugPrint('Creating stream controller');
       final StreamController<List<TransactionDetails?>>
           transactionStreamController =
           StreamController<List<TransactionDetails?>>();
@@ -211,18 +210,15 @@ class WalletSolanaService {
       late final Future<void> streamProcessing;
 
       try {
-        debugPrint('Setting up stream processing');
         streamProcessing = transactionStreamController.stream.listen(
           (List<TransactionDetails?> batch) {
             if (isCancelled != null && isCancelled()) {
               return;
             }
-            debugPrint('Processing batch of size: ${batch.length}');
             allTransactions.addAll(batch);
           },
         ).asFuture<void>();
 
-        debugPrint('Fetching transactions');
         await _fetchTransactionsWithCircuitBreaker(
           signatures
               .map((TransactionSignatureInformation sig) => sig.signature)
@@ -240,17 +236,12 @@ class WalletSolanaService {
           isCancelled: isCancelled,
         );
 
-        debugPrint('Closing stream');
         await transactionStreamController.close();
 
-        debugPrint('Waiting for stream processing to complete');
         await streamProcessing;
-        debugPrint('Stream processing completed');
       } catch (e) {
-        debugPrint('Error during transaction processing: $e');
         rethrow;
       } finally {
-        debugPrint('Ensuring stream is closed');
         await transactionStreamController.close();
       }
 
@@ -277,7 +268,6 @@ class WalletSolanaService {
         groupedTransactions[monthKey]!.add(transaction);
       }
 
-      debugPrint('Returning grouped transactions');
       return groupedTransactions;
     } catch (e) {
       throw WalletSolanaServiceException(

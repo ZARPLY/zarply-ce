@@ -49,7 +49,6 @@ class WalletViewModel extends ChangeNotifier {
         tokenAccount = providedTokenAccount;
 
         await refreshBalances();
-        await updateTransactionCount();
 
         isLoading = false;
         isLoadingTransactions = true;
@@ -57,16 +56,14 @@ class WalletViewModel extends ChangeNotifier {
 
         try {
           await loadTransactions();
+          await updateTransactionCount();
         } catch (e) {
-          isLoadingTransactions = false;
-          notifyListeners();
+          rethrow;
         }
-      } else {
-        isLoading = false;
-        isLoadingTransactions = false;
-        notifyListeners();
       }
     } catch (e) {
+      throw Exception('Error loading wallet data: $e');
+    } finally {
       isLoading = false;
       isLoadingTransactions = false;
       notifyListeners();
@@ -109,7 +106,6 @@ class WalletViewModel extends ChangeNotifier {
       final String? lastSignature =
           await _walletRepository.getLastTransactionSignature();
 
-      isLoadingMore = true;
       loadedTransactions = 0;
       notifyListeners();
 
@@ -119,8 +115,6 @@ class WalletViewModel extends ChangeNotifier {
           lastKnownSignature: lastSignature,
           onBatchLoaded: (List<TransactionDetails?> batch) {
             if (_walletRepository.isCancelled) {
-              isLoadingTransactions = false;
-              notifyListeners();
               return;
             }
 
@@ -137,17 +131,7 @@ class WalletViewModel extends ChangeNotifier {
           },
         );
       } catch (e) {
-        isLoadingTransactions = false;
-        notifyListeners();
-      } finally {
-        debugPrint('Loading more finished');
-        isLoadingMore = false;
-        isLoadingTransactions = false;
-
-        if (!_walletRepository.isCancelled) {
-          updateHasMoreTransactions();
-        }
-        notifyListeners();
+        throw Exception('Error loading transactions: $e');
       }
     }
   }
@@ -157,7 +141,7 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshTransactions() async {
-    if (isRefreshing) return; // Prevent multiple refreshes
+    if (isRefreshing) return;
 
     isRefreshing = true;
     notifyListeners();
@@ -166,9 +150,8 @@ class WalletViewModel extends ChangeNotifier {
       await refreshBalances();
       await loadTransactions();
     } catch (e) {
-      debugPrint('Error in refreshTransactions: $e');
+      throw Exception('Error in refreshTransactions: $e');
     } finally {
-      debugPrint('Refreshing finished');
       isRefreshing = false;
       notifyListeners();
     }
@@ -281,7 +264,12 @@ class WalletViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Error loading more transactions: $e');
     } finally {
+      debugPrint('Loading more finished');
       isLoadingMore = false;
+
+      if (!_walletRepository.isCancelled) {
+        updateHasMoreTransactions();
+      }
       notifyListeners();
     }
   }
