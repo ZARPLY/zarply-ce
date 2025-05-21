@@ -174,8 +174,8 @@ class WalletSolanaService {
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
     int limit = 100,
-    String? afterSignature,
-    String? beforeSignature,
+    String? until,
+    String? before,
     Function(List<TransactionDetails?>)? onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
@@ -184,8 +184,8 @@ class WalletSolanaService {
           await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
         limit: limit,
-        until: afterSignature,
-        before: beforeSignature,
+        until: until,
+        before: before,
         commitment: Commitment.confirmed,
       );
 
@@ -193,50 +193,65 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty && afterSignature == null) {
+      if (signatures.isNotEmpty && until != null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );
       }
 
-      final StreamController<List<TransactionDetails?>>
-          transactionStreamController =
-          StreamController<List<TransactionDetails?>>();
-
       if (isCancelled != null && isCancelled()) {
-        await transactionStreamController.close();
         return <String, List<TransactionDetails?>>{};
       }
 
-      await _fetchTransactionsWithCircuitBreaker(
-        signatures
-            .map((TransactionSignatureInformation sig) => sig.signature)
-            .toList(),
-        onBatchLoaded: (List<TransactionDetails?> batch) {
-          if (isCancelled != null && isCancelled()) {
-            return;
-          }
-
-          transactionStreamController.add(batch);
-          if (onBatchLoaded != null) {
-            onBatchLoaded(batch);
-          }
-        },
-        isCancelled: isCancelled,
-      ).then((_) {
-        transactionStreamController.close();
-      }).catchError((Object e) {
-        transactionStreamController.addError(e);
-        transactionStreamController.close();
-      });
-
+      debugPrint('Creating stream controller');
+      final StreamController<List<TransactionDetails?>>
+          transactionStreamController =
+          StreamController<List<TransactionDetails?>>();
       final List<TransactionDetails?> allTransactions = <TransactionDetails?>[];
-      await for (final List<TransactionDetails?> batch
-          in transactionStreamController.stream) {
-        if (isCancelled != null && isCancelled()) {
-          break;
-        }
-        allTransactions.addAll(batch);
+      late final Future<void> streamProcessing;
+
+      try {
+        debugPrint('Setting up stream processing');
+        streamProcessing = transactionStreamController.stream.listen(
+          (List<TransactionDetails?> batch) {
+            if (isCancelled != null && isCancelled()) {
+              return;
+            }
+            debugPrint('Processing batch of size: ${batch.length}');
+            allTransactions.addAll(batch);
+          },
+        ).asFuture<void>();
+
+        debugPrint('Fetching transactions');
+        await _fetchTransactionsWithCircuitBreaker(
+          signatures
+              .map((TransactionSignatureInformation sig) => sig.signature)
+              .toList(),
+          onBatchLoaded: (List<TransactionDetails?> batch) {
+            if (isCancelled != null && isCancelled()) {
+              return;
+            }
+
+            transactionStreamController.add(batch);
+            if (onBatchLoaded != null) {
+              onBatchLoaded(batch);
+            }
+          },
+          isCancelled: isCancelled,
+        );
+
+        debugPrint('Closing stream');
+        await transactionStreamController.close();
+
+        debugPrint('Waiting for stream processing to complete');
+        await streamProcessing;
+        debugPrint('Stream processing completed');
+      } catch (e) {
+        debugPrint('Error during transaction processing: $e');
+        rethrow;
+      } finally {
+        debugPrint('Ensuring stream is closed');
+        await transactionStreamController.close();
       }
 
       if (isCancelled != null && isCancelled()) {
@@ -262,6 +277,7 @@ class WalletSolanaService {
         groupedTransactions[monthKey]!.add(transaction);
       }
 
+      debugPrint('Returning grouped transactions');
       return groupedTransactions;
     } catch (e) {
       throw WalletSolanaServiceException(
@@ -281,8 +297,6 @@ class WalletSolanaService {
         'pubkey': wallet.address,
       }),
     );
-
-    debugPrint('requestZARP response: ${response.body}');
 
     if (response.statusCode != 200) {
       throw WalletSolanaServiceException(
