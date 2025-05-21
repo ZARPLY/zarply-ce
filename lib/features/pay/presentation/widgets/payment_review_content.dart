@@ -42,16 +42,34 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
-      // Handle error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Wallet not found. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       return;
     }
 
-    await _viewModel.makeTransaction(
-      wallet: wallet,
-      recipientAddress: widget.recipientAddress,
-      amount: widget.amount,
-      context: context,
-    );
+    try {
+      await _viewModel.makeTransaction(
+        wallet: wallet,
+        recipientAddress: widget.recipientAddress,
+        amount: widget.amount,
+        context: context,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

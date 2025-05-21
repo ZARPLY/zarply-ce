@@ -29,33 +29,48 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (recipientAddress.isNotEmpty) {
-        final String txSignature = await _repository.makeTransaction(
-          wallet: wallet,
-          recipientAddress: recipientAddress,
-          amount: double.parse(amount),
-        );
-
-        await Future<void>.delayed(const Duration(seconds: 2));
-        final TransactionDetails? txDetails =
-            await _repository.getTransactionDetails(txSignature);
-
-        if (txDetails != null) {
-          await _repository.storeTransactionDetails(txDetails);
-
-          // Refresh transactions in the wallet provider
-          final walletProvider =
-              Provider.of<WalletProvider>(context, listen: false);
-          await walletProvider.refreshTransactions();
-        }
-
-        _hasPaymentBeenMade = true;
-        notifyListeners();
-      } else {
-        _hasPaymentBeenMade = false;
-        notifyListeners();
-        throw Exception('Wallet or recipient address not found');
+      if (recipientAddress.isEmpty) {
+        throw Exception('Recipient address not found');
       }
+
+      final String txSignature = await _repository.makeTransaction(
+        wallet: wallet,
+        recipientAddress: recipientAddress,
+        amount: double.parse(amount),
+      );
+
+      // Wait for transaction confirmation
+      TransactionDetails? txDetails;
+      int retryCount = 0;
+      const int maxRetries = 10;
+      const Duration retryDelay = Duration(seconds: 2);
+
+      while (retryCount < maxRetries) {
+        txDetails = await _repository.getTransactionDetails(txSignature);
+        if (txDetails != null) {
+          break;
+        }
+        await Future<void>.delayed(retryDelay);
+        retryCount++;
+      }
+
+      if (txDetails == null) {
+        throw Exception('Transaction not confirmed after multiple attempts');
+      }
+
+      await _repository.storeTransactionDetails(txDetails);
+
+      // Refresh transactions in the wallet provider
+      final walletProvider =
+          Provider.of<WalletProvider>(context, listen: false);
+      await walletProvider.refreshTransactions();
+
+      _hasPaymentBeenMade = true;
+      notifyListeners();
+    } catch (e) {
+      _hasPaymentBeenMade = false;
+      notifyListeners();
+      rethrow; // Re-throw the error to be handled by the UI
     } finally {
       _isLoading = false;
       notifyListeners();
