@@ -5,7 +5,6 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';
-import '../../features/onboarding/presentation/screens/new_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/private_keys_screen.dart';
 import '../../features/onboarding/presentation/screens/restore_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/splash_screen.dart';
@@ -40,11 +39,6 @@ GoRouter createRouter(WalletProvider walletProvider) {
             path: '/welcome',
             builder: (BuildContext context, GoRouterState state) =>
                 const WelcomeScreen(),
-          ),
-          GoRoute(
-            path: '/new_wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const NewWalletScreen(),
           ),
           GoRoute(
             path: '/backup_wallet',

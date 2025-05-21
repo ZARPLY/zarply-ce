@@ -1,4 +1,5 @@
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -22,20 +23,41 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   final WalletStorageService _storageService;
 
   @override
-  Future<({String recoveryPhrase, Wallet wallet, ProgramAccount tokenAccount})>
-      createWallet() async {
-    final String recoveryPhrase = bip39.generateMnemonic();
-    final Wallet wallet =
-        await _walletService.createWalletFromMnemonic(recoveryPhrase);
-    await Future<void>.delayed(const Duration(seconds: 2));
-    final ProgramAccount tokenAccount =
-        await _walletService.createAssociatedTokenAccount(wallet);
+  Future<
+      ({
+        String? recoveryPhrase,
+        Wallet? wallet,
+        ProgramAccount? tokenAccount,
+        String? errorMessage
+      })> createWallet() async {
+    try {
+      final String recoveryPhrase = bip39.generateMnemonic();
+      final Wallet wallet =
+          await _walletService.createWalletFromMnemonic(recoveryPhrase);
+      debugPrint('Wallet created: ${wallet.publicKey}');
+      await Future<void>.delayed(const Duration(seconds: 20));
+      debugPrint('Creating token account');
+      final ProgramAccount tokenAccount =
+          await _walletService.createAssociatedTokenAccount(wallet);
+      debugPrint('Token account created: ${tokenAccount.pubkey}');
 
-    return (
-      recoveryPhrase: recoveryPhrase,
-      wallet: wallet,
-      tokenAccount: tokenAccount,
-    );
+      await _walletService.requestZARP(wallet);
+
+      return (
+        recoveryPhrase: recoveryPhrase,
+        wallet: wallet,
+        tokenAccount: tokenAccount,
+        errorMessage: null,
+      );
+    } catch (e) {
+      debugPrint('Error creating wallet: $e');
+      return (
+        recoveryPhrase: null,
+        wallet: null,
+        tokenAccount: null,
+        errorMessage: 'Could not create wallet. Please try again later.',
+      );
+    }
   }
 
   @override

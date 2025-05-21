@@ -44,27 +44,37 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
+  Future<Map<String, List<TransactionDetails?>>> getNewerTransactions({
     required String walletAddress,
-    String? afterSignature,
-    String? beforeSignature,
+    String? lastKnownSignature,
     Function(List<TransactionDetails?>)? onBatchLoaded,
-    int limit = 100,
   }) {
     return _walletSolanaService.getAccountTransactions(
       walletAddress: walletAddress,
-      afterSignature: afterSignature,
-      beforeSignature: beforeSignature,
+      until: lastKnownSignature,
       onBatchLoaded: (List<TransactionDetails?> batch) {
-        if (_isCancelled) {
-          return;
-        }
-        if (onBatchLoaded != null) {
-          onBatchLoaded(batch);
-        }
+        if (_isCancelled) return;
+        if (onBatchLoaded != null) onBatchLoaded(batch);
       },
       isCancelled: () => _isCancelled,
-      limit: limit,
+    );
+  }
+
+  @override
+  Future<Map<String, List<TransactionDetails?>>> getOlderTransactions({
+    required String walletAddress,
+    required String oldestSignature,
+    Function(List<TransactionDetails?>)? onBatchLoaded,
+  }) {
+    return _walletSolanaService.getAccountTransactions(
+      walletAddress: walletAddress,
+      before: oldestSignature,
+      limit: 100,
+      onBatchLoaded: (List<TransactionDetails?> batch) {
+        if (_isCancelled) return;
+        if (onBatchLoaded != null) onBatchLoaded(batch);
+      },
+      isCancelled: () => _isCancelled,
     );
   }
 
