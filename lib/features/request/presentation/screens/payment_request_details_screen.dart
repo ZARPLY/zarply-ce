@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../pay/presentation/models/payment_review_content_view_model.dart';
 
 class PaymentRequestDetailsScreen extends StatefulWidget {
   const PaymentRequestDetailsScreen({
@@ -25,22 +26,71 @@ class _PaymentRequestDetailsScreenState
   bool _isProcessing = false;
   bool _showCheckmarkFrom = false;
   bool _showCheckmarkTo = false;
+  late final PaymentReviewContentViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = PaymentReviewContentViewModel();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
 
   Future<void> _handlePaymentConfirmation() async {
     setState(() {
       _isProcessing = true;
     });
 
-    // Simulate payment processing
-    await Future.delayed(const Duration(seconds: 2));
+    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    final wallet = walletProvider.wallet;
 
-    if (mounted) {
-      // Show success bottom sheet
-      await _showSuccessBottomSheet();
-
-      // Navigate back to wallet screen
+    if (wallet == null) {
       if (mounted) {
-        context.go('/wallet');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Wallet not found. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      await _viewModel.makeTransaction(
+        wallet: wallet,
+        recipientAddress: widget.recipientAddress,
+        amount: widget.amount,
+        context: context,
+      );
+
+      if (mounted) {
+        // Show success bottom sheet
+        await _showSuccessBottomSheet();
+
+        // Navigate back to wallet screen
+        if (mounted) {
+          context.go('/wallet');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isProcessing = false;
+        });
       }
     }
   }

@@ -36,7 +36,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
       final String txSignature = await _repository.makeTransaction(
         wallet: wallet,
         recipientAddress: recipientAddress,
-        amount: double.parse(amount),
+        amount: double.parse(amount) / 100,
       );
 
       // Wait for transaction confirmation
