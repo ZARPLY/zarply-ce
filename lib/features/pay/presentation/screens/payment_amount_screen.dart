@@ -6,7 +6,7 @@ import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
 
-class PaymentAmountScreen extends StatelessWidget {
+class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
     required this.recipientAddress,
     required this.source,
@@ -17,6 +17,19 @@ class PaymentAmountScreen extends StatelessWidget {
   final String recipientAddress;
   final String? initialAmount;
   final String source;
+
+  @override
+  State<PaymentAmountScreen> createState() => _PaymentAmountScreenState();
+}
+
+class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
+  final FocusNode _amountFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _amountFocus.dispose();
+    super.dispose();
+  }
 
   void _showPaymentReviewModal(BuildContext context, String amount) {
     showModalBottomSheet<void>(
@@ -34,7 +47,7 @@ class PaymentAmountScreen extends StatelessWidget {
         ),
         child: PaymentReviewContent(
           amount: amount,
-          recipientAddress: recipientAddress,
+          recipientAddress: widget.recipientAddress,
           onCancel: () => Navigator.pop(context),
         ),
       ),
@@ -45,8 +58,8 @@ class PaymentAmountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
-        recipientAddress: recipientAddress,
-        initialAmount: initialAmount,
+        recipientAddress: widget.recipientAddress,
+        initialAmount: widget.initialAmount,
       ),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
@@ -56,7 +69,7 @@ class PaymentAmountScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
-                  onTap: () => context.go(source),
+                  onTap: () => context.go(widget.source),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: const Color(0xFFEBECEF),
@@ -82,7 +95,14 @@ class PaymentAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: initialAmount != null && initialAmount!.isNotEmpty,
+                    readOnly: widget.initialAmount != null &&
+                        widget.initialAmount!.isNotEmpty,
+                    focusNode: _amountFocus,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _showPaymentReviewModal(
+                      context,
+                      viewModel.paymentAmountController.text,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Column(

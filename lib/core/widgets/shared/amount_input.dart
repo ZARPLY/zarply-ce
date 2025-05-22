@@ -8,10 +8,16 @@ class AmountInput extends StatefulWidget {
     required this.controller,
     this.readOnly = false,
     super.key,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted, 
+    this.focusNode,
   });
 
   final TextEditingController controller;
   final bool readOnly;
+  final TextInputAction textInputAction;  
+  final ValueChanged<String>? onSubmitted;   
+  final FocusNode? focusNode;   
 
   @override
   State<AmountInput> createState() => _AmountInputState();
@@ -47,6 +53,9 @@ class _AmountInputState extends State<AmountInput> {
     return TextField(
       controller: _displayController,
       keyboardType: TextInputType.number,
+      focusNode: widget.focusNode,
+      textInputAction: widget.textInputAction,
+      onSubmitted: widget.onSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
       readOnly: widget.readOnly,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly,
@@ -56,18 +65,13 @@ class _AmountInputState extends State<AmountInput> {
               widget.controller.text = '';
               return newValue;
             }
-
             final int? cents = int.tryParse(newValue.text);
             if (cents == null) return oldValue;
-
             final double rands = cents / 100;
-
             final String formatted =
                 Formatters.formatAmount(rands).replaceAll('R', '').trim();
             if (formatted.isEmpty) return oldValue;
-
             widget.controller.text = newValue.text;
-
             return TextEditingValue(
               text: formatted,
               selection: TextSelection.collapsed(offset: formatted.length),

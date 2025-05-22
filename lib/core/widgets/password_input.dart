@@ -7,12 +7,18 @@ class PasswordInput extends StatefulWidget {
     this.labelText = 'Password',
     this.errorText,
     this.onChanged,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
+    this.focusNode,
   });
 
   final TextEditingController controller;
   final String labelText;
   final String? errorText;
   final void Function(String)? onChanged;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final FocusNode? focusNode;
 
   @override
   State<PasswordInput> createState() => _PasswordInputState();
@@ -30,8 +36,17 @@ class _PasswordInputState extends State<PasswordInput> {
   Widget build(BuildContext context) {
     return TextField(
       controller: widget.controller,
+      focusNode: widget.focusNode,
       obscureText: _obscureText,
       onChanged: widget.onChanged,
+      textInputAction: widget.textInputAction,
+      onSubmitted: (String value) {
+        if (widget.onSubmitted != null) {
+          widget.onSubmitted!(value);
+        } else {
+          FocusScope.of(context).nextFocus();
+        }
+      },
       style: const TextStyle(
         fontSize: 14,
       ),
