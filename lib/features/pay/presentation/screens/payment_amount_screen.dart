@@ -95,13 +95,14 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: widget.initialAmount != null,
+                    readOnly: widget.initialAmount != null &&
+                        widget.initialAmount!.isNotEmpty,
                     focusNode: _amountFocus,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _showPaymentReviewModal(
                       context,
                       viewModel.paymentAmountController.text,
-                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Column(

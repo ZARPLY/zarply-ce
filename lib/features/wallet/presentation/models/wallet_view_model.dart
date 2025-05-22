@@ -43,20 +43,27 @@ class WalletViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    if (providedWallet != null && providedTokenAccount != null) {
-      wallet = providedWallet;
-      tokenAccount = providedTokenAccount;
+    try {
+      if (providedWallet != null && providedTokenAccount != null) {
+        wallet = providedWallet;
+        tokenAccount = providedTokenAccount;
 
-      await refreshBalances();
+        await refreshBalances();
 
-      await updateTransactionCount();
+        isLoading = false;
+        isLoadingTransactions = true;
+        notifyListeners();
 
-      isLoading = false;
-      notifyListeners();
-
-      isLoadingTransactions = true;
-      await loadTransactions();
-    } else {
+        try {
+          await loadTransactions();
+          await updateTransactionCount();
+        } catch (e) {
+          rethrow;
+        }
+      }
+    } catch (e) {
+      throw Exception('Error loading wallet data: $e');
+    } finally {
       isLoading = false;
       isLoadingTransactions = false;
       notifyListeners();
@@ -93,21 +100,21 @@ class WalletViewModel extends ChangeNotifier {
       notifyListeners();
     }
 
+    (_walletRepository as WalletRepositoryImpl).resetCancellation();
+
     if (storedTransactions.isEmpty || isRefreshing) {
       final String? lastSignature =
           await _walletRepository.getLastTransactionSignature();
 
-      isLoadingMore = true;
       loadedTransactions = 0;
       notifyListeners();
 
       try {
-        await _walletRepository.getAccountTransactions(
+        await _walletRepository.getNewerTransactions(
           walletAddress: tokenAccount!.pubkey,
-          afterSignature: lastSignature,
+          lastKnownSignature: lastSignature,
           onBatchLoaded: (List<TransactionDetails?> batch) {
-            if ((_walletRepository as WalletRepositoryImpl).isCancelled) {
-              isLoadingTransactions = false;
+            if (_walletRepository.isCancelled) {
               return;
             }
 
@@ -120,23 +127,173 @@ class WalletViewModel extends ChangeNotifier {
 
             _updateOldestSignature(storedTransactions);
             isLoadingTransactions = false;
-
             notifyListeners();
           },
         );
-      } finally {
-        if (!(_walletRepository as WalletRepositoryImpl).isCancelled) {
-          isLoadingMore = false;
-          isRefreshing = false;
-
-          updateHasMoreTransactions();
-        } else {
-          isLoadingMore = false;
-          isRefreshing = false;
-        }
-        notifyListeners();
+      } catch (e) {
+        throw Exception('Error loading transactions: $e');
       }
     }
+  }
+
+  Future<void> refreshTransactionsFromButton() async {
+    unawaited(refreshIndicatorKey?.currentState?.show());
+  }
+
+  Future<void> refreshTransactions() async {
+    if (isRefreshing) return;
+
+    isRefreshing = true;
+    notifyListeners();
+
+    try {
+      await refreshBalances();
+      await loadTransactions();
+    } catch (e) {
+      throw Exception('Error in refreshTransactions: $e');
+    } finally {
+      isRefreshing = false;
+      notifyListeners();
+    }
+  }
+
+  TransactionTransferInfo? parseTransferDetails(
+    TransactionDetails? transaction,
+  ) {
+    if (transaction == null || tokenAccount == null) return null;
+
+    return _walletRepository.parseTransferDetails(
+      transaction,
+      tokenAccount!.pubkey,
+    );
+  }
+
+  List<dynamic> getSortedTransactionItems() {
+    final List<dynamic> transactionItems = <dynamic>[];
+
+    final List<String> sortedMonths = transactions.keys.toList()
+      ..sort((String a, String b) => b.compareTo(a));
+
+    for (final String monthKey in sortedMonths) {
+      final int displayedCount =
+          transactions[monthKey]!.where((TransactionDetails? tx) {
+        final TransactionTransferInfo? transferInfo = parseTransferDetails(tx);
+        return transferInfo != null && transferInfo.amount != 0;
+      }).length;
+
+      transactionItems.add(<String, dynamic>{
+        'type': 'header',
+        'month': monthKey,
+        'monthKey': monthKey,
+        'count': displayedCount,
+      });
+
+      final List<TransactionDetails?> sortedTransactions =
+          List<TransactionDetails?>.from(transactions[monthKey]!)
+            ..sort((TransactionDetails? a, TransactionDetails? b) {
+              if (a == null || b == null) return 0;
+              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
+            });
+
+      transactionItems.addAll(sortedTransactions);
+    }
+
+    return transactionItems;
+  }
+
+  Future<void> updateTransactionCount() async {
+    if (tokenAccount == null) return;
+
+    final int? storedCount =
+        await _walletRepository.getStoredTransactionCount();
+
+    if (storedCount != null) {
+      totalSignatures = storedCount;
+    } else {
+      final int count = await _walletRepository.getTransactionCount(
+        tokenAccount!.pubkey,
+      );
+      totalSignatures = count;
+      await _walletRepository.storeTransactionCount(count);
+    }
+
+    updateHasMoreTransactions();
+  }
+
+  Future<void> loadMoreTransactions() async {
+    if (tokenAccount == null || isLoadingMore || !hasMoreTransactionsToLoad) {
+      return;
+    }
+
+    (_walletRepository as WalletRepositoryImpl).resetCancellation();
+
+    isLoadingMore = true;
+    loadedTransactions = 0;
+    notifyListeners();
+
+    final Map<String, List<TransactionDetails?>> storedTransactions =
+        Map<String, List<TransactionDetails?>>.from(transactions);
+
+    try {
+      await _walletRepository.getOlderTransactions(
+        walletAddress: tokenAccount!.pubkey,
+        oldestSignature: oldestLoadedSignature!,
+        onBatchLoaded: (List<TransactionDetails?> batch) {
+          if (_walletRepository.isCancelled) {
+            return;
+          }
+
+          _processNewTransactionBatch(
+            batch,
+            storedTransactions,
+            isOlderTransactions: true,
+          );
+          loadedTransactions +=
+              batch.where((TransactionDetails? tx) => tx != null).length;
+
+          transactions =
+              Map<String, List<TransactionDetails?>>.from(storedTransactions);
+          _updateOldestSignature(storedTransactions);
+          notifyListeners();
+        },
+      );
+
+      if (!_walletRepository.isCancelled) {
+        updateHasMoreTransactions();
+      }
+    } catch (e) {
+      throw Exception('Error loading more transactions: $e');
+    } finally {
+      debugPrint('Loading more finished');
+      isLoadingMore = false;
+
+      if (!_walletRepository.isCancelled) {
+        updateHasMoreTransactions();
+      }
+      notifyListeners();
+    }
+  }
+
+  void updateHasMoreTransactions() {
+    int loadedCount = 0;
+    for (final List<TransactionDetails?> txList in transactions.values) {
+      loadedCount +=
+          txList.where((TransactionDetails? tx) => tx != null).length;
+    }
+
+    loadedTransactions = loadedCount;
+    hasMoreTransactionsToLoad = loadedTransactions < totalSignatures;
+    notifyListeners();
+  }
+
+  void cancelOperations() {
+    (_walletRepository as WalletRepositoryImpl).cancelTransactions();
+  }
+
+  @override
+  void dispose() {
+    cancelOperations();
+    super.dispose();
   }
 
   Future<void> _processNewTransactionBatch(
@@ -210,120 +367,6 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransactionsFromButton() async {
-    unawaited(refreshIndicatorKey?.currentState?.show());
-  }
-
-  Future<void> refreshTransactions() async {
-    isRefreshing = true;
-    notifyListeners();
-
-    await Future.wait(<Future<void>>[
-      refreshBalances(),
-      loadTransactions(),
-    ]);
-  }
-
-  TransactionTransferInfo? parseTransferDetails(
-    TransactionDetails? transaction,
-  ) {
-    if (transaction == null || tokenAccount == null) return null;
-
-    return _walletRepository.parseTransferDetails(
-      transaction,
-      tokenAccount!.pubkey,
-    );
-  }
-
-  List<dynamic> getSortedTransactionItems() {
-    final List<dynamic> transactionItems = <dynamic>[];
-
-    final List<String> sortedMonths = transactions.keys.toList()
-      ..sort((String a, String b) => b.compareTo(a));
-
-    for (final String monthKey in sortedMonths) {
-      final int displayedCount =
-          transactions[monthKey]!.where((TransactionDetails? tx) {
-        final TransactionTransferInfo? transferInfo = parseTransferDetails(tx);
-        return transferInfo != null && transferInfo.amount != 0;
-      }).length;
-
-      transactionItems.add(<String, dynamic>{
-        'type': 'header',
-        'month': monthKey,
-        'monthKey': monthKey,
-        'count': displayedCount,
-      });
-
-      final List<TransactionDetails?> sortedTransactions =
-          List<TransactionDetails?>.from(transactions[monthKey]!)
-            ..sort((TransactionDetails? a, TransactionDetails? b) {
-              if (a == null || b == null) return 0;
-              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
-            });
-
-      transactionItems.addAll(sortedTransactions);
-    }
-
-    return transactionItems;
-  }
-
-  void cancelOperations() {
-    (_walletRepository as WalletRepositoryImpl).cancelTransactions();
-  }
-
-  @override
-  void dispose() {
-    cancelOperations();
-    super.dispose();
-  }
-
-  Future<void> loadMoreTransactions() async {
-    if (tokenAccount == null || isLoadingMore || !hasMoreTransactionsToLoad) {
-      return;
-    }
-
-    (_walletRepository as WalletRepositoryImpl).resetCancellation();
-
-    isLoadingMore = true;
-    loadedTransactions = 0;
-    notifyListeners();
-
-    final Map<String, List<TransactionDetails?>> storedTransactions =
-        Map<String, List<TransactionDetails?>>.from(transactions);
-
-    try {
-      await _walletRepository.getAccountTransactions(
-        walletAddress: tokenAccount!.pubkey,
-        limit: 100,
-        beforeSignature: oldestLoadedSignature,
-        onBatchLoaded: (List<TransactionDetails?> batch) {
-          _processNewTransactionBatch(
-            batch,
-            storedTransactions,
-            isOlderTransactions: true,
-          );
-          loadedTransactions +=
-              batch.where((TransactionDetails? tx) => tx != null).length;
-
-          transactions =
-              Map<String, List<TransactionDetails?>>.from(storedTransactions);
-          _updateOldestSignature(storedTransactions);
-          notifyListeners();
-        },
-      );
-
-      if (!_walletRepository.isCancelled) {
-        updateHasMoreTransactions();
-      }
-    } catch (e) {
-      throw Exception('Error loading more transactions: $e');
-    } finally {
-      isLoadingMore = false;
-      notifyListeners();
-    }
-  }
-
   void _updateOldestSignature(
     Map<String, List<TransactionDetails?>> transactions,
   ) {
@@ -346,36 +389,5 @@ class WalletViewModel extends ChangeNotifier {
     }
 
     oldestLoadedSignature = oldestSig;
-  }
-
-  Future<void> updateTransactionCount() async {
-    if (tokenAccount == null) return;
-
-    final int? storedCount =
-        await _walletRepository.getStoredTransactionCount();
-
-    if (storedCount != null) {
-      totalSignatures = storedCount;
-    } else {
-      final int count = await _walletRepository.getTransactionCount(
-        tokenAccount!.pubkey,
-      );
-      totalSignatures = count;
-      await _walletRepository.storeTransactionCount(count);
-    }
-
-    updateHasMoreTransactions();
-  }
-
-  void updateHasMoreTransactions() {
-    int loadedCount = 0;
-    for (final List<TransactionDetails?> txList in transactions.values) {
-      loadedCount +=
-          txList.where((TransactionDetails? tx) => tx != null).length;
-    }
-
-    loadedTransactions = loadedCount;
-    hasMoreTransactionsToLoad = loadedTransactions < totalSignatures;
-    notifyListeners();
   }
 }
