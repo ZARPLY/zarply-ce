@@ -83,7 +83,10 @@ class _AmountInputState extends State<AmountInput> {
           'R ',
           style: TextStyle(fontSize: 14),
         ),
-        suffixIcon: ClearIconButton(controller: _displayController),
+        suffixIcon: ClearIconButton(
+          controller: _displayController,
+          otherControllers: [widget.controller],
+        ),
         border: const OutlineInputBorder(),
         enabledBorder: const OutlineInputBorder(
           borderSide: BorderSide(
