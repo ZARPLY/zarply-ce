@@ -19,6 +19,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
   final FocusNode _checkboxFocus = FocusNode();
+  final FocusNode _rememberPasswordFocus = FocusNode();
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     _passwordFocus.dispose();
     _confirmFocus.dispose();
     _checkboxFocus.dispose();
+    _rememberPasswordFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -117,16 +119,16 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                   const SizedBox(height: 24),
                   Focus(
                     focusNode: _checkboxFocus,
-                    child: Builder(builder:(context) {
+                    child: Builder(builder: (context) {
                       final bool hasFocus = Focus.of(context).hasFocus;
                       return Container(
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color: hasFocus ? Colors.blue : Colors.transparent,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8)
-                        ),
+                            border: Border.all(
+                              color:
+                                  hasFocus ? Colors.blue : Colors.transparent,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.all(8),
                         child: Row(
                           children: <Widget>[
@@ -142,13 +144,48 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                               child: Text(
                                 'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
                                 style: Theme.of(context).textTheme.bodySmall,
-                               ),
                               ),
-                             ],
                             ),
-                           );
-                    },
-                    ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  Focus(
+                    focusNode: _rememberPasswordFocus,
+                    child: Builder(builder: (context) {
+                      final bool hasFocus = Focus.of(context).hasFocus;
+                      return Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color:
+                                  hasFocus ? Colors.blue : Colors.transparent,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          children: <Widget>[
+                            Checkbox(
+                              value: viewModel.rememberPassword,
+                              activeColor: const Color(0xFF4169E1),
+                              onChanged: (bool? value) {
+                                if (value != null) {
+                                  viewModel.setRememberPassword(value);
+                                }
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Remember Password',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ),
                   const Spacer(),
                   SizedBox(
