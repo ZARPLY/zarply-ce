@@ -18,6 +18,9 @@ class RestoreWalletScreen extends StatefulWidget {
 class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   late final RestoreWalletViewModel _viewModel;
 
+  final FocusNode _phraseFocus = FocusNode();
+  final FocusNode _privateKeyFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +29,8 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
 
   @override
   void dispose() {
+    _phraseFocus.dispose();
+    _privateKeyFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -145,8 +150,11 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                 const SizedBox(height: 32),
                 if (_viewModel.selectedRestoreMethod == 'Seed Phrase')
                   TextField(
+                    focusNode: _phraseFocus,
                     controller: _viewModel.phraseController,
                     maxLines: 3,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleRestoreWallet(),
                     style: const TextStyle(
                       fontSize: 14,
                     ),
@@ -167,8 +175,11 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   )
                 else
                   TextField(
+                    focusNode: _privateKeyFocus,
                     controller: _viewModel.privateKeyController,
                     maxLines: 1,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleRestoreWallet(),
                     style: const TextStyle(
                       fontSize: 14,
                     ),
