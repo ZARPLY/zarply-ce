@@ -61,9 +61,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
-          recipientAddress: recipientAddress,
-          initialAmount: initialAmount,
-          currentWalletAddress: recipientAddress),
+          recipientAddress: widget.recipientAddress,
+          initialAmount: widget.initialAmount,
+          currentWalletAddress: widget.recipientAddress),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
           return Scaffold(
@@ -115,7 +115,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: Text(
-                          viewModel.recipientAddress,
+                          widget.recipientAddress,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -128,7 +128,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                       ),
                       PreviouslyPaidInfo(
                         viewModel: viewModel,
-                        recipientAddress: recipientAddress,
+                        recipientAddress: widget.recipientAddress,
                       ),
                     ],
                   ),

@@ -79,9 +79,9 @@ class WalletProvider extends ChangeNotifier {
           await _walletRepository.getLastTransactionSignature();
 
       // Fetch new transactions
-      await _walletRepository.getAccountTransactions(
+      await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
-        afterSignature: lastSignature,
+        lastKnownSignature: lastSignature,
         onBatchLoaded: (List<TransactionDetails?> batch) {
           for (final TransactionDetails? tx in batch) {
             if (tx == null) continue;
