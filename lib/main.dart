@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/provider/wallet_provider.dart';
 import 'core/provider/auth_provider.dart';
+import 'core/provider/wallet_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
             walletProvider,
             Provider.of<AuthProvider>(context),
           );
-          
+
           return MaterialApp.router(
             title: 'ZARPLY',
             theme: AppTheme.lightTheme,

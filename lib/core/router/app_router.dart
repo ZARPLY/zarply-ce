@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
@@ -22,15 +21,21 @@ import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
-GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) {
+GoRouter createRouter(
+  WalletProvider walletProvider,
+  AuthProvider authProvider,
+) {
   return GoRouter(
     initialLocation: '/',
     redirect: (BuildContext context, GoRouterState state) {
-      final AuthProvider authProvider = Provider.of<AuthProvider>(context,listen: false,);
+      final AuthProvider authProvider = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      );
       final String location = state.uri.toString();
       final bool isAuthenticated = authProvider.isAuthenticated;
 
-      final List<String> protectedRoutes = [
+      final List<String> protectedRoutes = <String>[
         '/wallet',
         '/pay_request',
         '/payment_amount',
@@ -40,7 +45,7 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
         '/scan',
       ];
 
-      final List<String> onboardingRoutes = [
+      final List<String> onboardingRoutes = <String>[
         '/',
         '/welcome',
         '/create_password',
@@ -53,13 +58,15 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
 
       final bool isLoginRoute = location == '/login';
       final bool isProtected = protectedRoutes.contains(location);
-      final bool isFromOnboarding = onboardingRoutes.contains(state.extra?.toString());
+      final bool isFromOnboarding =
+          onboardingRoutes.contains(state.extra?.toString());
 
       if (!isAuthenticated && isProtected && !isFromOnboarding) {
-          return '/login';
+        return '/login';
       }
-      if (isAuthenticated && (isLoginRoute || onboardingRoutes.contains(location))){
-          return '/wallet';
+      if (isAuthenticated &&
+          (isLoginRoute || onboardingRoutes.contains(location))) {
+        return '/wallet';
       }
       return null;
     },

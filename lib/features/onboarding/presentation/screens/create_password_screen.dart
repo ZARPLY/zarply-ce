@@ -117,37 +117,39 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                   const SizedBox(height: 24),
                   Focus(
                     focusNode: _checkboxFocus,
-                    child: Builder(builder:(context) {
-                      final bool hasFocus = Focus.of(context).hasFocus;
-                      return Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: hasFocus ? Colors.blue : Colors.transparent,
-                            width: 2,
+                    child: Builder(
+                      builder: (BuildContext context) {
+                        final bool hasFocus = Focus.of(context).hasFocus;
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color:
+                                  hasFocus ? Colors.blue : Colors.transparent,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          borderRadius: BorderRadius.circular(8)
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<bool>(
-                              value: true,
-                              groupValue: viewModel.isChecked,
-                              activeColor: const Color(0xFF4169E1),
-                              onChanged: (bool? value) {
-                                viewModel.setChecked(value: value ?? false);
-                              },
-                            ),
-                            Expanded(
-                              child: Text(
-                                'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
-                                style: Theme.of(context).textTheme.bodySmall,
-                               ),
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: <Widget>[
+                              Radio<bool>(
+                                value: true,
+                                groupValue: viewModel.isChecked,
+                                activeColor: const Color(0xFF4169E1),
+                                onChanged: (bool? value) {
+                                  viewModel.setChecked(value: value ?? false);
+                                },
                               ),
-                             ],
-                            ),
-                           );
-                    },
+                              Expanded(
+                                child: Text(
+                                  'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const Spacer(),

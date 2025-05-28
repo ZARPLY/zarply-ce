@@ -3,10 +3,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
+import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
 import '../../features/wallet/data/services/wallet_solana_service.dart';
 import '../../features/wallet/data/services/wallet_storage_service.dart';
 import '../../features/wallet/domain/repositories/wallet_repository.dart';
-import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
 
 class WalletProvider extends ChangeNotifier {
   final WalletStorageService _walletStorageService = WalletStorageService();
@@ -19,7 +19,8 @@ class WalletProvider extends ChangeNotifier {
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
-  Map<String, List<TransactionDetails?>> _transactions = {};
+  Map<String, List<TransactionDetails?>> _transactions =
+      <String, List<TransactionDetails?>>{};
 
   Wallet? get wallet => _wallet;
 

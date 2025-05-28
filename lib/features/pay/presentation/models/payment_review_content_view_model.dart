@@ -61,7 +61,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
       await _repository.storeTransactionDetails(txDetails);
 
       // Refresh transactions in the wallet provider
-      final walletProvider =
+      final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
       await walletProvider.refreshTransactions();
 

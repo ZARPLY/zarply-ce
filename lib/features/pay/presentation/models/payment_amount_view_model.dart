@@ -8,8 +8,8 @@ import '../../../wallet/domain/repositories/wallet_repository.dart';
 class PaymentAmountViewModel extends ChangeNotifier {
   PaymentAmountViewModel({
     required this.recipientAddress,
-    this.initialAmount,
-    required this.currentWalletAddress, // Add this parameter
+    required this.initialAmount,
+    required this.currentWalletAddress,
   }) {
     if (initialAmount != null) {
       paymentAmountController.text = initialAmount!;
@@ -41,7 +41,8 @@ class PaymentAmountViewModel extends ChangeNotifier {
         if (tx == null) continue;
 
         // Use the injected wallet address
-        final transferInfo = TransactionDetailsParser.parseTransferDetails(
+        final TransactionTransferInfo? transferInfo =
+            TransactionDetailsParser.parseTransferDetails(
           tx,
           currentWalletAddress, // Now using the properly provided address
         );

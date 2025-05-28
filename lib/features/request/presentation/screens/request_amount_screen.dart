@@ -4,10 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
-import '../../../../core/widgets/previously_paid_info.dart';
+import '../../domain/entities/payment_request.dart';
 import '../models/request_amount_view_model.dart';
 import '../widgets/request_review_content.dart';
-import '../../domain/entities/payment_request.dart';
 
 class RequestAmountScreen extends StatelessWidget {
   const RequestAmountScreen({

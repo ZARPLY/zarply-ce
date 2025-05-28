@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/solana.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../pay/presentation/models/payment_review_content_view_model.dart';
@@ -45,8 +46,9 @@ class _PaymentRequestDetailsScreenState
       _isProcessing = true;
     });
 
-    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-    final wallet = walletProvider.wallet;
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final Wallet? wallet = walletProvider.wallet;
 
     if (wallet == null) {
       if (mounted) {
@@ -98,11 +100,11 @@ class _PaymentRequestDetailsScreenState
   Future<void> _showSuccessBottomSheet() {
     return showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
+      builder: (BuildContext context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: <Widget>[
             const Icon(
               Icons.check_circle,
               color: Colors.green,
@@ -136,7 +138,10 @@ class _PaymentRequestDetailsScreenState
   }
 
   Future<void> _copyToClipboard(
-      BuildContext context, String text, bool isFrom) async {
+    BuildContext context,
+    String text,
+    bool isFrom,
+  ) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +171,7 @@ class _PaymentRequestDetailsScreenState
   Widget _buildCopyableAddress(String label, String address, bool isFrom) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Text(
           label,
           style: const TextStyle(
@@ -180,12 +185,12 @@ class _PaymentRequestDetailsScreenState
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
+              children: <Widget>[
                 Flexible(
                   child: Text(
                     address,
@@ -203,13 +208,13 @@ class _PaymentRequestDetailsScreenState
                       ? Icon(
                           Icons.check,
                           size: 14,
-                          color: Colors.grey.withOpacity(0.8),
+                          color: Colors.grey.withValues(alpha: 0.8),
                           key: const ValueKey<String>('check'),
                         )
                       : Icon(
                           Icons.copy,
                           size: 14,
-                          color: Colors.grey.withOpacity(0.8),
+                          color: Colors.grey.withValues(alpha: 0.8),
                           key: const ValueKey<String>('copy'),
                         ),
                 ),
@@ -224,9 +229,9 @@ class _PaymentRequestDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final double amountInRands = double.parse(widget.amount) / 100;
-    final walletProvider = Provider.of<WalletProvider>(context);
-    final wallet = walletProvider.wallet;
-    final tokenAccount = walletProvider.userTokenAccount;
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final Wallet? wallet = walletProvider.wallet;
 
     return Scaffold(
       appBar: AppBar(
@@ -235,7 +240,7 @@ class _PaymentRequestDetailsScreenState
           onPressed: () => context.go('/wallet'),
         ),
         title: const Text('Payment Review'),
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () => context.go('/wallet'),
             child: const Text('Cancel'),
@@ -245,21 +250,21 @@ class _PaymentRequestDetailsScreenState
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Container(
               padding: const EdgeInsets.all(24),
               color: Colors.blue,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: <Widget>[
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
+                    children: <Widget>[
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          children: <Widget>[
                             const Text(
                               "You're about to pay",
                               style: TextStyle(
@@ -300,15 +305,21 @@ class _PaymentRequestDetailsScreenState
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+                children: <Widget>[
                   Center(
                     child: _buildCopyableAddress(
-                        'From account', wallet?.address ?? '', true),
+                      'From account',
+                      wallet?.address ?? '',
+                      true,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Center(
                     child: _buildCopyableAddress(
-                        'To account', widget.recipientAddress, false),
+                      'To account',
+                      widget.recipientAddress,
+                      false,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(

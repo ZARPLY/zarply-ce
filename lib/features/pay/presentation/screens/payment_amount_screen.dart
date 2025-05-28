@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
 
-import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
-import '../../../../core/widgets/previously_paid_info.dart';
 
 class PaymentAmountScreen extends StatefulWidget {
   const PaymentAmountScreen({
@@ -61,9 +59,10 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
-          recipientAddress: widget.recipientAddress,
-          initialAmount: widget.initialAmount,
-          currentWalletAddress: widget.recipientAddress),
+        recipientAddress: widget.recipientAddress,
+        initialAmount: widget.initialAmount,
+        currentWalletAddress: widget.recipientAddress,
+      ),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
           return Scaffold(
