@@ -5,6 +5,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
 
@@ -19,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   late StreamSubscription<bool> keyboardSubscription;
   late LoginViewModel _viewModel;
 
+  final FocusNode _passwordFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -32,9 +35,24 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void dispose(){
+    keyboardSubscription.cancel();
+    _passwordFocus.dispose();
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _performLogin() async {
+    final bool success = await _viewModel.validatePassword();
+    if (success && mounted) {
+      context.go('/wallet');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<LoginViewModel>(
-      create: (_) => _viewModel,
+    return ChangeNotifierProvider<LoginViewModel>.value(
+      value: _viewModel,
       child: Consumer<LoginViewModel>(
         builder: (BuildContext context, LoginViewModel viewModel, _) {
           return Scaffold(
@@ -86,24 +104,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 40),
-                            TextField(
+                            PasswordInput(
                               controller: viewModel.passwordController,
-                              obscureText: true,
-                              style: const TextStyle(
-                                fontSize: 14,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: 'Enter your password',
-                                border: const OutlineInputBorder(),
-                                errorBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorText: viewModel.errorMessage.isNotEmpty
-                                    ? viewModel.errorMessage
-                                    : null,
-                              ),
+                              labelText: 'Enter your password',
+                              errorText: viewModel.errorMessage.isNotEmpty
+                                  ? viewModel.errorMessage
+                                  : null,
+                              focusNode: _passwordFocus,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) =>  _performLogin(),
                             ),
                           ],
                         ),
@@ -168,12 +177,5 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    keyboardSubscription.cancel();
-    _viewModel.dispose();
-    super.dispose();
   }
 }

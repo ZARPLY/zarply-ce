@@ -67,8 +67,9 @@ class PrivateKeysView extends StatelessWidget {
             viewModel.isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
-                    color: Colors.blue,
-                  ))
+                      color: Colors.blue,
+                    ),
+                  )
                 : _buildKeysContent(context, viewModel),
             const Spacer(),
             SizedBox(

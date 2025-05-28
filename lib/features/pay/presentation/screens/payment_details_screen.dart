@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/widgets/clear_icon_button.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
@@ -13,6 +14,9 @@ class PaymentDetails extends StatefulWidget {
 class _PaymentDetailsState extends State<PaymentDetails> {
   late PaymentDetailsViewModel _viewModel;
 
+  final FocusNode _publicKeyFocus = FocusNode();
+  final FocusNode _descriptionFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -21,6 +25,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
 
   @override
   void dispose() {
+    _publicKeyFocus.dispose();
+    _descriptionFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -80,12 +86,18 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   SizedBox(
                     width: 250,
                     child: TextField(
+                      focusNode: _publicKeyFocus,
                       controller: viewModel.publicKeyController,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _descriptionFocus.requestFocus(),
                       style: const TextStyle(
                         fontSize: 14,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Public Key',
+                        suffixIcon: ClearIconButton(
+                          controller: viewModel.publicKeyController,
+                          ),
                         border: const OutlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.red,
@@ -99,12 +111,29 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   SizedBox(
                     width: 250,
                     child: TextField(
+                      focusNode: _descriptionFocus,
                       controller: viewModel.descriptionController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                        if (viewModel.isFormValid) {
+                          context.go(
+                            '/payment_amount',
+                            extra: <String, String>{
+                              'recipientAddress': 
+                                viewModel.publicKeyController.text,
+                              'source': '/payment_details',
+                            },
+                          );
+                        }
+                      },
                       style: const TextStyle(
                         fontSize: 14,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Description (Optional)',
+                        suffixIcon: ClearIconButton(
+                          controller: viewModel.descriptionController, 
+                          ),
                       ),
                     ),
                   ),

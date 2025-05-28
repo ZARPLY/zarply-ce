@@ -12,24 +12,43 @@ class WelcomeViewModel extends ChangeNotifier {
 
   final WelcomeRepository _repository;
   bool _isLoading = false;
+  String? _errorMessage;
 
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
-  Future<void> createAndStoreWallet(WalletProvider walletProvider) async {
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  Future<bool> createAndStoreWallet(WalletProvider walletProvider) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
       final ({
-        String recoveryPhrase,
-        ProgramAccount tokenAccount,
-        Wallet wallet
+        String? recoveryPhrase,
+        ProgramAccount? tokenAccount,
+        Wallet? wallet,
+        String? errorMessage
       }) result = await _repository.createWallet();
-      walletProvider.setRecoveryPhrase(result.recoveryPhrase);
+
+      if (result.errorMessage != null) {
+        _errorMessage = result.errorMessage;
+        return false;
+      }
+
+      walletProvider.setRecoveryPhrase(result.recoveryPhrase!);
       await _repository.storeWalletKeys(
-        wallet: result.wallet,
-        tokenAccount: result.tokenAccount,
+        wallet: result.wallet!,
+        tokenAccount: result.tokenAccount!,
       );
+      return true;
+    } catch (e) {
+      _errorMessage = 'Unexpected error. Please try again later.';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
