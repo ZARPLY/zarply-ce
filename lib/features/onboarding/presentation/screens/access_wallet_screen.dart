@@ -159,7 +159,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                             Provider.of<WalletProvider>(context, listen: false);
                         await walletProvider.initialize();
                         if (context.mounted) {
-                          context.go('/wallet');
+                          context.go('/wallet', extra: '/create_password');
                         }
                       }
                     : null,
