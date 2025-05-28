@@ -4,9 +4,9 @@
 1. [Install VMware and Ubuntu]
 1. [Create and Configure the VM]
 2. [Base System Update]
-3. [Install FLutter & Andriod Studio]
+3. [Install Flutter & Andriod Studio]
 4. [Install & Launch Cursor AI]
-5. [Generate SSH Keys & Clone Repo]s
+5. [Generate SSH Keys & Clone Repos]
 
 
 1. **Install VMware Workstation & Ubuntu ISO**
