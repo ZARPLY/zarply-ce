@@ -39,7 +39,7 @@ class PrivateKeysView extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/backup_wallet'),
+            onTap: () => context.go('/backup_wallet'), 
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -50,7 +50,7 @@ class PrivateKeysView extends StatelessWidget {
           ),
         ),
         title: const ProgressSteps(
-          currentStep: 0,
+          currentStep: 1,
           totalSteps: 3,
         ),
       ),

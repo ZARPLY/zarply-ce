@@ -58,7 +58,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 padding:
                     const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
-                  onTap: () => context.go('/welcome'),
+                  onTap: () => context.go('/backup_wallet'),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: const Color(0xFFEBECEF),
@@ -74,7 +74,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
               title: const Padding(
                 padding: EdgeInsets.only(right: 24),
                 child: ProgressSteps(
-                  currentStep: 1,
+                  currentStep: 2,
                   totalSteps: 3,
                 ),
               ),
