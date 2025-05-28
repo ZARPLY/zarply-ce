@@ -97,10 +97,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     context,
                                     listen: false,
                                   );
-                                  await viewModel
+                                  final bool success = await viewModel
                                       .createAndStoreWallet(walletProvider);
                                   if (!context.mounted) return;
-                                  context.go('/backup_wallet');
+
+                                  if (success) {
+                                    context.go('/backup_wallet');
+                                  } else if (viewModel.errorMessage != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(viewModel.errorMessage!),
+                                        backgroundColor: Colors.red.shade700,
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: const Duration(seconds: 5),
+                                        action: SnackBarAction(
+                                          label: 'Dismiss',
+                                          textColor: Colors.white,
+                                          onPressed: () {
+                                            ScaffoldMessenger.of(context)
+                                                .hideCurrentSnackBar();
+                                            viewModel.clearError();
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4169E1),

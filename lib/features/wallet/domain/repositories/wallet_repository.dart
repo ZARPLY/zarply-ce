@@ -9,12 +9,17 @@ abstract class WalletRepository {
   /// Get SOL balance for a given address
   Future<double> getSolBalance(String address);
 
-  /// Get transactions for a wallet account
-  Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
+  /// Get newer transactions for a wallet account
+  Future<Map<String, List<TransactionDetails?>>> getNewerTransactions({
     required String walletAddress,
-    int limit = 100,
-    String? afterSignature,
-    String? beforeSignature,
+    String? lastKnownSignature,
+    Function(List<TransactionDetails?>)? onBatchLoaded,
+  });
+
+  /// Get older transactions for a wallet account
+  Future<Map<String, List<TransactionDetails?>>> getOlderTransactions({
+    required String walletAddress,
+    required String oldestSignature,
     Function(List<TransactionDetails?>)? onBatchLoaded,
   });
 
