@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'clear_icon_button.dart';
 
 class PasswordInput extends StatefulWidget {
   const PasswordInput({
@@ -8,12 +7,18 @@ class PasswordInput extends StatefulWidget {
     this.labelText = 'Password',
     this.errorText,
     this.onChanged,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
+    this.focusNode,
   });
 
   final TextEditingController controller;
   final String labelText;
   final String? errorText;
   final void Function(String)? onChanged;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final FocusNode? focusNode;
 
   @override
   State<PasswordInput> createState() => _PasswordInputState();
@@ -25,15 +30,23 @@ class _PasswordInputState extends State<PasswordInput> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(() => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: widget.controller,
+      focusNode: widget.focusNode,
       obscureText: _obscureText,
       onChanged: widget.onChanged,
+      textInputAction: widget.textInputAction,
+      onSubmitted: (String value) {
+        if (widget.onSubmitted != null) {
+          widget.onSubmitted!(value);
+        } else {
+          FocusScope.of(context).nextFocus();
+        }
+      },
       style: const TextStyle(
         fontSize: 14,
       ),
@@ -51,7 +64,6 @@ class _PasswordInputState extends State<PasswordInput> {
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ClearIconButton(controller: widget.controller),
             IconButton(
               icon: Icon(
                 _obscureText ? Icons.visibility : Icons.visibility_off,

@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -41,10 +43,7 @@ class WalletSolanaService {
         );
       }
 
-      await requestAirdrop(
-        wallet.address,
-        50000000, // SOL 0.05
-      );
+      await _requestSOL(wallet);
 
       return wallet;
     } catch (e) {
@@ -62,10 +61,7 @@ class WalletSolanaService {
       );
     }
 
-    await requestAirdrop(
-      wallet.address,
-      50000000, // SOL 0.05
-    );
+    await _requestSOL(wallet);
 
     return wallet;
   }
@@ -124,18 +120,6 @@ class WalletSolanaService {
     }
   }
 
-  Future<String> requestAirdrop(String address, int lamports) async {
-    try {
-      final String signature = await _client.requestAirdrop(
-        address: Ed25519HDPublicKey(base58decode(address)),
-        lamports: lamports,
-      );
-      return signature;
-    } catch (e) {
-      throw WalletSolanaServiceException('Airdrop failed: $e');
-    }
-  }
-
   Future<double> getSolBalance(String publicKey) async {
     try {
       final BalanceResult lamports =
@@ -190,8 +174,8 @@ class WalletSolanaService {
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
     int limit = 100,
-    String? afterSignature,
-    String? beforeSignature,
+    String? until,
+    String? before,
     Function(List<TransactionDetails?>)? onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
@@ -200,8 +184,8 @@ class WalletSolanaService {
           await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
         limit: limit,
-        until: afterSignature,
-        before: beforeSignature,
+        until: until,
+        before: before,
         commitment: Commitment.confirmed,
       );
 
@@ -209,50 +193,56 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty && afterSignature == null) {
+      if (signatures.isNotEmpty) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );
       }
 
-      final StreamController<List<TransactionDetails?>>
-          transactionStreamController =
-          StreamController<List<TransactionDetails?>>();
-
       if (isCancelled != null && isCancelled()) {
-        await transactionStreamController.close();
         return <String, List<TransactionDetails?>>{};
       }
 
-      await _fetchTransactionsWithCircuitBreaker(
-        signatures
-            .map((TransactionSignatureInformation sig) => sig.signature)
-            .toList(),
-        onBatchLoaded: (List<TransactionDetails?> batch) {
-          if (isCancelled != null && isCancelled()) {
-            return;
-          }
-
-          transactionStreamController.add(batch);
-          if (onBatchLoaded != null) {
-            onBatchLoaded(batch);
-          }
-        },
-        isCancelled: isCancelled,
-      ).then((_) {
-        transactionStreamController.close();
-      }).catchError((Object e) {
-        transactionStreamController.addError(e);
-        transactionStreamController.close();
-      });
-
+      final StreamController<List<TransactionDetails?>>
+          transactionStreamController =
+          StreamController<List<TransactionDetails?>>();
       final List<TransactionDetails?> allTransactions = <TransactionDetails?>[];
-      await for (final List<TransactionDetails?> batch
-          in transactionStreamController.stream) {
-        if (isCancelled != null && isCancelled()) {
-          break;
-        }
-        allTransactions.addAll(batch);
+      late final Future<void> streamProcessing;
+
+      try {
+        streamProcessing = transactionStreamController.stream.listen(
+          (List<TransactionDetails?> batch) {
+            if (isCancelled != null && isCancelled()) {
+              return;
+            }
+            allTransactions.addAll(batch);
+          },
+        ).asFuture<void>();
+
+        await _fetchTransactionsWithCircuitBreaker(
+          signatures
+              .map((TransactionSignatureInformation sig) => sig.signature)
+              .toList(),
+          onBatchLoaded: (List<TransactionDetails?> batch) {
+            if (isCancelled != null && isCancelled()) {
+              return;
+            }
+
+            transactionStreamController.add(batch);
+            if (onBatchLoaded != null) {
+              onBatchLoaded(batch);
+            }
+          },
+          isCancelled: isCancelled,
+        );
+
+        await transactionStreamController.close();
+
+        await streamProcessing;
+      } catch (e) {
+        rethrow;
+      } finally {
+        await transactionStreamController.close();
       }
 
       if (isCancelled != null && isCancelled()) {
@@ -284,6 +274,57 @@ class WalletSolanaService {
         'Error fetching transactions by signatures: $e',
       );
     }
+  }
+
+  Future<String> requestZARP(Wallet wallet) async {
+    // call ZARPLY faucet
+    final http.Response response = await http.post(
+      Uri.parse('https://faucet.zarply.co.za/api/faucet'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'pubkey': wallet.address,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw WalletSolanaServiceException(
+        'Faucet request failed: ${response.body}',
+      );
+    }
+
+    return response.body;
+  }
+
+  Future<TransactionDetails?> getTransactionDetails(String signature) async {
+    try {
+      return await _client.rpcClient.getTransaction(signature);
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction details: $e',
+      );
+    }
+  }
+
+  Future<int> getTransactionCount(String address) async {
+    try {
+      final List<TransactionSignatureInformation> signatures =
+          await _client.rpcClient.getSignaturesForAddress(address);
+      return signatures.length;
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Error fetching transaction count: $e',
+      );
+    }
+  }
+
+  bool isValidMnemonic(String mnemonic) {
+    return bip39.validateMnemonic(mnemonic);
+  }
+
+  bool isValidPrivateKey(String privateKey) {
+    return privateKey.length == 64;
   }
 
   Future<void> _fetchTransactionsWithCircuitBreaker(
@@ -366,33 +407,25 @@ class WalletSolanaService {
     }
   }
 
-  Future<TransactionDetails?> getTransactionDetails(String signature) async {
-    try {
-      return await _client.rpcClient.getTransaction(signature);
-    } catch (e) {
+  Future<String> _requestSOL(Wallet wallet) async {
+    // call ZARPLY faucet
+    final http.Response response = await http.post(
+      Uri.parse('https://faucet.zarply.co.za/api/faucet'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'pubkey': wallet.address,
+        'sol_only': true,
+      }),
+    );
+
+    if (response.statusCode != 200) {
       throw WalletSolanaServiceException(
-        'Error fetching transaction details: $e',
+        'Faucet request failed: ${response.body}',
       );
     }
-  }
 
-  Future<int> getTransactionCount(String address) async {
-    try {
-      final List<TransactionSignatureInformation> signatures =
-          await _client.rpcClient.getSignaturesForAddress(address);
-      return signatures.length;
-    } catch (e) {
-      throw WalletSolanaServiceException(
-        'Error fetching transaction count: $e',
-      );
-    }
-  }
-
-  bool isValidMnemonic(String mnemonic) {
-    return bip39.validateMnemonic(mnemonic);
-  }
-
-  bool isValidPrivateKey(String privateKey) {
-    return privateKey.length == 64;
+    return response.body;
   }
 }

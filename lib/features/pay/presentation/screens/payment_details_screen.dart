@@ -14,6 +14,9 @@ class PaymentDetails extends StatefulWidget {
 class _PaymentDetailsState extends State<PaymentDetails> {
   late PaymentDetailsViewModel _viewModel;
 
+  final FocusNode _publicKeyFocus = FocusNode();
+  final FocusNode _descriptionFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -22,6 +25,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
 
   @override
   void dispose() {
+    _publicKeyFocus.dispose();
+    _descriptionFocus.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -81,7 +86,10 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   SizedBox(
                     width: 250,
                     child: TextField(
+                      focusNode: _publicKeyFocus,
                       controller: viewModel.publicKeyController,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _descriptionFocus.requestFocus(),
                       style: const TextStyle(
                         fontSize: 14,
                       ),
@@ -103,7 +111,21 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   SizedBox(
                     width: 250,
                     child: TextField(
+                      focusNode: _descriptionFocus,
                       controller: viewModel.descriptionController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                        if (viewModel.isFormValid) {
+                          context.go(
+                            '/payment_amount',
+                            extra: <String, String>{
+                              'recipientAddress': 
+                                viewModel.publicKeyController.text,
+                              'source': '/payment_details',
+                            },
+                          );
+                        }
+                      },
                       style: const TextStyle(
                         fontSize: 14,
                       ),
