@@ -9,15 +9,15 @@ class AmountInput extends StatefulWidget {
     this.readOnly = false,
     super.key,
     this.textInputAction = TextInputAction.next,
-    this.onSubmitted, 
+    this.onSubmitted,
     this.focusNode,
   });
 
   final TextEditingController controller;
   final bool readOnly;
-  final TextInputAction textInputAction;  
-  final ValueChanged<String>? onSubmitted;   
-  final FocusNode? focusNode;   
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final FocusNode? focusNode;
 
   @override
   State<AmountInput> createState() => _AmountInputState();
@@ -55,7 +55,8 @@ class _AmountInputState extends State<AmountInput> {
       keyboardType: TextInputType.number,
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction,
-      onSubmitted: widget.onSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
+      onSubmitted:
+          widget.onSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
       readOnly: widget.readOnly,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly,
@@ -87,7 +88,10 @@ class _AmountInputState extends State<AmountInput> {
           'R ',
           style: TextStyle(fontSize: 14),
         ),
-        suffixIcon: ClearIconButton(controller: _displayController),
+        suffixIcon: ClearIconButton(
+          controller: _displayController,
+          otherControllers: <TextEditingController>[widget.controller],
+        ),
         border: const OutlineInputBorder(),
         enabledBorder: const OutlineInputBorder(
           borderSide: BorderSide(

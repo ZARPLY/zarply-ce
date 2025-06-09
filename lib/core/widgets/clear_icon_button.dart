@@ -4,9 +4,11 @@ class ClearIconButton extends StatelessWidget {
   const ClearIconButton({
     required this.controller,
     super.key,
+    this.otherControllers,
   });
 
   final TextEditingController controller;
+  final List<TextEditingController>? otherControllers;
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +20,22 @@ class ClearIconButton extends StatelessWidget {
               height: 20,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.grey[200], // Light gray background
+                  color: Colors.grey[200],
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.close, size: 14),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  onPressed: controller.clear,
+                  onPressed: () {
+                    controller.clear();
+                    if (otherControllers != null) {
+                      for (final TextEditingController otherController
+                          in otherControllers!) {
+                        otherController.clear();
+                      }
+                    }
+                  },
                 ),
               ),
             ),
