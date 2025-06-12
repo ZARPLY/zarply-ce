@@ -44,7 +44,7 @@ class CreatePasswordViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setRememberPassword(bool value) {
+  void setRememberPassword({required bool value}) {
     _rememberPassword = value;
     notifyListeners();
   }
@@ -92,7 +92,7 @@ class CreatePasswordViewModel extends ChangeNotifier {
     final bool success =
         await _repository.savePassword(passwordController.text);
     if (success && _rememberPassword) {
-      await _secureStorage.setRememberPassword(true);
+      await _secureStorage.setRememberPassword(value: true);
     }
     return success;
   }

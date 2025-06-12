@@ -46,13 +46,16 @@ class SecureStorageService {
     }
   }
 
-  Future<void> setRememberPassword(bool value) async {
+  Future<void> setRememberPassword({required bool value}) async {
     try {
       await _secureStorage.write(
-          key: 'remember_password', value: value.toString());
+        key: 'remember_password',
+        value: value.toString(),
+      );
     } catch (e) {
       throw SecureStorageException(
-          'Failed to save remember password preference: $e');
+        'Failed to save remember password preference: $e',
+      );
     }
   }
 

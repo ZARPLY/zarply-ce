@@ -123,7 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   activeColor: const Color(0xFF4169E1),
                                   onChanged: (bool? value) {
                                     if (value != null) {
-                                      viewModel.setRememberPassword(value);
+                                      viewModel.setRememberPassword(
+                                        value: value,
+                                      );
                                     }
                                   },
                                 ),
@@ -174,7 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 final bool success =
                                     await viewModel.validatePassword();
                                 if (success && mounted) {
-                                  await Provider.of<AuthProvider>(context, listen: false).login();
+                                  await Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false,
+                                  ).login();
                                   context.go('/wallet');
                                 }
                               },

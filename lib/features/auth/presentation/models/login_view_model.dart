@@ -36,15 +36,15 @@ class LoginViewModel extends ChangeNotifier {
       } catch (e) {
         // Handle error silently
         _rememberPassword = false;
-        await _secureStorage.setRememberPassword(false);
+        await _secureStorage.setRememberPassword(value: false);
       }
     }
     notifyListeners();
   }
 
-  void setRememberPassword(bool value) {
+  void setRememberPassword({required bool value}) {
     _rememberPassword = value;
-    _secureStorage.setRememberPassword(value);
+    _secureStorage.setRememberPassword(value: value);
     if (!value) {
       // Clear the password field if remember password is disabled
       passwordController.clear();
