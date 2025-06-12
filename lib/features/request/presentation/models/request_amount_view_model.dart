@@ -3,9 +3,19 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/payment_request.dart';
 
 class RequestAmountViewModel extends ChangeNotifier {
-  RequestAmountViewModel() {
+  RequestAmountViewModel({
+    this.recipientAddress,
+    this.initialAmount,
+  }) {
+    if (initialAmount != null) {
+      paymentAmountController.text = initialAmount!;
+      isFormValid = true;
+    }
     paymentAmountController.addListener(_updateFormValidity);
   }
+
+  final String? recipientAddress;
+  final String? initialAmount;
   final TextEditingController paymentAmountController = TextEditingController();
   bool isFormValid = false;
 

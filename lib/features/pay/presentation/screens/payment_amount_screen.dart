@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
@@ -60,6 +61,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
       create: (_) => PaymentAmountViewModel(
         recipientAddress: widget.recipientAddress,
         initialAmount: widget.initialAmount,
+        currentWalletAddress: widget.recipientAddress,
       ),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
@@ -95,14 +97,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
-                    readOnly: widget.initialAmount != null &&
-                        widget.initialAmount!.isNotEmpty,
-                    focusNode: _amountFocus,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _showPaymentReviewModal(
-                      context,
-                      viewModel.paymentAmountController.text,
-                    ),
+                    readOnly: false,
                   ),
                   const SizedBox(height: 16),
                   Column(
@@ -119,7 +114,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: Text(
-                          viewModel.recipientAddress,
+                          widget.recipientAddress,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -130,20 +125,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                       const SizedBox(
                         height: 12,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                            child: const Text('R43,134.78'),
-                          ),
-                          const SizedBox(width: 16),
-                          const Text('2024-12-22'),
-                        ],
+                      PreviouslyPaidInfo(
+                        viewModel: viewModel,
+                        recipientAddress: widget.recipientAddress,
                       ),
                     ],
                   ),

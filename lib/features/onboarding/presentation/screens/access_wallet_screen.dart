@@ -87,7 +87,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                         if (states.contains(WidgetState.selected)) {
                           return Colors.blue;
                         }
-                        return Colors.grey;
+                        return Colors.white;
                       },
                     ),
                     onChanged: (bool? value) {

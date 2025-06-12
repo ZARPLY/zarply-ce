@@ -34,7 +34,7 @@ class PaymentReviewContentRepositoryImpl
     return await _walletSolanaService.sendTransaction(
       senderWallet: wallet,
       recipientAddress: recipientAddress,
-      zarpAmount: amount / 100,
+      zarpAmount: amount,
     );
   }
 
