@@ -34,7 +34,12 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
   @override
   Widget build(BuildContext context) {
     if (previousTransaction == null) {
-      return const SizedBox.shrink();
+      return const Text(
+        'no previous payment',
+        style: TextStyle(
+          color: Colors.grey,
+        ),
+      );
     }
 
     return Row(

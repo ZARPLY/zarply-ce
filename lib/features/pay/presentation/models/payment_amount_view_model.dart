@@ -44,11 +44,12 @@ class PaymentAmountViewModel extends ChangeNotifier {
         final TransactionTransferInfo? transferInfo =
             TransactionDetailsParser.parseTransferDetails(
           tx,
-          currentWalletAddress, // Now using the properly provided address
+          currentWalletAddress,
         );
 
         if (transferInfo != null &&
             transferInfo.amount < 0 &&
+            transferInfo.recipient != 'myself' &&
             transferInfo.recipient == recipientAddress) {
           if (lastTransactionDate == null ||
               (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
