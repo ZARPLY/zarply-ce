@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../data/repositories/create_password_repository_impl.dart';
 import '../../domain/repositories/create_password_repository.dart';
 
@@ -13,18 +14,22 @@ class CreatePasswordViewModel extends ChangeNotifier {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final CreatePasswordRepository _repository;
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   bool _isChecked = false;
   bool _isFormValid = false;
+  bool _rememberPassword = false;
   String? _passwordErrorText;
   String? _confirmErrorText;
 
   bool get isChecked => _isChecked;
   bool get isFormValid => _isFormValid;
+  bool get rememberPassword => _rememberPassword;
   String? get passwordErrorText => _passwordErrorText;
   String? get confirmErrorText => _confirmErrorText;
 
-  static final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+  static final RegExp complexity =
+      RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
 
   @override
   void dispose() {
@@ -39,8 +44,12 @@ class CreatePasswordViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setRememberPassword(bool value) {
+    _rememberPassword = value;
+    notifyListeners();
+  }
+
   void _validateForm() {
-    
     _passwordErrorText = null;
     _confirmErrorText = null;
     _isFormValid = false;
@@ -51,21 +60,22 @@ class CreatePasswordViewModel extends ChangeNotifier {
       } else {
         _passwordErrorText = null;
       }
-        _confirmErrorText = null;
-        _isFormValid = false;
+      _confirmErrorText = null;
+      _isFormValid = false;
     } else if (passwordController.text.length < 8) {
       _passwordErrorText = 'Password must be at least 8 characters';
       _confirmErrorText = null;
       _isFormValid = false;
-    } else if(!complexity.hasMatch(passwordController.text)){
-      _passwordErrorText = 'Password must include a letter, number, and special character';
+    } else if (!complexity.hasMatch(passwordController.text)) {
+      _passwordErrorText =
+          'Password must include a letter, number, and special character';
       _confirmErrorText = null;
       _isFormValid = false;
     } else if (confirmPasswordController.text.isEmpty) {
       _passwordErrorText = null;
       _confirmErrorText = null;
       _isFormValid = false;
-    } else if(passwordController.text != confirmPasswordController.text){
+    } else if (passwordController.text != confirmPasswordController.text) {
       _passwordErrorText = null;
       _confirmErrorText = 'Passwords do not match';
       _isFormValid = false;
@@ -79,6 +89,11 @@ class CreatePasswordViewModel extends ChangeNotifier {
 
   Future<bool> createPassword() async {
     if (!_isFormValid) return false;
-    return await _repository.savePassword(passwordController.text);
+    final bool success =
+        await _repository.savePassword(passwordController.text);
+    if (success && _rememberPassword) {
+      await _secureStorage.setRememberPassword(true);
+    }
+    return success;
   }
 }

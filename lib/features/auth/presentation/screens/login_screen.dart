@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose(){
+  void dispose() {
     keyboardSubscription.cancel();
     _passwordFocus.dispose();
     _viewModel.dispose();
@@ -113,7 +113,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                   : null,
                               focusNode: _passwordFocus,
                               textInputAction: TextInputAction.done,
-                              onSubmitted: (_) =>  _performLogin(),
+                              onSubmitted: (_) => _performLogin(),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: <Widget>[
+                                Checkbox(
+                                  value: viewModel.rememberPassword,
+                                  activeColor: const Color(0xFF4169E1),
+                                  onChanged: (bool? value) {
+                                    if (value != null) {
+                                      viewModel.setRememberPassword(value);
+                                    }
+                                  },
+                                ),
+                                const Text('Remember Password'),
+                              ],
                             ),
                           ],
                         ),

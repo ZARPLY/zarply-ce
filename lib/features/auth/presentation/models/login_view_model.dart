@@ -4,12 +4,16 @@ import '../../../../core/services/secure_storage_service.dart';
 class LoginViewModel extends ChangeNotifier {
   LoginViewModel() {
     _startSplashTimer();
+    _loadRememberPassword();
   }
   final TextEditingController passwordController = TextEditingController();
   final SecureStorageService _secureStorage = SecureStorageService();
   String errorMessage = '';
   bool showSplash = true;
   bool isKeyboardVisible = false;
+  bool _rememberPassword = false;
+
+  bool get rememberPassword => _rememberPassword;
 
   static final RegExp complexity =
       RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
@@ -19,6 +23,33 @@ class LoginViewModel extends ChangeNotifier {
       showSplash = false;
       notifyListeners();
     });
+  }
+
+  Future<void> _loadRememberPassword() async {
+    _rememberPassword = await _secureStorage.getRememberPassword();
+    if (_rememberPassword) {
+      try {
+        final String storedPin = await _secureStorage.getPin();
+        passwordController.text = storedPin;
+        // Auto-validate password if remember password is enabled
+        await validatePassword();
+      } catch (e) {
+        // Handle error silently
+        _rememberPassword = false;
+        await _secureStorage.setRememberPassword(false);
+      }
+    }
+    notifyListeners();
+  }
+
+  void setRememberPassword(bool value) {
+    _rememberPassword = value;
+    _secureStorage.setRememberPassword(value);
+    if (!value) {
+      // Clear the password field if remember password is disabled
+      passwordController.clear();
+    }
+    notifyListeners();
   }
 
   void setKeyboardVisibility({required bool visible}) {

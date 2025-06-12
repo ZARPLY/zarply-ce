@@ -45,4 +45,23 @@ class SecureStorageService {
       throw SecureStorageException('Failed to delete PIN: $e');
     }
   }
+
+  Future<void> setRememberPassword(bool value) async {
+    try {
+      await _secureStorage.write(
+          key: 'remember_password', value: value.toString());
+    } catch (e) {
+      throw SecureStorageException(
+          'Failed to save remember password preference: $e');
+    }
+  }
+
+  Future<bool> getRememberPassword() async {
+    try {
+      final String? value = await _secureStorage.read(key: 'remember_password');
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
