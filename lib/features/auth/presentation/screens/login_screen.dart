@@ -137,24 +137,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       AnimatedOpacity(
                         opacity: viewModel.showSplash ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 500),
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              height: 1.2,
-                            ),
-                            children: <InlineSpan>[
-                              TextSpan(text: 'ZARPLY the '),
-                              TextSpan(
-                                text: 'Rand\nstable-coin\nwallet',
-                                style: TextStyle(
-                                  color: Color(0xFF1F75DC),
-                                ),
+                        child: IgnorePointer(
+                          ignoring: viewModel.showSplash,
+                          child: RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.2,
                               ),
-                              TextSpan(text: ' on Solana.'),
-                            ],
+                              children: <InlineSpan>[
+                                TextSpan(text: 'ZARPLY the '),
+                                TextSpan(
+                                  text: 'Rand\nstable-coin\nwallet',
+                                  style: TextStyle(
+                                    color: Color(0xFF1F75DC),
+                                  ),
+                                ),
+                                TextSpan(text: ' on Solana.'),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -174,7 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 final bool success =
                                     await viewModel.validatePassword();
                                 if (success && mounted) {
-                                  await Provider.of<AuthProvider>(context, listen: false).login();
+                                  await Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false,
+                                  ).login();
                                   context.go('/wallet');
                                 }
                               },
