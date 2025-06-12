@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/widgets/password_input.dart';
+import '../../../../core/widgets/password_input_with_tooltip_strength.dart';
 import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
 
@@ -96,7 +96,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 32),
-                  PasswordInput(
+                  PasswordInputWithTooltipStrength(
                     controller: viewModel.passwordController,
                     labelText: 'Password',
                     errorText: viewModel.passwordErrorText,
@@ -105,24 +105,50 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     onSubmitted: (_) => _confirmFocus.requestFocus(),
                   ),
                   const SizedBox(height: 16),
-                  PasswordInput(
+                  PasswordInputWithTooltipStrength(
                     controller: viewModel.confirmPasswordController,
                     labelText: 'Confirm Password',
                     errorText: viewModel.confirmErrorText,
                     focusNode: _confirmFocus,
                     textInputAction: TextInputAction.done,
+                    enableStrengthFeedback: false,
                     onSubmitted: (_) {
                       FocusScope.of(context).unfocus();
                       _checkboxFocus.requestFocus();
                     },
                   ),
+                  const SizedBox(height: 8),
+                  Focus(
+                    focusNode: _rememberPasswordFocus,
+                    child: Row(
+                      children: <Widget>[
+                        Checkbox(
+                          value: viewModel.rememberPassword,
+                          activeColor: const Color(0xFF4169E1),
+                          onChanged: (bool? value) {
+                            if (value != null) {
+                              viewModel.setRememberPassword(value: value);
+                            }
+                          },
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Remember Password',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
                   const SizedBox(height: 24),
+                  const Spacer(),
                   Focus(
                     focusNode: _checkboxFocus,
                     child: Builder(
                       builder: (BuildContext context) {
                         final bool hasFocus = Focus.of(context).hasFocus;
-                        return Container(
+                        return DecoratedBox(
                           decoration: BoxDecoration(
                             border: Border.all(
                               color:
@@ -131,7 +157,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          padding: const EdgeInsets.all(8),
                           child: Row(
                             children: <Widget>[
                               Radio<bool>(
@@ -155,45 +180,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Focus(
-                    focusNode: _rememberPasswordFocus,
-                    child: Builder(
-                      builder: (BuildContext context) {
-                        final bool hasFocus = Focus.of(context).hasFocus;
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color:
-                                  hasFocus ? Colors.blue : Colors.transparent,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: Row(
-                            children: <Widget>[
-                              Checkbox(
-                                value: viewModel.rememberPassword,
-                                activeColor: const Color(0xFF4169E1),
-                                onChanged: (bool? value) {
-                                  if (value != null) {
-                                    viewModel.setRememberPassword(value);
-                                  }
-                                },
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'Remember Password',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

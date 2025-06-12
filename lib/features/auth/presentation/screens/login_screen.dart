@@ -123,7 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   activeColor: const Color(0xFF4169E1),
                                   onChanged: (bool? value) {
                                     if (value != null) {
-                                      viewModel.setRememberPassword(value);
+                                      viewModel.setRememberPassword(
+                                        value: value,
+                                      );
                                     }
                                   },
                                 ),
