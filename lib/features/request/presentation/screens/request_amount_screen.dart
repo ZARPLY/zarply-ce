@@ -13,29 +13,32 @@ class RequestAmountScreen extends StatelessWidget {
     super.key,
   });
 
-  void _showPaymentReviewModal(BuildContext context, String amount) {
-    showModalBottomSheet(
+  void _showRequestReviewModal(BuildContext context, String amount) {
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final String walletAddress = walletProvider.wallet?.address ?? '';
+
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        final WalletProvider walletProvider =
-            Provider.of<WalletProvider>(context);
-        final String walletAddress = walletProvider.wallet?.address ?? '';
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.90,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) => Container(
+        height: MediaQuery.of(context).size.height * 0.90,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: RequestReviewContent(
+          paymentRequest: PaymentRequest(
+            amount: amount,
+            walletAddress: walletAddress,
           ),
-          child: RequestReviewContent(
-            paymentRequest: PaymentRequest(
-              amount: amount,
-              walletAddress: walletAddress,
-            ),
-            onCancel: () => Navigator.pop(context),
-          ),
-        );
-      },
+          onCancel: () => Navigator.pop(context),
+        ),
+      ),
     );
   }
 
@@ -77,38 +80,19 @@ class RequestAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   AmountInput(controller: viewModel.paymentAmountController),
                   const SizedBox(height: 16),
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      const Text('Minimum amount is R5'),
-                      const SizedBox(
+                      Text('Minimum amount is R5'),
+                      SizedBox(
                         height: 40,
-                      ),
-                      const Text('Previously paid'),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                            child: const Text('R43,134.78'),
-                          ),
-                          const SizedBox(width: 16),
-                          const Text('2024-12-22'),
-                        ],
                       ),
                     ],
                   ),
                   const Spacer(),
                   ElevatedButton(
                     onPressed: viewModel.isFormValid
-                        ? () => _showPaymentReviewModal(
+                        ? () => _showRequestReviewModal(
                               context,
                               viewModel.paymentAmountController.text,
                             )

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
@@ -13,7 +12,8 @@ import '../../features/onboarding/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../features/pay/presentation/screens/pay_request_screen.dart';
 import '../../features/pay/presentation/screens/payment_amount_screen.dart';
-import '../../features/pay/presentation/screens/payment_details_screen.dart';
+import '../../features/request/presentation/screens/payment_details_screen.dart';
+import '../../features/request/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
@@ -21,15 +21,21 @@ import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
-GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) {
+GoRouter createRouter(
+  WalletProvider walletProvider,
+  AuthProvider authProvider,
+) {
   return GoRouter(
     initialLocation: '/',
     redirect: (BuildContext context, GoRouterState state) {
-      final AuthProvider authProvider = Provider.of<AuthProvider>(context,listen: false,);
+      final AuthProvider authProvider = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      );
       final String location = state.uri.toString();
       final bool isAuthenticated = authProvider.isAuthenticated;
 
-      final List<String> protectedRoutes = [
+      final List<String> protectedRoutes = <String>[
         '/wallet',
         '/pay_request',
         '/payment_amount',
@@ -39,7 +45,7 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
         '/scan',
       ];
 
-      final List<String> onboardingRoutes = [
+      final List<String> onboardingRoutes = <String>[
         '/',
         '/welcome',
         '/create_password',
@@ -52,13 +58,15 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
 
       final bool isLoginRoute = location == '/login';
       final bool isProtected = protectedRoutes.contains(location);
-      final bool isFromOnboarding = onboardingRoutes.contains(state.extra?.toString());
+      final bool isFromOnboarding =
+          onboardingRoutes.contains(state.extra?.toString());
 
       if (!isAuthenticated && isProtected && !isFromOnboarding) {
-          return '/login';
+        return '/login';
       }
-      if (isAuthenticated && (isLoginRoute || onboardingRoutes.contains(location))){
-          return '/wallet';
+      if (isAuthenticated &&
+          (isLoginRoute || onboardingRoutes.contains(location))) {
+        return '/wallet';
       }
       return null;
     },
@@ -149,7 +157,7 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
               final Map<String, String> extra =
                   state.extra as Map<String, String>;
               final String publicKey = extra['recipientAddress'] ?? '';
-              final String amount = extra['amount'] ?? '';
+              final String? amount = extra['amount'];
               final String source = extra['source'] ?? '/pay_request';
               return PaymentAmountScreen(
                 recipientAddress: publicKey,
@@ -167,6 +175,17 @@ GoRouter createRouter(WalletProvider walletProvider, AuthProvider authProvider) 
             path: '/scan',
             builder: (BuildContext context, GoRouterState state) =>
                 const QRScanner(),
+          ),
+          GoRoute(
+            path: '/payment_request_details',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extra =
+                  state.extra as Map<String, dynamic>;
+              return PaymentRequestDetailsScreen(
+                amount: extra['amount'] as String,
+                recipientAddress: extra['recipientAddress'] as String,
+              );
+            },
           ),
         ],
       ),
