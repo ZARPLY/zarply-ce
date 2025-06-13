@@ -19,12 +19,14 @@ class CreatePasswordViewModel extends ChangeNotifier {
   bool _isChecked = false;
   bool _isFormValid = false;
   bool _rememberPassword = false;
+  bool _isLoading = false;
   String? _passwordErrorText;
   String? _confirmErrorText;
 
   bool get isChecked => _isChecked;
   bool get isFormValid => _isFormValid;
   bool get rememberPassword => _rememberPassword;
+  bool get isLoading => _isLoading;
   String? get passwordErrorText => _passwordErrorText;
   String? get confirmErrorText => _confirmErrorText;
 
@@ -89,11 +91,22 @@ class CreatePasswordViewModel extends ChangeNotifier {
 
   Future<bool> createPassword() async {
     if (!_isFormValid) return false;
-    final bool success =
-        await _repository.savePassword(passwordController.text);
-    if (success && _rememberPassword) {
-      await _secureStorage.setRememberPassword(value: true);
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bool success =
+          await _repository.savePassword(passwordController.text);
+      if (success && _rememberPassword) {
+        await _secureStorage.setRememberPassword(value: true);
+      }
+      return success;
+    } catch (e) {
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    return success;
   }
 }

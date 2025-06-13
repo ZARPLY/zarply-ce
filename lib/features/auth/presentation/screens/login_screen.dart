@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
@@ -172,7 +173,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
                     child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: LoadingButton(
+                        isLoading: viewModel.isLoading,
                         onPressed: viewModel.showSplash
                             ? null
                             : () async {

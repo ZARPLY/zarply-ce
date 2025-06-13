@@ -4,12 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 import '../../domain/repositories/wallet_repository.dart';
 
 class WalletViewModel extends ChangeNotifier {
+  WalletViewModel() {
+    _balanceCacheService = BalanceCacheService(
+      walletRepository: _walletRepository,
+    );
+  }
   final WalletRepository _walletRepository = WalletRepositoryImpl();
+  late final BalanceCacheService _balanceCacheService;
 
   ProgramAccount? tokenAccount;
   Wallet? wallet;
@@ -48,7 +55,8 @@ class WalletViewModel extends ChangeNotifier {
         wallet = providedWallet;
         tokenAccount = providedTokenAccount;
 
-        await refreshBalances();
+        // Use cached balances for faster initial load
+        await loadCachedBalances();
 
         isLoading = false;
         isLoadingTransactions = true;
@@ -70,16 +78,79 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
+  /// Load cached balances for fast initial display
+  Future<void> loadCachedBalances() async {
+    if (tokenAccount != null && wallet != null) {
+      try {
+        final ({double solBalance, double zarpBalance}) balances =
+            await _balanceCacheService.getBothBalances(
+          zarpAddress: tokenAccount!.pubkey,
+          solAddress: wallet!.address,
+          forceRefresh: false, // Use cache if available
+        );
+
+        walletAmount = balances.zarpBalance;
+        solBalance = balances.solBalance;
+        notifyListeners();
+
+        debugPrint(
+          'Loaded cached balances - ZARP: $walletAmount, SOL: $solBalance',
+        );
+      } catch (e) {
+        debugPrint('Error loading cached balances: $e');
+        // If cache fails, fall back to network refresh
+        await refreshBalances();
+      }
+    }
+  }
+
+  /// Refresh balances from network and update cache
+  /// This should be called when user manually refreshes or after payments
   Future<void> refreshBalances() async {
     if (tokenAccount != null && wallet != null) {
-      final double newWalletAmount =
-          await _walletRepository.getZarpBalance(tokenAccount!.pubkey);
-      final double newSolBalance =
-          await _walletRepository.getSolBalance(wallet!.address);
+      try {
+        final ({double solBalance, double zarpBalance}) balances =
+            await _balanceCacheService.refreshBalances(
+          zarpAddress: tokenAccount!.pubkey,
+          solAddress: wallet!.address,
+        );
 
-      walletAmount = newWalletAmount;
-      solBalance = newSolBalance;
-      notifyListeners();
+        walletAmount = balances.zarpBalance;
+        solBalance = balances.solBalance;
+        notifyListeners();
+
+        debugPrint(
+          'Refreshed balances - ZARP: $walletAmount, SOL: $solBalance',
+        );
+      } catch (e) {
+        debugPrint('Error refreshing balances: $e');
+        rethrow;
+      }
+    }
+  }
+
+  /// Force refresh balances from network (used after payments)
+  Future<void> forceRefreshBalances() async {
+    if (tokenAccount != null && wallet != null) {
+      try {
+        final ({double solBalance, double zarpBalance}) balances =
+            await _balanceCacheService.getBothBalances(
+          zarpAddress: tokenAccount!.pubkey,
+          solAddress: wallet!.address,
+          forceRefresh: true, // Force network fetch
+        );
+
+        walletAmount = balances.zarpBalance;
+        solBalance = balances.solBalance;
+        notifyListeners();
+
+        debugPrint(
+          'Force refreshed balances - ZARP: $walletAmount, SOL: $solBalance',
+        );
+      } catch (e) {
+        debugPrint('Error force refreshing balances: $e');
+        rethrow;
+      }
     }
   }
 
@@ -140,6 +211,8 @@ class WalletViewModel extends ChangeNotifier {
     unawaited(refreshIndicatorKey?.currentState?.show());
   }
 
+  /// Refresh transactions and balances
+  /// This is called when user pulls to refresh
   Future<void> refreshTransactions() async {
     if (isRefreshing) return;
 
@@ -147,6 +220,7 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Refresh balances from network when user manually refreshes
       await refreshBalances();
       await loadTransactions();
     } catch (e) {
@@ -155,6 +229,12 @@ class WalletViewModel extends ChangeNotifier {
       isRefreshing = false;
       notifyListeners();
     }
+  }
+
+  /// Call this after a successful payment to update balances
+  Future<void> onPaymentCompleted() async {
+    debugPrint('Payment completed, refreshing balances...');
+    await forceRefreshBalances();
   }
 
   TransactionTransferInfo? parseTransferDetails(
@@ -199,25 +279,6 @@ class WalletViewModel extends ChangeNotifier {
     }
 
     return transactionItems;
-  }
-
-  Future<void> updateTransactionCount() async {
-    if (tokenAccount == null) return;
-
-    final int? storedCount =
-        await _walletRepository.getStoredTransactionCount();
-
-    if (storedCount != null) {
-      totalSignatures = storedCount;
-    } else {
-      final int count = await _walletRepository.getTransactionCount(
-        tokenAccount!.pubkey,
-      );
-      totalSignatures = count;
-      await _walletRepository.storeTransactionCount(count);
-    }
-
-    updateHasMoreTransactions();
   }
 
   Future<void> loadMoreTransactions() async {
@@ -286,6 +347,86 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateTransactionCount() async {
+    if (tokenAccount == null) return;
+
+    try {
+      final int networkCount =
+          await _walletRepository.getTransactionCount(tokenAccount!.pubkey);
+      totalSignatures = networkCount;
+
+      await _walletRepository.storeTransactionCount(networkCount);
+      updateHasMoreTransactions();
+    } catch (e) {
+      final int? storedCount =
+          await _walletRepository.getStoredTransactionCount();
+      if (storedCount != null) {
+        totalSignatures = storedCount;
+        updateHasMoreTransactions();
+      }
+    }
+  }
+
+  void _processNewTransactionBatch(
+    List<TransactionDetails?> batch,
+    Map<String, List<TransactionDetails?>> storedTransactions, {
+    bool isOlderTransactions = false,
+  }) {
+    for (final TransactionDetails? tx in batch) {
+      if (tx == null) continue;
+
+      final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
+        tx.blockTime! * 1000,
+      );
+      final String monthKey =
+          '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+
+      if (!storedTransactions.containsKey(monthKey)) {
+        storedTransactions[monthKey] = <TransactionDetails?>[];
+      }
+
+      if (isOlderTransactions) {
+        storedTransactions[monthKey]!.add(tx);
+      } else {
+        storedTransactions[monthKey]!.insert(0, tx);
+      }
+    }
+
+    _walletRepository.storeTransactions(storedTransactions);
+  }
+
+  void _updateOldestSignature(
+    Map<String, List<TransactionDetails?>> storedTransactions,
+  ) {
+    DateTime? oldestTime;
+
+    for (final List<TransactionDetails?> txList in storedTransactions.values) {
+      for (final TransactionDetails? tx in txList) {
+        if (tx?.blockTime != null) {
+          final DateTime txTime = DateTime.fromMillisecondsSinceEpoch(
+            tx!.blockTime! * 1000,
+          );
+          if (oldestTime == null || txTime.isBefore(oldestTime)) {
+            oldestTime = txTime;
+            // Use block time as a fallback identifier for oldest transaction
+            oldestLoadedSignature = tx.blockTime.toString();
+          }
+        }
+      }
+    }
+  }
+
+  /// Get cache information for debugging
+  Future<String> getCacheInfo() async {
+    return await _balanceCacheService.getCacheAgeInfo();
+  }
+
+  /// Clear balance cache (useful for logout)
+  Future<void> clearBalanceCache() async {
+    await _balanceCacheService.clearCache();
+  }
+
+  /// Cancel ongoing operations to prevent memory leaks
   void cancelOperations() {
     (_walletRepository as WalletRepositoryImpl).cancelTransactions();
   }
@@ -294,100 +435,5 @@ class WalletViewModel extends ChangeNotifier {
   void dispose() {
     cancelOperations();
     super.dispose();
-  }
-
-  Future<void> _processNewTransactionBatch(
-    List<TransactionDetails?> batchTransactions,
-    Map<String, List<TransactionDetails?>> storedTransactions, {
-    bool isOlderTransactions = false,
-  }) async {
-    final Set<String> existingSignatures = <String>{};
-
-    for (final List<TransactionDetails?> monthTransactions
-        in storedTransactions.values) {
-      for (final TransactionDetails? tx in monthTransactions) {
-        if (tx != null) {
-          final String sig = tx.transaction.toJson()['signatures'][0];
-          existingSignatures.add(sig);
-        }
-      }
-    }
-
-    final Map<String, List<TransactionDetails?>> groupedBatch =
-        <String, List<TransactionDetails?>>{};
-
-    for (final TransactionDetails? transaction in batchTransactions) {
-      if (transaction == null) continue;
-
-      final DateTime transactionDate = transaction.blockTime != null
-          ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
-          : DateTime.now();
-
-      final String monthKey =
-          '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
-
-      if (!groupedBatch.containsKey(monthKey)) {
-        groupedBatch[monthKey] = <TransactionDetails?>[];
-      }
-      groupedBatch[monthKey]!.add(transaction);
-    }
-
-    bool hasNewTransactions = false;
-    for (final String monthKey in groupedBatch.keys) {
-      if (!storedTransactions.containsKey(monthKey)) {
-        storedTransactions[monthKey] = <TransactionDetails?>[];
-      }
-
-      final List<TransactionDetails?> uniqueNewTransactions =
-          groupedBatch[monthKey]!.where((TransactionDetails? tx) {
-        if (tx == null) return false;
-        final String sig = tx.transaction.toJson()['signatures'][0];
-        final bool isUnique = !existingSignatures.contains(sig);
-        if (isUnique) {
-          existingSignatures.add(sig);
-          hasNewTransactions = true;
-        }
-        return isUnique;
-      }).toList();
-
-      if (uniqueNewTransactions.isNotEmpty) {
-        if (isOlderTransactions) {
-          storedTransactions[monthKey]!.addAll(uniqueNewTransactions);
-        } else {
-          storedTransactions[monthKey]!.insertAll(0, uniqueNewTransactions);
-        }
-      }
-    }
-
-    transactions =
-        Map<String, List<TransactionDetails?>>.from(storedTransactions);
-
-    if (hasNewTransactions) {
-      await _walletRepository.storeTransactions(storedTransactions);
-    }
-  }
-
-  void _updateOldestSignature(
-    Map<String, List<TransactionDetails?>> transactions,
-  ) {
-    DateTime? oldestDate;
-    String? oldestSig;
-
-    for (final List<TransactionDetails?> list in transactions.values) {
-      for (final TransactionDetails? tx in list) {
-        if (tx != null) {
-          final DateTime txDate = tx.blockTime != null
-              ? DateTime.fromMillisecondsSinceEpoch(tx.blockTime! * 1000)
-              : DateTime.now();
-
-          if (oldestDate == null || txDate.isBefore(oldestDate)) {
-            oldestDate = txDate;
-            oldestSig = tx.transaction.toJson()['signatures'][0];
-          }
-        }
-      }
-    }
-
-    oldestLoadedSignature = oldestSig;
   }
 }

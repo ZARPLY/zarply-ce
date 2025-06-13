@@ -7,14 +7,21 @@ import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
 import '../../features/wallet/data/services/wallet_solana_service.dart';
 import '../../features/wallet/data/services/wallet_storage_service.dart';
 import '../../features/wallet/domain/repositories/wallet_repository.dart';
+import '../services/balance_cache_service.dart';
 
 class WalletProvider extends ChangeNotifier {
+  WalletProvider() {
+    _balanceCacheService = BalanceCacheService(
+      walletRepository: _walletRepository,
+    );
+  }
   final WalletStorageService _walletStorageService = WalletStorageService();
   final WalletSolanaService _walletSolanaService = WalletSolanaService(
     rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletRepository _walletRepository = WalletRepositoryImpl();
+  late final BalanceCacheService _balanceCacheService;
 
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
@@ -141,5 +148,22 @@ class WalletProvider extends ChangeNotifier {
 
   Future<bool> hasPassword() async {
     return _walletStorageService.hasPassword();
+  }
+
+  /// Refresh balances after a payment is completed
+  Future<void> onPaymentCompleted() async {
+    if (_wallet != null && _userTokenAccount != null) {
+      try {
+        debugPrint('Payment completed, refreshing balances...');
+        await _balanceCacheService.getBothBalances(
+          zarpAddress: _userTokenAccount!.pubkey,
+          solAddress: _wallet!.address,
+          forceRefresh: true, // Force network fetch after payment
+        );
+        debugPrint('Balances refreshed after payment');
+      } catch (e) {
+        debugPrint('Error refreshing balances after payment: $e');
+      }
+    }
   }
 }

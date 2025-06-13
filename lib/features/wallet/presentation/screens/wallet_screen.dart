@@ -13,17 +13,35 @@ class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  WalletScreenState createState() => WalletScreenState();
+  _WalletScreenState createState() => _WalletScreenState();
 }
 
-class WalletScreenState extends State<WalletScreen> {
+class _WalletScreenState extends State<WalletScreen>
+    with WidgetsBindingObserver {
   late WalletViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _viewModel = WalletViewModel();
     _loadWalletData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh balances when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      _refreshBalances();
+    }
   }
 
   Future<void> _loadWalletData() async {
@@ -33,6 +51,11 @@ class WalletScreenState extends State<WalletScreen> {
       walletProvider.wallet,
       walletProvider.userTokenAccount,
     );
+  }
+
+  Future<void> _refreshBalances() async {
+    // Force refresh cached balances when returning to screen
+    await _viewModel.loadCachedBalances();
   }
 
   @override
@@ -300,9 +323,10 @@ class WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                       ],
-                    ).then((String? value) async{
+                    ).then((String? value) async {
                       if (value == 'logout') {
-                        await Provider.of<AuthProvider>(context, listen: false).logout();
+                        await Provider.of<AuthProvider>(context, listen: false)
+                            .logout();
                         context.go('/login');
                       }
                     });
@@ -356,11 +380,5 @@ class WalletScreenState extends State<WalletScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.cancelOperations();
-    super.dispose();
   }
 }

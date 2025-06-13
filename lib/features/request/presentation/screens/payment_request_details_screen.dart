@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../../../pay/presentation/models/payment_review_content_view_model.dart';
 
 class PaymentRequestDetailsScreen extends StatefulWidget {
@@ -72,6 +73,9 @@ class _PaymentRequestDetailsScreenState
         amount: widget.amount,
         context: context,
       );
+
+      // Refresh balances after payment completion
+      await walletProvider.onPaymentCompleted();
 
       if (mounted) {
         // Show success bottom sheet
@@ -324,18 +328,10 @@ class _PaymentRequestDetailsScreenState
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          _isProcessing ? null : _handlePaymentConfirmation,
-                      child: _isProcessing
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Confirm Payment'),
+                    child: LoadingButton(
+                      isLoading: _isProcessing,
+                      onPressed: _handlePaymentConfirmation,
+                      child: const Text('Confirm Payment'),
                     ),
                   ),
                 ],
