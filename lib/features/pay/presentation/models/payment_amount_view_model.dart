@@ -35,8 +35,14 @@ class PaymentAmountViewModel extends ChangeNotifier {
     }
 
     try {
+      debugPrint(
+          'Fetching previous transaction for recipient: $recipientAddress');
+      debugPrint('Current wallet address: $currentWalletAddress');
+
       final Map<String, List<TransactionDetails?>> transactions =
           await _walletRepository.getStoredTransactions();
+
+      debugPrint('Found ${transactions.length} months of transactions');
 
       TransactionTransferInfo? lastTransaction;
       DateTime? lastTransactionDate;
@@ -44,6 +50,9 @@ class PaymentAmountViewModel extends ChangeNotifier {
       // Iterate through transactions to find the most recent payment to this recipient
       for (final List<TransactionDetails?> monthTransactions
           in transactions.values) {
+        debugPrint(
+            'Processing ${monthTransactions.length} transactions in month');
+
         for (final TransactionDetails? tx in monthTransactions) {
           if (tx == null) continue;
 
@@ -53,15 +62,29 @@ class PaymentAmountViewModel extends ChangeNotifier {
             currentWalletAddress,
           );
 
-          if (transferInfo != null &&
-              transferInfo.amount < 0 && // Outgoing transaction
-              transferInfo.recipient != 'myself' &&
-              transferInfo.recipient == recipientAddress) {
-            if (lastTransactionDate == null ||
-                (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
-                    false)) {
-              lastTransaction = transferInfo;
-              lastTransactionDate = transferInfo.timestamp;
+          if (transferInfo != null) {
+            debugPrint(
+                'Parsed transaction: amount=${transferInfo.amount}, recipient=${transferInfo.recipient}, sender=${transferInfo.sender}');
+
+            // Check if this is an outgoing transaction to the recipient
+            // We'll try to match by wallet address first
+            final bool isOutgoingToRecipient =
+                transferInfo.amount < 0 && // Outgoing transaction
+                    transferInfo.recipient != 'myself' &&
+                    transferInfo.recipient ==
+                        recipientAddress; // Match wallet address
+
+            if (isOutgoingToRecipient) {
+              debugPrint('Found matching outgoing transaction to recipient');
+
+              if (lastTransactionDate == null ||
+                  (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
+                      false)) {
+                lastTransaction = transferInfo;
+                lastTransactionDate = transferInfo.timestamp;
+                debugPrint(
+                    'Updated last transaction: ${transferInfo.amount} to ${transferInfo.recipient} on ${transferInfo.timestamp}');
+              }
             }
           }
         }
@@ -70,6 +93,14 @@ class PaymentAmountViewModel extends ChangeNotifier {
       // Cache the result
       _cachedLastTransaction = lastTransaction;
       _hasLoadedTransaction = true;
+
+      if (lastTransaction != null) {
+        debugPrint(
+            'Returning last transaction: ${lastTransaction.amount} to ${lastTransaction.recipient}');
+      } else {
+        debugPrint(
+            'No previous transaction found for recipient: $recipientAddress');
+      }
 
       return lastTransaction;
     } catch (e) {

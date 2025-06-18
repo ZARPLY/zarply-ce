@@ -60,7 +60,10 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   Widget build(BuildContext context) {
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
-    final String currentWalletAddress = walletProvider.wallet?.address ?? '';
+    final String currentWalletAddress =
+        walletProvider.userTokenAccount?.pubkey ??
+            walletProvider.wallet?.address ??
+            '';
 
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
