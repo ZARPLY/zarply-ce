@@ -23,45 +23,59 @@ class PaymentAmountViewModel extends ChangeNotifier {
   bool isFormValid = false;
   final String recipientAddress;
   final String? initialAmount;
-  final String currentWalletAddress; // Store wallet address here
+  final String currentWalletAddress;
 
-  TransactionTransferInfo? lastTransaction;
-  DateTime? lastTransactionDate;
+  TransactionTransferInfo? _cachedLastTransaction;
+  bool _hasLoadedTransaction = false;
 
   Future<TransactionTransferInfo?> getPreviousTransaction() async {
-    lastTransaction = null;
-    lastTransactionDate = null;
+    // Return cached result if already loaded
+    if (_hasLoadedTransaction) {
+      return _cachedLastTransaction;
+    }
 
-    final Map<String, List<TransactionDetails?>> transactions =
-        await _walletRepository.getStoredTransactions();
+    try {
+      final Map<String, List<TransactionDetails?>> transactions =
+          await _walletRepository.getStoredTransactions();
 
-    for (final List<TransactionDetails?> monthTransactions
-        in transactions.values) {
-      for (final TransactionDetails? tx in monthTransactions) {
-        if (tx == null) continue;
+      TransactionTransferInfo? lastTransaction;
+      DateTime? lastTransactionDate;
 
-        // Use the injected wallet address
-        final TransactionTransferInfo? transferInfo =
-            TransactionDetailsParser.parseTransferDetails(
-          tx,
-          currentWalletAddress,
-        );
+      // Iterate through transactions to find the most recent payment to this recipient
+      for (final List<TransactionDetails?> monthTransactions
+          in transactions.values) {
+        for (final TransactionDetails? tx in monthTransactions) {
+          if (tx == null) continue;
 
-        if (transferInfo != null &&
-            transferInfo.amount < 0 &&
-            transferInfo.recipient != 'myself' &&
-            transferInfo.recipient == recipientAddress) {
-          if (lastTransactionDate == null ||
-              (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
-                  false)) {
-            lastTransaction = transferInfo;
-            lastTransactionDate = transferInfo.timestamp;
+          final TransactionTransferInfo? transferInfo =
+              TransactionDetailsParser.parseTransferDetails(
+            tx,
+            currentWalletAddress,
+          );
+
+          if (transferInfo != null &&
+              transferInfo.amount < 0 && // Outgoing transaction
+              transferInfo.recipient != 'myself' &&
+              transferInfo.recipient == recipientAddress) {
+            if (lastTransactionDate == null ||
+                (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
+                    false)) {
+              lastTransaction = transferInfo;
+              lastTransactionDate = transferInfo.timestamp;
+            }
           }
         }
       }
-    }
 
-    return lastTransaction;
+      // Cache the result
+      _cachedLastTransaction = lastTransaction;
+      _hasLoadedTransaction = true;
+
+      return lastTransaction;
+    } catch (e) {
+      debugPrint('Error fetching previous transaction: $e');
+      return null;
+    }
   }
 
   void _updateFormValidity() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
@@ -57,11 +58,15 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final String currentWalletAddress = walletProvider.wallet?.address ?? '';
+
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
         recipientAddress: widget.recipientAddress,
         initialAmount: widget.initialAmount,
-        currentWalletAddress: widget.recipientAddress,
+        currentWalletAddress: currentWalletAddress,
       ),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {
