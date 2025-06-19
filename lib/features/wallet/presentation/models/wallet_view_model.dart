@@ -408,8 +408,7 @@ class WalletViewModel extends ChangeNotifier {
           );
           if (oldestTime == null || txTime.isBefore(oldestTime)) {
             oldestTime = txTime;
-            // Use block time as a fallback identifier for oldest transaction
-            oldestLoadedSignature = tx.blockTime.toString();
+            oldestLoadedSignature = tx.transaction.toJson()['signatures'][0];
           }
         }
       }

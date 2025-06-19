@@ -62,9 +62,6 @@ class WalletProvider extends ChangeNotifier {
       _userTokenAccount =
           await _walletSolanaService.getAssociatedTokenAccount(_wallet!);
 
-      // Load transactions
-      await refreshTransactions();
-
       notifyListeners();
       return true;
     } catch (e) {
