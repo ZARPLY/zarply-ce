@@ -88,7 +88,7 @@ class WalletProvider extends ChangeNotifier {
         isCancelled: () => _walletRepository.isCancelled,
       );
     } catch (e) {
-      debugPrint('Error fetching limited transactions: $e');
+      throw Exception(e);
     }
   }
 
@@ -100,33 +100,28 @@ class WalletProvider extends ChangeNotifier {
     try {
       final String? lastSignature =
           await _walletRepository.getLastTransactionSignature();
-      debugPrint('Last signature: $lastSignature');
 
       await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
         lastKnownSignature: lastSignature,
         onBatchLoaded: (List<TransactionDetails?> batch) {
-          debugPrint('Processing and storing transactions: ${batch.length}');
           if (batch.isEmpty) return;
 
           _processAndStoreTransactions(batch);
         },
       );
     } catch (e) {
-      debugPrint('Error refreshing transactions: $e');
+      throw Exception(e);
     }
   }
 
-  // Helper method to process and store transactions in secure storage
   Future<void> _processAndStoreTransactions(
     List<TransactionDetails?> batch,
   ) async {
     try {
-      // Get current stored transactions
       final Map<String, List<TransactionDetails?>> transactions =
           await _walletRepository.getStoredTransactions();
 
-      // Process new transactions
       for (final TransactionDetails? tx in batch) {
         if (tx == null) continue;
 
@@ -142,17 +137,15 @@ class WalletProvider extends ChangeNotifier {
         transactions[monthKey]!.insert(0, tx);
       }
 
-      // Store updated transactions
       await _walletRepository.storeTransactions(transactions);
 
-      // Store the latest transaction signature for future fetches
       if (batch.isNotEmpty && batch.first != null) {
         final String signature =
             batch.first!.transaction.toJson()['signatures'][0];
         await _walletRepository.storeLastTransactionSignature(signature);
       }
     } catch (e) {
-      debugPrint('Error processing transactions: $e');
+      throw Exception(e);
     }
   }
 
@@ -166,7 +159,7 @@ class WalletProvider extends ChangeNotifier {
         forceRefresh: true,
       );
     } catch (e) {
-      debugPrint('Error fetching balances: $e');
+      throw Exception(e);
     }
   }
 
@@ -208,15 +201,13 @@ class WalletProvider extends ChangeNotifier {
   Future<void> onPaymentCompleted() async {
     if (_wallet != null && _userTokenAccount != null) {
       try {
-        debugPrint('Payment completed, refreshing balances...');
         await _balanceCacheService.getBothBalances(
           zarpAddress: _userTokenAccount!.pubkey,
           solAddress: _wallet!.address,
-          forceRefresh: true, // Force network fetch after payment
+          forceRefresh: true,
         );
-        debugPrint('Balances refreshed after payment');
       } catch (e) {
-        debugPrint('Error refreshing balances after payment: $e');
+        throw Exception(e);
       }
     }
   }

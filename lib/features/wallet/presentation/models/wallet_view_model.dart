@@ -55,20 +55,12 @@ class WalletViewModel extends ChangeNotifier {
         walletAmount = balances.zarpBalance;
         solBalance = balances.solBalance;
         notifyListeners();
-
-        debugPrint(
-          'Loaded cached balances - ZARP: $walletAmount, SOL: $solBalance',
-        );
       } catch (e) {
-        debugPrint('Error loading cached balances: $e');
-        // If cache fails, fall back to network refresh
         await refreshBalances();
       }
     }
   }
 
-  /// Refresh balances from network and update cache
-  /// This should be called when user manually refreshes or after payments
   Future<void> refreshBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
@@ -81,18 +73,12 @@ class WalletViewModel extends ChangeNotifier {
         walletAmount = balances.zarpBalance;
         solBalance = balances.solBalance;
         notifyListeners();
-
-        debugPrint(
-          'Refreshed balances - ZARP: $walletAmount, SOL: $solBalance',
-        );
       } catch (e) {
-        debugPrint('Error refreshing balances: $e');
         rethrow;
       }
     }
   }
 
-  /// Force refresh balances from network (used after payments)
   Future<void> forceRefreshBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
@@ -106,12 +92,7 @@ class WalletViewModel extends ChangeNotifier {
         walletAmount = balances.zarpBalance;
         solBalance = balances.solBalance;
         notifyListeners();
-
-        debugPrint(
-          'Force refreshed balances - ZARP: $walletAmount, SOL: $solBalance',
-        );
       } catch (e) {
-        debugPrint('Error force refreshing balances: $e');
         rethrow;
       }
     }
@@ -182,15 +163,6 @@ class WalletViewModel extends ChangeNotifier {
     final Map<String, List<TransactionDetails?>> storedTransactions =
         await _walletRepository.getStoredTransactions();
 
-    // Log the number of transactions retrieved from storage
-    int totalStoredTransactions = 0;
-    storedTransactions
-        .forEach((String month, List<TransactionDetails?> txList) {
-      totalStoredTransactions +=
-          txList.where((TransactionDetails? tx) => tx != null).length;
-    });
-    debugPrint('Retrieved $totalStoredTransactions transactions from storage');
-
     transactions =
         Map<String, List<TransactionDetails?>>.from(storedTransactions);
     notifyListeners();
@@ -202,8 +174,6 @@ class WalletViewModel extends ChangeNotifier {
     unawaited(refreshIndicatorKey?.currentState?.show());
   }
 
-  /// Refresh transactions and balances
-  /// This is called when user pulls to refresh
   Future<void> refreshTransactions() async {
     if (isRefreshing) return;
 
@@ -276,8 +246,6 @@ class WalletViewModel extends ChangeNotifier {
     loadedTransactions = 0;
     notifyListeners();
 
-    debugPrint('Loading 20 more transactions...');
-
     final Map<String, List<TransactionDetails?>> storedTransactions =
         Map<String, List<TransactionDetails?>>.from(transactions);
 
@@ -311,14 +279,10 @@ class WalletViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Error loading more transactions: $e');
     } finally {
-      debugPrint('Loading more finished');
       isLoadingMore = false;
 
       if (!_walletRepository.isCancelled) {
         updateHasMoreTransactions();
-        debugPrint(
-          'Loaded $loadedTransactions more transactions. Total: ${transactions.values.expand((List<TransactionDetails?> list) => list).where((TransactionDetails? tx) => tx != null).length}',
-        );
       }
       notifyListeners();
     }

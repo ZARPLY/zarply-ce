@@ -48,9 +48,6 @@ class _TransactionsListState extends State<TransactionsList> {
     final List<dynamic> transactionItems =
         widget.viewModel.getSortedTransactionItems();
 
-    debugPrint(
-      'isLoadingTransactions: ${widget.viewModel.isLoadingTransactions}',
-    );
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,

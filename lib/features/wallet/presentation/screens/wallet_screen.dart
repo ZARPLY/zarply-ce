@@ -51,7 +51,11 @@ class _WalletScreenState extends State<WalletScreen>
         await _viewModel.updateTransactionCount();
       }
     } catch (e) {
-      debugPrint('Error loading transactions from repository: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading transactions from repository: $e'),
+        ),
+      );
     }
   }
 

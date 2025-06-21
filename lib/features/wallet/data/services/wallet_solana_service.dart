@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
@@ -180,7 +179,6 @@ class WalletSolanaService {
     bool Function()? isCancelled,
   }) async {
     try {
-      debugPrint('Getting account transactions for $walletAddress');
       final List<TransactionSignatureInformation> signatures =
           await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
@@ -189,7 +187,6 @@ class WalletSolanaService {
         before: before,
         commitment: Commitment.confirmed,
       );
-      debugPrint('Signatures: ${signatures.length}');
 
       if (signatures.isEmpty) {
         return <String, List<TransactionDetails?>>{};
@@ -202,7 +199,6 @@ class WalletSolanaService {
       }
 
       if (isCancelled != null && isCancelled()) {
-        debugPrint('Cancelled');
         return <String, List<TransactionDetails?>>{};
       }
 
@@ -359,9 +355,6 @@ class WalletSolanaService {
           }
 
           if (isRateLimited) {
-            debugPrint(
-              'Rate limit hit, waiting for $rateLimitWaitTime before retry...',
-            );
             await Future<void>.delayed(rateLimitWaitTime);
             isRateLimited = false;
           }
@@ -378,7 +371,6 @@ class WalletSolanaService {
               isRateLimited = true;
               retryCount++;
             } else {
-              debugPrint('Error fetching transaction $signature: $e');
               retryCount++;
 
               // For non-rate-limit errors, use exponential backoff

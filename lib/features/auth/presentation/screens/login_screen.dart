@@ -50,25 +50,19 @@ class _LoginScreenState extends State<LoginScreen> {
     final bool success = await _viewModel.validatePassword();
     try {
       if (success && mounted) {
-        // Fetch balances and transactions before navigating
         final WalletProvider walletProvider = Provider.of<WalletProvider>(
           context,
           listen: false,
         );
 
-        // Initialize wallet if needed
         if (!walletProvider.hasWallet) {
-          debugPrint('Initializing wallet on login');
           await walletProvider.initialize();
         }
 
-        // Refresh transactions
-        debugPrint('Fetching new transactions on login');
         await walletProvider.refreshTransactions();
 
         await Future<void>.delayed(const Duration(seconds: 3));
 
-        debugPrint('Fetching and caching balances on login');
         await walletProvider.fetchAndCacheBalances();
 
         _viewModel.setIsLoading(value: false);
@@ -76,14 +70,17 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           listen: false,
         ).login();
-        // Navigate to wallet screen
+
         if (mounted) {
-          debugPrint('Login successful, navigating to wallet screen');
           context.go('/wallet');
         }
       }
     } catch (e) {
-      debugPrint('Error logging in: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error logging in: $e'),
+        ),
+      );
     } finally {
       _viewModel.setIsLoading(value: false);
     }
