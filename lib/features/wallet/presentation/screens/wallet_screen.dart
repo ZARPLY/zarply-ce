@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
@@ -13,26 +14,69 @@ class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  WalletScreenState createState() => WalletScreenState();
+  _WalletScreenState createState() => _WalletScreenState();
 }
 
-class WalletScreenState extends State<WalletScreen> {
+class _WalletScreenState extends State<WalletScreen>
+    with WidgetsBindingObserver {
   late WalletViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = WalletViewModel();
-    _loadWalletData();
-  }
+    WidgetsBinding.instance.addObserver(this);
 
-  Future<void> _loadWalletData() async {
+    _viewModel = WalletViewModel();
+
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
-    await _viewModel.loadWalletData(
-      walletProvider.wallet,
-      walletProvider.userTokenAccount,
-    );
+    _viewModel.wallet = walletProvider.wallet;
+    _viewModel.tokenAccount = walletProvider.userTokenAccount;
+
+    // Load transactions from repository
+    _loadTransactionsFromRepository();
+
+    _viewModel.loadCachedBalances();
+
+    _viewModel.isLoadingTransactions = false;
+  }
+
+  Future<void> _loadTransactionsFromRepository() async {
+    try {
+      final Map<String, List<TransactionDetails?>> storedTransactions =
+          await _viewModel.loadStoredTransactions();
+
+      if (storedTransactions.isNotEmpty) {
+        _viewModel.updateOldestSignature();
+        await _viewModel.updateTransactionCount();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading transactions from repository: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshBalances() async {
+    await _viewModel.loadCachedBalances();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _refreshBalances();
+      _loadTransactionsFromRepository();
+    }
   }
 
   @override
@@ -41,17 +85,6 @@ class WalletScreenState extends State<WalletScreen> {
       value: _viewModel,
       child: Consumer<WalletViewModel>(
         builder: (BuildContext context, WalletViewModel viewModel, _) {
-          if (viewModel.isLoading) {
-            return const Scaffold(
-              backgroundColor: Colors.white,
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: Colors.blue,
-                ),
-              ),
-            );
-          }
-
           return Scaffold(
             body: SafeArea(
               bottom: false,
@@ -300,9 +333,10 @@ class WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                       ],
-                    ).then((String? value) async{
+                    ).then((String? value) async {
                       if (value == 'logout') {
-                        await Provider.of<AuthProvider>(context, listen: false).logout();
+                        await Provider.of<AuthProvider>(context, listen: false)
+                            .logout();
                         context.go('/login');
                       }
                     });
@@ -356,11 +390,5 @@ class WalletScreenState extends State<WalletScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.cancelOperations();
-    super.dispose();
   }
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../models/welcome_view_model.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -88,41 +89,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       const SizedBox(height: 64),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: viewModel.isLoading
-                              ? null
-                              : () async {
-                                  final WalletProvider walletProvider =
-                                      Provider.of<WalletProvider>(
-                                    context,
-                                    listen: false,
-                                  );
-                                  final bool success = await viewModel
-                                      .createAndStoreWallet(walletProvider);
-                                  if (!context.mounted) return;
+                        child: LoadingButton(
+                          isLoading: viewModel.isLoading,
+                          onPressed: () async {
+                            final WalletProvider walletProvider =
+                                Provider.of<WalletProvider>(
+                              context,
+                              listen: false,
+                            );
+                            final bool success = await viewModel
+                                .createAndStoreWallet(walletProvider);
+                            if (!context.mounted) return;
 
-                                  if (success) {
-                                    context.go('/backup_wallet');
-                                  } else if (viewModel.errorMessage != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(viewModel.errorMessage!),
-                                        backgroundColor: Colors.red.shade700,
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: const Duration(seconds: 5),
-                                        action: SnackBarAction(
-                                          label: 'Dismiss',
-                                          textColor: Colors.white,
-                                          onPressed: () {
-                                            ScaffoldMessenger.of(context)
-                                                .hideCurrentSnackBar();
-                                            viewModel.clearError();
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
+                            if (success) {
+                              context.go('/backup_wallet');
+                            } else if (viewModel.errorMessage != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(viewModel.errorMessage!),
+                                  backgroundColor: Colors.red.shade700,
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 5),
+                                  action: SnackBarAction(
+                                    label: 'Dismiss',
+                                    textColor: Colors.white,
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context)
+                                          .hideCurrentSnackBar();
+                                      viewModel.clearError();
+                                    },
+                                  ),
+                                ),
+                              );
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4169E1),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -130,22 +130,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: viewModel.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFF4169E1),
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Create new wallet',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                          child: const Text(
+                            'Create new wallet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),

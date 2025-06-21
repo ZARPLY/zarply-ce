@@ -69,7 +69,7 @@ class WalletRepositoryImpl implements WalletRepository {
     return _walletSolanaService.getAccountTransactions(
       walletAddress: walletAddress,
       before: oldestSignature,
-      limit: 100,
+      limit: 20,
       onBatchLoaded: (List<TransactionDetails?> batch) {
         if (_isCancelled) return;
         if (onBatchLoaded != null) onBatchLoaded(batch);
@@ -96,6 +96,11 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<String?> getLastTransactionSignature() {
     return _transactionStorageService.getLastTransactionSignature();
+  }
+
+  @override
+  Future<void> storeLastTransactionSignature(String signature) {
+    return _transactionStorageService.storeLastTransactionSignature(signature);
   }
 
   @override

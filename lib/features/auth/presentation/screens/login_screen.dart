@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
+import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
@@ -44,9 +45,37 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _performLogin() async {
+    _viewModel.setIsLoading(value: true);
     final bool success = await _viewModel.validatePassword();
-    if (success && mounted) {
-      context.go('/wallet');
+    try {
+      if (success && mounted) {
+        final WalletProvider walletProvider = Provider.of<WalletProvider>(
+          context,
+          listen: false,
+        );
+
+        if (!walletProvider.hasWallet) {
+          await walletProvider.initialize();
+        }
+
+        await walletProvider.refreshTransactions();
+
+        await walletProvider.fetchAndCacheBalances();
+
+        // routing happens in app_router.dart based on isAuthenticated
+        await Provider.of<AuthProvider>(
+          context,
+          listen: false,
+        ).login();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error logging in: $e'),
+        ),
+      );
+    } finally {
+      _viewModel.setIsLoading(value: false);
     }
   }
 
@@ -172,20 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
                     child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: viewModel.showSplash
-                            ? null
-                            : () async {
-                                final bool success =
-                                    await viewModel.validatePassword();
-                                if (success && mounted) {
-                                  await Provider.of<AuthProvider>(
-                                    context,
-                                    listen: false,
-                                  ).login();
-                                  context.go('/wallet');
-                                }
-                              },
+                      child: LoadingButton(
+                        isLoading: viewModel.isLoading,
+                        onPressed: viewModel.showSplash ? null : _performLogin,
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(
                             fontSize: 18,

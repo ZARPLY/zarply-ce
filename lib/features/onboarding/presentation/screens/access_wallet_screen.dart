@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../widgets/progress_steps.dart';
 
 class AccessWalletScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class AccessWalletScreen extends StatefulWidget {
 
 class _AccessWalletScreenState extends State<AccessWalletScreen> {
   bool _isAgreementChecked = false;
+  bool _isLoading = false;
 
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
@@ -24,6 +27,53 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not launch URL')),
       );
+    }
+  }
+
+  Future<void> _handleContinue() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final WalletProvider walletProvider =
+          Provider.of<WalletProvider>(context, listen: false);
+      final AuthProvider authProvider =
+          Provider.of<AuthProvider>(context, listen: false);
+
+      final bool initialized = await walletProvider.initialize();
+      if (!initialized) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to initialize wallet'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      await walletProvider.fetchLimitedTransactions();
+
+      await walletProvider.fetchAndCacheBalances();
+
+      await authProvider.login();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error initializing wallet: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -142,33 +192,20 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
               ),
             ),
             const Spacer(),
-            const SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: null,
-                child: Text('Use Fingerprint'),
-              ),
-            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
-                onPressed: _isAgreementChecked
-                    ? () async {
-                        final WalletProvider walletProvider =
-                            Provider.of<WalletProvider>(context, listen: false);
-                        await walletProvider.initialize();
-                        if (context.mounted) {
-                          context.go('/wallet', extra: '/create_password');
-                        }
-                      }
-                    : null,
-                child: Text(
-                  'Maybe Later',
-                  style: TextStyle(
-                    color: _isAgreementChecked ? Colors.black : Colors.grey,
+              child: LoadingButton(
+                isLoading: _isLoading,
+                type: LoadingButtonType.elevated,
+                style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                onPressed: _isAgreementChecked ? _handleContinue : null,
+                child: const Text('Continue'),
               ),
             ),
           ],

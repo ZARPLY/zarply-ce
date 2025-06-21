@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../models/restore_wallet_view_model.dart';
 import '../widgets/importing_wallet_modal.dart';
 import '../widgets/restore_wallet_dropdown.dart';
@@ -16,6 +17,7 @@ class RestoreWalletScreen extends StatefulWidget {
 
 class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   late final RestoreWalletViewModel _viewModel;
+  bool _isLoading = false;
 
   final FocusNode _phraseFocus = FocusNode();
   final FocusNode _privateKeyFocus = FocusNode();
@@ -35,59 +37,73 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   }
 
   Future<void> _handleRestoreWallet() async {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    setState(() {
+      _isLoading = true;
+    });
 
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.90,
-        child: StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return FutureBuilder<void>(
-              future: () async {
-                final bool success =
-                    await _viewModel.restoreWallet(walletProvider);
-                if (!success) {
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                  return;
-                }
+    try {
+      final WalletProvider walletProvider =
+          Provider.of<WalletProvider>(context, listen: false);
 
-                final bool hasPassword = await walletProvider.hasPassword();
-                if (!context.mounted) return;
-
-                if (!hasPassword) {
-                  context.replace('/create_password');
-                } else {
-                  context.replace('/login');
-                }
-              }(),
-              builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-                return ImportingWalletModal(
-                  isImported: _viewModel.importComplete,
-                );
-              },
-            );
-          },
+      await showModalBottomSheet<void>(
+        context: context,
+        isDismissible: false,
+        enableDrag: false,
+        backgroundColor: Colors.white,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-      ),
-    );
+        builder: (BuildContext context) => SizedBox(
+          height: MediaQuery.of(context).size.height * 0.90,
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return FutureBuilder<void>(
+                future: () async {
+                  final bool success =
+                      await _viewModel.restoreWallet(walletProvider);
+                  if (!success) {
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    return;
+                  }
 
-    if (_viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.errorMessage!),
-          backgroundColor: Colors.red,
+                  final bool hasPassword = await walletProvider.hasPassword();
+                  if (!context.mounted) return;
+
+                  if (!hasPassword) {
+                    context.replace('/create_password');
+                  } else {
+                    context.replace('/login');
+                  }
+                }(),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  return ImportingWalletModal(
+                    isImported: _viewModel.importComplete,
+                  );
+                },
+              );
+            },
+          ),
         ),
       );
+
+      if (_viewModel.errorMessage != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_viewModel.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -200,15 +216,11 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed:
-                        _viewModel.isFormValid ? _handleRestoreWallet : null,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  child: LoadingButton(
+                    isLoading: _isLoading,
+                    onPressed: _viewModel.isFormValid && !_isLoading
+                        ? _handleRestoreWallet
+                        : null,
                     child: const Text('Import Wallet'),
                   ),
                 ),
