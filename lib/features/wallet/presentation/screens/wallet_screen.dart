@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
@@ -24,8 +25,38 @@ class _WalletScreenState extends State<WalletScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
     _viewModel = WalletViewModel();
-    _loadWalletData();
+
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    _viewModel.wallet = walletProvider.wallet;
+    _viewModel.tokenAccount = walletProvider.userTokenAccount;
+
+    // Load transactions from repository
+    _loadTransactionsFromRepository();
+
+    _viewModel.loadCachedBalances();
+
+    _viewModel.isLoadingTransactions = false;
+  }
+
+  Future<void> _loadTransactionsFromRepository() async {
+    try {
+      final Map<String, List<TransactionDetails?>> storedTransactions =
+          await _viewModel.loadStoredTransactions();
+
+      if (storedTransactions.isNotEmpty) {
+        _viewModel.updateOldestSignature();
+        await _viewModel.updateTransactionCount();
+      }
+    } catch (e) {
+      debugPrint('Error loading transactions from repository: $e');
+    }
+  }
+
+  Future<void> _refreshBalances() async {
+    await _viewModel.loadCachedBalances();
   }
 
   @override
@@ -38,24 +69,10 @@ class _WalletScreenState extends State<WalletScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // Refresh balances when app comes back to foreground
     if (state == AppLifecycleState.resumed) {
       _refreshBalances();
+      _loadTransactionsFromRepository();
     }
-  }
-
-  Future<void> _loadWalletData() async {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
-    await _viewModel.loadWalletData(
-      walletProvider.wallet,
-      walletProvider.userTokenAccount,
-    );
-  }
-
-  Future<void> _refreshBalances() async {
-    // Force refresh cached balances when returning to screen
-    await _viewModel.loadCachedBalances();
   }
 
   @override
@@ -64,17 +81,6 @@ class _WalletScreenState extends State<WalletScreen>
       value: _viewModel,
       child: Consumer<WalletViewModel>(
         builder: (BuildContext context, WalletViewModel viewModel, _) {
-          if (viewModel.isLoading) {
-            return const Scaffold(
-              backgroundColor: Colors.white,
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: Colors.blue,
-                ),
-              ),
-            );
-          }
-
           return Scaffold(
             body: SafeArea(
               bottom: false,

@@ -37,7 +37,24 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
     try {
       final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
-      await walletProvider.initialize();
+
+      final bool initialized = await walletProvider.initialize();
+      if (!initialized) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to initialize wallet'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      await walletProvider.fetchLimitedTransactions();
+
+      await walletProvider.fetchAndCacheBalances();
+
       if (mounted) {
         context.go('/wallet', extra: '/create_password');
       }

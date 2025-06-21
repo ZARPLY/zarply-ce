@@ -46,7 +46,6 @@ GoRouter createRouter(
       ];
 
       final List<String> onboardingRoutes = <String>[
-        '/',
         '/welcome',
         '/create_password',
         '/access_wallet',

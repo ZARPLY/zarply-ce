@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
@@ -45,9 +46,46 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _performLogin() async {
+    _viewModel.setIsLoading(value: true);
     final bool success = await _viewModel.validatePassword();
-    if (success && mounted) {
-      context.go('/wallet');
+    try {
+      if (success && mounted) {
+        // Fetch balances and transactions before navigating
+        final WalletProvider walletProvider = Provider.of<WalletProvider>(
+          context,
+          listen: false,
+        );
+
+        // Initialize wallet if needed
+        if (!walletProvider.hasWallet) {
+          debugPrint('Initializing wallet on login');
+          await walletProvider.initialize();
+        }
+
+        // Refresh transactions
+        debugPrint('Fetching new transactions on login');
+        await walletProvider.refreshTransactions();
+
+        await Future<void>.delayed(const Duration(seconds: 3));
+
+        debugPrint('Fetching and caching balances on login');
+        await walletProvider.fetchAndCacheBalances();
+
+        _viewModel.setIsLoading(value: false);
+        await Provider.of<AuthProvider>(
+          context,
+          listen: false,
+        ).login();
+        // Navigate to wallet screen
+        if (mounted) {
+          debugPrint('Login successful, navigating to wallet screen');
+          context.go('/wallet');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error logging in: $e');
+    } finally {
+      _viewModel.setIsLoading(value: false);
     }
   }
 
@@ -175,19 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       child: LoadingButton(
                         isLoading: viewModel.isLoading,
-                        onPressed: viewModel.showSplash
-                            ? null
-                            : () async {
-                                final bool success =
-                                    await viewModel.validatePassword();
-                                if (success && mounted) {
-                                  await Provider.of<AuthProvider>(
-                                    context,
-                                    listen: false,
-                                  ).login();
-                                  context.go('/wallet');
-                                }
-                              },
+                        onPressed: viewModel.showSplash ? null : _performLogin,
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(
                             fontSize: 18,

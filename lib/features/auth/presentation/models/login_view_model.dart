@@ -59,10 +59,12 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> validatePassword() async {
-    _isLoading = true;
+  void setIsLoading({required bool value}) {
+    _isLoading = value;
     notifyListeners();
+  }
 
+  Future<bool> validatePassword() async {
     try {
       if (passwordController.text.isEmpty) {
         errorMessage = 'Password required';
@@ -89,9 +91,6 @@ class LoginViewModel extends ChangeNotifier {
     } catch (e) {
       errorMessage = 'Error validating password';
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
   }
 

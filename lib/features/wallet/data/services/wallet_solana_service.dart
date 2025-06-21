@@ -180,6 +180,7 @@ class WalletSolanaService {
     bool Function()? isCancelled,
   }) async {
     try {
+      debugPrint('Getting account transactions for $walletAddress');
       final List<TransactionSignatureInformation> signatures =
           await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
@@ -188,6 +189,7 @@ class WalletSolanaService {
         before: before,
         commitment: Commitment.confirmed,
       );
+      debugPrint('Signatures: ${signatures.length}');
 
       if (signatures.isEmpty) {
         return <String, List<TransactionDetails?>>{};
@@ -200,6 +202,7 @@ class WalletSolanaService {
       }
 
       if (isCancelled != null && isCancelled()) {
+        debugPrint('Cancelled');
         return <String, List<TransactionDetails?>>{};
       }
 
