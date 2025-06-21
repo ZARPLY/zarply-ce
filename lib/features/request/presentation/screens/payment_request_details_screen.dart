@@ -74,9 +74,6 @@ class _PaymentRequestDetailsScreenState
         context: context,
       );
 
-      // Refresh balances after payment completion
-      await walletProvider.onPaymentCompleted();
-
       if (mounted) {
         // Show success bottom sheet
         await _showSuccessBottomSheet();
