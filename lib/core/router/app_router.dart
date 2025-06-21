@@ -56,17 +56,23 @@ GoRouter createRouter(
       ];
 
       final bool isLoginRoute = location == '/login';
+      final bool isRootRoute = location == '/';
+      final bool isAccessWalletRoute = location == '/access_wallet';
       final bool isProtected = protectedRoutes.contains(location);
       final bool isFromOnboarding =
           onboardingRoutes.contains(state.extra?.toString());
 
+      // If authenticated and trying to access root or login, go to wallet
+      if (isAuthenticated &&
+          (isLoginRoute || isRootRoute || isAccessWalletRoute)) {
+        return '/wallet';
+      }
+
+      // If not authenticated and trying to access protected routes
       if (!isAuthenticated && isProtected && !isFromOnboarding) {
         return '/login';
       }
-      if (isAuthenticated &&
-          (isLoginRoute || onboardingRoutes.contains(location))) {
-        return '/wallet';
-      }
+
       return null;
     },
     routes: <RouteBase>[

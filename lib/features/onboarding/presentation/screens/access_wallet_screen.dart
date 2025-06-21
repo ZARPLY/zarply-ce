@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../widgets/progress_steps.dart';
@@ -37,6 +38,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
     try {
       final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
+      final AuthProvider authProvider =
+          Provider.of<AuthProvider>(context, listen: false);
 
       final bool initialized = await walletProvider.initialize();
       if (!initialized) {
@@ -55,9 +58,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
 
       await walletProvider.fetchAndCacheBalances();
 
-      if (mounted) {
-        context.go('/wallet', extra: '/create_password');
-      }
+      await authProvider.login();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

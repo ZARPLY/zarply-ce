@@ -192,7 +192,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty) {
+      if (signatures.isNotEmpty && before == null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );

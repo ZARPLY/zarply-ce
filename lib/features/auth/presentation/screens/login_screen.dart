@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
@@ -61,19 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         await walletProvider.refreshTransactions();
 
-        await Future<void>.delayed(const Duration(seconds: 3));
-
         await walletProvider.fetchAndCacheBalances();
 
-        _viewModel.setIsLoading(value: false);
+        // routing happens in app_router.dart based on isAuthenticated
         await Provider.of<AuthProvider>(
           context,
           listen: false,
         ).login();
-
-        if (mounted) {
-          context.go('/wallet');
-        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
