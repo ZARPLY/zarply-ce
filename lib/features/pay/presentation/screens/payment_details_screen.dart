@@ -97,7 +97,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                         labelText: 'Public Key',
                         suffixIcon: ClearIconButton(
                           controller: viewModel.publicKeyController,
-                          ),
+                        ),
                         border: const OutlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.red,
@@ -119,8 +119,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                           context.go(
                             '/payment_amount',
                             extra: <String, String>{
-                              'recipientAddress': 
-                                viewModel.publicKeyController.text,
+                              'recipientAddress':
+                                  viewModel.publicKeyController.text,
                               'source': '/payment_details',
                             },
                           );
@@ -132,8 +132,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                       decoration: InputDecoration(
                         labelText: 'Description (Optional)',
                         suffixIcon: ClearIconButton(
-                          controller: viewModel.descriptionController, 
-                          ),
+                          controller: viewModel.descriptionController,
+                        ),
                       ),
                     ),
                   ),
