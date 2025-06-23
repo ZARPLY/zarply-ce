@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input_with_tooltip_strength.dart';
 import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
@@ -182,7 +183,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: LoadingButton(
+                      isLoading: viewModel.isLoading,
                       onPressed: viewModel.isFormValid ? _handleContinue : null,
                       style: ElevatedButton.styleFrom(
                         textStyle: const TextStyle(

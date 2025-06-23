@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../../core/services/secure_storage_service.dart';
 
 class SplashViewModel extends ChangeNotifier {
   SplashViewModel(this._walletProvider);
   final WalletProvider _walletProvider;
-  final SecureStorageService _secureStorage = SecureStorageService();
   late AnimationController animationController;
 
   void initAnimationController(TickerProvider vsync) {
@@ -38,15 +36,12 @@ class SplashViewModel extends ChangeNotifier {
 
       final bool haveWalletAndTokenAccount = await _walletProvider.initialize();
       final bool hasPassword = await _walletProvider.hasPassword();
-      final bool rememberPassword = await _secureStorage.getRememberPassword();
       await Future<void>.delayed(const Duration(seconds: 4));
 
       if (!haveWalletAndTokenAccount) {
         return '/welcome';
       } else if (!hasPassword) {
         return '/create_password';
-      } else if (rememberPassword) {
-        return '/wallet';
       } else {
         return '/login';
       }

@@ -34,6 +34,9 @@ abstract class WalletRepository {
   /// Get the signature of the last transaction
   Future<String?> getLastTransactionSignature();
 
+  /// Store the signature of the last transaction
+  Future<void> storeLastTransactionSignature(String signature);
+
   /// Parse transfer details from a transaction
   TransactionTransferInfo? parseTransferDetails(
     TransactionDetails? transaction,

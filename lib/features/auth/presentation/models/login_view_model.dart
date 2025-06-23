@@ -12,8 +12,10 @@ class LoginViewModel extends ChangeNotifier {
   bool showSplash = true;
   bool isKeyboardVisible = false;
   bool _rememberPassword = false;
+  bool _isLoading = false;
 
   bool get rememberPassword => _rememberPassword;
+  bool get isLoading => _isLoading;
 
   static final RegExp complexity =
       RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
@@ -57,38 +59,37 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> validatePassword() async {
-    if (passwordController.text.isEmpty) {
-      errorMessage = 'Password required';
-      notifyListeners();
-      return false;
-    }
-    if (passwordController.text.length < 8) {
-      errorMessage = 'Password must be at least 8 characters';
-      notifyListeners();
-      return false;
-    }
-    if (!complexity.hasMatch(passwordController.text)) {
-      errorMessage =
-          'Password must include a letter, number, and special character';
-      notifyListeners();
-      return false;
-    }
+  void setIsLoading({required bool value}) {
+    _isLoading = value;
+    notifyListeners();
+  }
 
+  Future<bool> validatePassword() async {
     try {
+      if (passwordController.text.isEmpty) {
+        errorMessage = 'Password required';
+        return false;
+      }
+      if (passwordController.text.length < 8) {
+        errorMessage = 'Password must be at least 8 characters';
+        return false;
+      }
+      if (!complexity.hasMatch(passwordController.text)) {
+        errorMessage =
+            'Password must include a letter, number, and special character';
+        return false;
+      }
+
       final String storedPin = await _secureStorage.getPin();
       if (passwordController.text == storedPin) {
         errorMessage = '';
-        notifyListeners();
         return true;
       } else {
         errorMessage = 'Incorrect password';
-        notifyListeners();
         return false;
       }
     } catch (e) {
       errorMessage = 'Error validating password';
-      notifyListeners();
       return false;
     }
   }

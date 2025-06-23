@@ -7,20 +7,25 @@ import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
 import '../../features/wallet/data/services/wallet_solana_service.dart';
 import '../../features/wallet/data/services/wallet_storage_service.dart';
 import '../../features/wallet/domain/repositories/wallet_repository.dart';
+import '../services/balance_cache_service.dart';
 
 class WalletProvider extends ChangeNotifier {
+  WalletProvider() {
+    _balanceCacheService = BalanceCacheService(
+      walletRepository: _walletRepository,
+    );
+  }
   final WalletStorageService _walletStorageService = WalletStorageService();
   final WalletSolanaService _walletSolanaService = WalletSolanaService(
     rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
     websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
   );
   final WalletRepository _walletRepository = WalletRepositoryImpl();
+  late final BalanceCacheService _balanceCacheService;
 
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
-  Map<String, List<TransactionDetails?>> _transactions =
-      <String, List<TransactionDetails?>>{};
 
   Wallet? get wallet => _wallet;
 
@@ -31,8 +36,6 @@ class WalletProvider extends ChangeNotifier {
   String? get recoveryPhrase => _recoveryPhrase;
 
   bool get hasRecoveryPhrase => _recoveryPhrase != null;
-
-  Map<String, List<TransactionDetails?>> get transactions => _transactions;
 
   void setRecoveryPhrase(String phrase) {
     _recoveryPhrase = phrase;
@@ -55,9 +58,6 @@ class WalletProvider extends ChangeNotifier {
       _userTokenAccount =
           await _walletSolanaService.getAssociatedTokenAccount(_wallet!);
 
-      // Load transactions
-      await refreshTransactions();
-
       notifyListeners();
       return true;
     } catch (e) {
@@ -68,44 +68,98 @@ class WalletProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransactions() async {
+  Future<void> fetchLimitedTransactions() async {
     if (_wallet == null || _userTokenAccount == null) return;
 
     try {
-      // Get stored transactions first
-      _transactions = await _walletRepository.getStoredTransactions();
-
-      // Get the last transaction signature
       final String? lastSignature =
           await _walletRepository.getLastTransactionSignature();
 
-      // Fetch new transactions
+      (_walletRepository as WalletRepositoryImpl).resetCancellation();
+      await _walletSolanaService.getAccountTransactions(
+        walletAddress: _userTokenAccount!.pubkey,
+        until: lastSignature,
+        limit: 10,
+        onBatchLoaded: (List<TransactionDetails?> batch) {
+          if (batch.isEmpty) return;
+
+          _processAndStoreTransactions(batch);
+        },
+        isCancelled: () => _walletRepository.isCancelled,
+      );
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
+  Future<void> refreshTransactions() async {
+    if (_wallet == null || _userTokenAccount == null) return;
+
+    (_walletRepository as WalletRepositoryImpl).resetCancellation();
+
+    try {
+      final String? lastSignature =
+          await _walletRepository.getLastTransactionSignature();
+
       await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
         lastKnownSignature: lastSignature,
         onBatchLoaded: (List<TransactionDetails?> batch) {
-          for (final TransactionDetails? tx in batch) {
-            if (tx == null) continue;
+          if (batch.isEmpty) return;
 
-            final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
-              tx.blockTime! * 1000,
-            );
-            final String monthKey =
-                '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
-
-            if (!_transactions.containsKey(monthKey)) {
-              _transactions[monthKey] = <TransactionDetails?>[];
-            }
-            _transactions[monthKey]!.insert(0, tx);
-          }
-
-          // Store updated transactions
-          _walletRepository.storeTransactions(_transactions);
-          notifyListeners();
+          _processAndStoreTransactions(batch);
         },
       );
     } catch (e) {
-      debugPrint('Error refreshing transactions: $e');
+      throw Exception(e);
+    }
+  }
+
+  Future<void> _processAndStoreTransactions(
+    List<TransactionDetails?> batch,
+  ) async {
+    try {
+      final Map<String, List<TransactionDetails?>> transactions =
+          await _walletRepository.getStoredTransactions();
+
+      for (final TransactionDetails? tx in batch) {
+        if (tx == null) continue;
+
+        final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
+          tx.blockTime! * 1000,
+        );
+        final String monthKey =
+            '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+
+        if (!transactions.containsKey(monthKey)) {
+          transactions[monthKey] = <TransactionDetails?>[];
+        }
+        transactions[monthKey]!.insert(0, tx);
+      }
+
+      await _walletRepository.storeTransactions(transactions);
+
+      if (batch.isNotEmpty && batch.first != null) {
+        final String signature =
+            batch.first!.transaction.toJson()['signatures'][0];
+        await _walletRepository.storeLastTransactionSignature(signature);
+      }
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
+  Future<void> fetchAndCacheBalances() async {
+    if (_wallet == null || _userTokenAccount == null) return;
+
+    try {
+      await _balanceCacheService.getBothBalances(
+        zarpAddress: _userTokenAccount!.pubkey,
+        solAddress: _wallet!.address,
+        forceRefresh: true,
+      );
+    } catch (e) {
+      throw Exception(e);
     }
   }
 
@@ -141,5 +195,20 @@ class WalletProvider extends ChangeNotifier {
 
   Future<bool> hasPassword() async {
     return _walletStorageService.hasPassword();
+  }
+
+  /// Refresh balances after a payment is completed
+  Future<void> onPaymentCompleted() async {
+    if (_wallet != null && _userTokenAccount != null) {
+      try {
+        await _balanceCacheService.getBothBalances(
+          zarpAddress: _userTokenAccount!.pubkey,
+          solAddress: _wallet!.address,
+          forceRefresh: true,
+        );
+      } catch (e) {
+        throw Exception(e);
+      }
+    }
   }
 }

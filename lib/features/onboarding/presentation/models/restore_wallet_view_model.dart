@@ -87,7 +87,7 @@ class RestoreWalletViewModel extends ChangeNotifier {
       importComplete = true;
       notifyListeners();
 
-      await Future<void>.delayed(const Duration(seconds: 2));
+      // await Future<void>.delayed(const Duration(seconds: 2));
 
       return true;
     } catch (e) {

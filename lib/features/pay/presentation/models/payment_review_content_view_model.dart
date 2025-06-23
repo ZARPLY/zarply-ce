@@ -4,6 +4,7 @@ import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/transaction_storage_service.dart';
 import '../../data/repositories/payment_review_content_repository_impl.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
 
@@ -12,6 +13,8 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
     PaymentReviewContentRepository? repository,
   }) : _repository = repository ?? PaymentReviewContentRepositoryImpl();
   final PaymentReviewContentRepository _repository;
+  final TransactionStorageService _transactionStorageService =
+      TransactionStorageService();
 
   bool _hasPaymentBeenMade = false;
   bool get hasPaymentBeenMade => _hasPaymentBeenMade;
@@ -60,10 +63,13 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
 
       await _repository.storeTransactionDetails(txDetails);
 
-      // Refresh transactions in the wallet provider
+      await _transactionStorageService.storeLastTransactionSignature(
+        txDetails.transaction.toJson()['signatures'][0],
+      );
+
       final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
-      await walletProvider.refreshTransactions();
+      await walletProvider.onPaymentCompleted();
 
       _hasPaymentBeenMade = true;
       notifyListeners();

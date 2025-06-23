@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
@@ -193,7 +192,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty) {
+      if (signatures.isNotEmpty && before == null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
         );
@@ -356,9 +355,6 @@ class WalletSolanaService {
           }
 
           if (isRateLimited) {
-            debugPrint(
-              'Rate limit hit, waiting for $rateLimitWaitTime before retry...',
-            );
             await Future<void>.delayed(rateLimitWaitTime);
             isRateLimited = false;
           }
@@ -375,7 +371,6 @@ class WalletSolanaService {
               isRateLimited = true;
               retryCount++;
             } else {
-              debugPrint('Error fetching transaction $signature: $e');
               retryCount++;
 
               // For non-rate-limit errors, use exponential backoff

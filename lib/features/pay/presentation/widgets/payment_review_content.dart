@@ -5,6 +5,7 @@ import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../models/payment_review_content_view_model.dart';
 import 'payment_success.dart';
 
@@ -149,26 +150,16 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _viewModel.isLoading ? null : _makeTransaction,
+                child: LoadingButton(
+                  isLoading: _viewModel.isLoading,
+                  onPressed: _makeTransaction,
                   style: ElevatedButton.styleFrom(
                     textStyle: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: _viewModel.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Text('Confirm Payment'),
+                  child: const Text('Confirm Payment'),
                 ),
               ),
               const SizedBox(height: 20),
