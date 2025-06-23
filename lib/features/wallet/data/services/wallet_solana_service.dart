@@ -77,15 +77,21 @@ class WalletSolanaService {
   }
 
   Future<ProgramAccount?> getAssociatedTokenAccount(
-    Wallet wallet,
+    String walletAddress,
   ) async {
-    final ProgramAccount? tokenAccount =
-        await _client.getAssociatedTokenAccount(
-      owner: wallet.publicKey,
-      mint: Ed25519HDPublicKey.fromBase58(zarpMint),
-    );
+    try {
+      final ProgramAccount? tokenAccount =
+          await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(walletAddress),
+        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+      );
 
-    return tokenAccount;
+      return tokenAccount;
+    } catch (e) {
+      throw WalletSolanaServiceException(
+        'Could not get associated token account for address: $e',
+      );
+    }
   }
 
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {

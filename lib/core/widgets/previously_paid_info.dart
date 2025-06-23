@@ -24,8 +24,6 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
   @override
   void initState() {
     super.initState();
-    debugPrint(
-        'PreviouslyPaidInfo: Initializing for recipient: ${widget.recipientAddress}');
     _previousTransactionFuture = widget.viewModel.getPreviousTransaction();
   }
 
@@ -33,11 +31,10 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
   Widget build(BuildContext context) {
     return FutureBuilder<TransactionTransferInfo?>(
       future: _previousTransactionFuture,
-      builder: (BuildContext context,
-          AsyncSnapshot<TransactionTransferInfo?> snapshot) {
-        debugPrint(
-            'PreviouslyPaidInfo: Connection state: ${snapshot.connectionState}, Has error: ${snapshot.hasError}, Data: ${snapshot.data}');
-
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<TransactionTransferInfo?> snapshot,
+      ) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 20,
@@ -47,8 +44,6 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
         }
 
         if (snapshot.hasError) {
-          debugPrint(
-              'PreviouslyPaidInfo: Error loading previous payment: ${snapshot.error}');
           return const Text(
             'Error loading previous payment',
             style: TextStyle(
@@ -61,7 +56,6 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
         final TransactionTransferInfo? previousTransaction = snapshot.data;
 
         if (previousTransaction == null) {
-          debugPrint('PreviouslyPaidInfo: No previous transaction found');
           return const Text(
             'No previous payment',
             style: TextStyle(
@@ -70,9 +64,6 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
             ),
           );
         }
-
-        debugPrint(
-            'PreviouslyPaidInfo: Found previous transaction: ${previousTransaction.amount} to ${previousTransaction.recipient} on ${previousTransaction.timestamp}');
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -116,7 +107,8 @@ class _PreviouslyPaidInfoState extends State<PreviouslyPaidInfo> {
                     Text(
                       previousTransaction.timestamp != null
                           ? Formatters.formatDate(
-                              previousTransaction.timestamp!)
+                              previousTransaction.timestamp!,
+                            )
                           : 'Unknown date',
                       style: const TextStyle(
                         fontWeight: FontWeight.w500,

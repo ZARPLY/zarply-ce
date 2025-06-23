@@ -51,4 +51,7 @@ abstract class WalletRepository {
 
   /// Retrieve the stored transaction count
   Future<int?> getStoredTransactionCount();
+
+  /// Get associated token account from wallet address
+  Future<ProgramAccount?> getAssociatedTokenAccount(String walletAddress);
 }

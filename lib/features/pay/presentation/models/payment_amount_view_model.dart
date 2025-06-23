@@ -35,14 +35,20 @@ class PaymentAmountViewModel extends ChangeNotifier {
     }
 
     try {
-      debugPrint(
-          'Fetching previous transaction for recipient: $recipientAddress');
-      debugPrint('Current wallet address: $currentWalletAddress');
+      // Convert recipient wallet address to token account address
+      final ProgramAccount? recipientTokenAccountProgram =
+          await _walletRepository.getAssociatedTokenAccount(recipientAddress);
+
+      if (recipientTokenAccountProgram == null) {
+        _cachedLastTransaction = null;
+        _hasLoadedTransaction = true;
+        return null;
+      }
+
+      final String recipientTokenAccount = recipientTokenAccountProgram.pubkey;
 
       final Map<String, List<TransactionDetails?>> transactions =
           await _walletRepository.getStoredTransactions();
-
-      debugPrint('Found ${transactions.length} months of transactions');
 
       TransactionTransferInfo? lastTransaction;
       DateTime? lastTransactionDate;
@@ -50,9 +56,6 @@ class PaymentAmountViewModel extends ChangeNotifier {
       // Iterate through transactions to find the most recent payment to this recipient
       for (final List<TransactionDetails?> monthTransactions
           in transactions.values) {
-        debugPrint(
-            'Processing ${monthTransactions.length} transactions in month');
-
         for (final TransactionDetails? tx in monthTransactions) {
           if (tx == null) continue;
 
@@ -63,27 +66,19 @@ class PaymentAmountViewModel extends ChangeNotifier {
           );
 
           if (transferInfo != null) {
-            debugPrint(
-                'Parsed transaction: amount=${transferInfo.amount}, recipient=${transferInfo.recipient}, sender=${transferInfo.sender}');
-
-            // Check if this is an outgoing transaction to the recipient
-            // We'll try to match by wallet address first
+            // Check if this is an outgoing transaction to the recipient's token account
             final bool isOutgoingToRecipient =
                 transferInfo.amount < 0 && // Outgoing transaction
                     transferInfo.recipient != 'myself' &&
                     transferInfo.recipient ==
-                        recipientAddress; // Match wallet address
+                        recipientTokenAccount; // Match token account address
 
             if (isOutgoingToRecipient) {
-              debugPrint('Found matching outgoing transaction to recipient');
-
               if (lastTransactionDate == null ||
-                  (transferInfo.timestamp?.isAfter(lastTransactionDate!) ??
+                  (transferInfo.timestamp?.isAfter(lastTransactionDate) ??
                       false)) {
                 lastTransaction = transferInfo;
                 lastTransactionDate = transferInfo.timestamp;
-                debugPrint(
-                    'Updated last transaction: ${transferInfo.amount} to ${transferInfo.recipient} on ${transferInfo.timestamp}');
               }
             }
           }
@@ -94,18 +89,9 @@ class PaymentAmountViewModel extends ChangeNotifier {
       _cachedLastTransaction = lastTransaction;
       _hasLoadedTransaction = true;
 
-      if (lastTransaction != null) {
-        debugPrint(
-            'Returning last transaction: ${lastTransaction.amount} to ${lastTransaction.recipient}');
-      } else {
-        debugPrint(
-            'No previous transaction found for recipient: $recipientAddress');
-      }
-
       return lastTransaction;
     } catch (e) {
-      debugPrint('Error fetching previous transaction: $e');
-      return null;
+      throw Exception('Error fetching previous transaction: $e');
     }
   }
 
@@ -113,6 +99,12 @@ class PaymentAmountViewModel extends ChangeNotifier {
     final double amount = double.tryParse(paymentAmountController.text) ?? 0;
     isFormValid = paymentAmountController.text.isNotEmpty && amount >= 500;
     notifyListeners();
+  }
+
+  /// Invalidate cached previous transaction data to force a fresh lookup
+  void invalidateCache() {
+    _cachedLastTransaction = null;
+    _hasLoadedTransaction = false;
   }
 
   @override
