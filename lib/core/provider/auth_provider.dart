@@ -37,21 +37,21 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _checkSessionOnStartup() async {
     final String? expiryString = await _storage.read(key: _sessionKey);
-    if (expiryString == null) {
-      await logout();
-      return;
+
+    // Always start as not authenticated on app startup
+    // User must login even if session is valid
+    _isAuthenticated = false;
+
+    // But keep the session if it's valid for when they do login
+    if (expiryString != null) {
+      final DateTime expiryTime = DateTime.parse(expiryString);
+      if (DateTime.now().isAfter(expiryTime)) {
+        // Session expired - clear it
+        await logout();
+      }
     }
 
-    final DateTime expiryTime = DateTime.parse(expiryString);
-
-    if (DateTime.now().isAfter(expiryTime)) {
-      await logout();
-    } else {
-      _isAuthenticated = true;
-      notifyListeners();
-
-      _scheduleExpiryCheck(expiryTime);
-    }
+    notifyListeners();
   }
 
   void _scheduleExpiryCheck(DateTime expiryTime) {
