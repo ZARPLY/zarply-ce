@@ -55,7 +55,7 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   ) async {
     try {
       final ProgramAccount? tokenAccount =
-          await _walletService.getAssociatedTokenAccount(wallet);
+          await _walletService.getAssociatedTokenAccount(wallet.address);
       if (tokenAccount == null) return;
       await walletProvider.storeAssociatedTokenAccount(tokenAccount);
     } catch (e) {

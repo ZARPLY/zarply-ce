@@ -55,8 +55,8 @@ class WalletProvider extends ChangeNotifier {
         return false;
       }
 
-      _userTokenAccount =
-          await _walletSolanaService.getAssociatedTokenAccount(_wallet!);
+      _userTokenAccount = await _walletSolanaService
+          .getAssociatedTokenAccount(_wallet!.address);
 
       notifyListeners();
       return true;

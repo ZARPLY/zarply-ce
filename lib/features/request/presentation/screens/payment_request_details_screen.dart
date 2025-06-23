@@ -244,7 +244,12 @@ class _PaymentRequestDetailsScreenState
         actions: <Widget>[
           TextButton(
             onPressed: () => context.go('/wallet'),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.blue,
+              ),
+            ),
           ),
         ],
       ),

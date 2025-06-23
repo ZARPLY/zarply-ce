@@ -130,4 +130,9 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<int?> getStoredTransactionCount() {
     return _transactionStorageService.getStoredTransactionCount();
   }
+
+  @override
+  Future<ProgramAccount?> getAssociatedTokenAccount(String walletAddress) {
+    return _walletSolanaService.getAssociatedTokenAccount(walletAddress);
+  }
 }
