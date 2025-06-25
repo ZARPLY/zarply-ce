@@ -6,8 +6,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
+import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/services/rpc_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
 
 class WalletSolanaServiceException implements Exception {
@@ -19,6 +21,7 @@ class WalletSolanaServiceException implements Exception {
 }
 
 class WalletSolanaService {
+  // Keep the old constructor for backward compatibility in tests
   WalletSolanaService({
     required String rpcUrl,
     required String websocketUrl,
@@ -26,6 +29,25 @@ class WalletSolanaService {
           rpcUrl: Uri.parse(rpcUrl),
           websocketUrl: Uri.parse(websocketUrl),
         );
+  WalletSolanaService._({
+    required String rpcUrl,
+    required String websocketUrl,
+  }) : _client = SolanaClient(
+          rpcUrl: Uri.parse(rpcUrl),
+          websocketUrl: Uri.parse(websocketUrl),
+        );
+
+  static Future<WalletSolanaService> create() async {
+    final RpcService rpcService = RpcService();
+    final ({String rpcUrl, String websocketUrl}) config =
+        await rpcService.getRpcConfiguration();
+
+    return WalletSolanaService._(
+      rpcUrl: config.rpcUrl,
+      websocketUrl: config.websocketUrl,
+    );
+  }
+
   final SolanaClient _client;
   final TransactionStorageService _transactionStorageService =
       TransactionStorageService();
@@ -73,6 +95,7 @@ class WalletSolanaService {
       mint: Ed25519HDPublicKey.fromBase58(zarpMint),
       funder: wallet,
       tokenProgramType: TokenProgramType.token2022Program,
+      commitment: Commitment.confirmed,
     );
   }
 
@@ -84,6 +107,7 @@ class WalletSolanaService {
           await _client.getAssociatedTokenAccount(
         owner: Ed25519HDPublicKey.fromBase58(walletAddress),
         mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+        commitment: Commitment.confirmed,
       );
 
       return tokenAccount;
@@ -127,8 +151,8 @@ class WalletSolanaService {
 
   Future<double> getSolBalance(String publicKey) async {
     try {
-      final BalanceResult lamports =
-          await _client.rpcClient.getBalance(publicKey);
+      final BalanceResult lamports = await _client.rpcClient
+          .getBalance(publicKey, commitment: Commitment.confirmed);
       return lamports.value.toDouble() / lamportsPerSol;
     } catch (e) {
       throw WalletSolanaServiceException('Could not retrieve SOL balance: $e');
@@ -150,12 +174,54 @@ class WalletSolanaService {
 
       final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
 
-      final TransactionId transaction = await _client.transferSplToken(
-        owner: senderWallet,
-        destination: Ed25519HDPublicKey(base58decode(recipientAddress)),
-        amount: tokenAmount,
+      final ProgramAccount? associatedRecipientAccount =
+          await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(recipientAddress),
         mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+        commitment: Commitment.confirmed,
+      );
+      final ProgramAccount? associatedSenderAccount =
+          await _client.getAssociatedTokenAccount(
+        owner: senderWallet.publicKey,
+        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+        commitment: Commitment.confirmed,
+      );
+
+      if (associatedRecipientAccount == null ||
+          associatedSenderAccount == null) {
+        throw WalletSolanaServiceException(
+          'Could not get associated token account for address: $recipientAddress or $senderWallet.address',
+        );
+      }
+
+      final TokenInstruction instruction = TokenInstruction.transfer(
+        source: Ed25519HDPublicKey.fromBase58(associatedSenderAccount.pubkey),
+        destination:
+            Ed25519HDPublicKey.fromBase58(associatedRecipientAccount.pubkey),
+        owner: senderWallet.publicKey,
+        amount: tokenAmount,
         tokenProgram: TokenProgramType.token2022Program,
+      );
+
+      final Message message = Message(
+        instructions: <TokenInstruction>[
+          instruction,
+        ],
+      );
+
+      final LatestBlockhash bh = await _client.rpcClient
+          .getLatestBlockhash(commitment: Commitment.confirmed)
+          .value;
+
+      final SignedTx tx = await signTransaction(
+        bh,
+        message,
+        <Ed25519HDKeyPair>[senderWallet],
+      );
+
+      final String transaction = await _client.rpcClient.sendTransaction(
+        tx.encode(),
+        preflightCommitment: Commitment.confirmed,
       );
 
       return transaction;
@@ -166,8 +232,8 @@ class WalletSolanaService {
 
   Future<double> getZarpBalance(String publicKey) async {
     try {
-      final TokenAmountResult balance =
-          await _client.rpcClient.getTokenAccountBalance(publicKey);
+      final TokenAmountResult balance = await _client.rpcClient
+          .getTokenAccountBalance(publicKey, commitment: Commitment.confirmed);
       return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       throw WalletSolanaServiceException(
@@ -304,7 +370,8 @@ class WalletSolanaService {
 
   Future<TransactionDetails?> getTransactionDetails(String signature) async {
     try {
-      return await _client.rpcClient.getTransaction(signature);
+      return await _client.rpcClient
+          .getTransaction(signature, commitment: Commitment.confirmed);
     } catch (e) {
       throw WalletSolanaServiceException(
         'Error fetching transaction details: $e',
@@ -314,8 +381,9 @@ class WalletSolanaService {
 
   Future<int> getTransactionCount(String address) async {
     try {
-      final List<TransactionSignatureInformation> signatures =
-          await _client.rpcClient.getSignaturesForAddress(address);
+      final List<TransactionSignatureInformation> signatures = await _client
+          .rpcClient
+          .getSignaturesForAddress(address, commitment: Commitment.confirmed);
       return signatures.length;
     } catch (e) {
       throw WalletSolanaServiceException(

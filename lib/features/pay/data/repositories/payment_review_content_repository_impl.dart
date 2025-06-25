@@ -1,4 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
@@ -11,15 +10,15 @@ class PaymentReviewContentRepositoryImpl
   PaymentReviewContentRepositoryImpl({
     WalletSolanaService? walletSolanaService,
     TransactionStorageService? transactionStorageService,
-  })  : _walletSolanaService = walletSolanaService ??
-            WalletSolanaService(
-              rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-              websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-            ),
+  })  : _walletSolanaService = walletSolanaService,
         _transactionStorageService =
             transactionStorageService ?? TransactionStorageService();
-  final WalletSolanaService _walletSolanaService;
+  final WalletSolanaService? _walletSolanaService;
   final TransactionStorageService _transactionStorageService;
+
+  Future<WalletSolanaService> get _service async {
+    return _walletSolanaService ?? await WalletSolanaService.create();
+  }
 
   @override
   Future<String> makeTransaction({
@@ -31,7 +30,8 @@ class PaymentReviewContentRepositoryImpl
       throw Exception('Recipient address not found');
     }
 
-    return await _walletSolanaService.sendTransaction(
+    final WalletSolanaService service = await _service;
+    return await service.sendTransaction(
       senderWallet: wallet,
       recipientAddress: recipientAddress,
       zarpAmount: amount,
@@ -40,7 +40,8 @@ class PaymentReviewContentRepositoryImpl
 
   @override
   Future<TransactionDetails?> getTransactionDetails(String txSignature) async {
-    return await _walletSolanaService.getTransactionDetails(txSignature);
+    final WalletSolanaService service = await _service;
+    return await service.getTransactionDetails(txSignature);
   }
 
   @override

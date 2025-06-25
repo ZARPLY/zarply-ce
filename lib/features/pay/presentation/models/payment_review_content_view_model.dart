@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
-import '../../../../core/provider/wallet_provider.dart';
+// import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/services/transaction_storage_service.dart';
 import '../../data/repositories/payment_review_content_repository_impl.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
@@ -36,26 +36,21 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         throw Exception('Recipient address not found');
       }
 
+      final DateTime startTime = DateTime.now();
       final String txSignature = await _repository.makeTransaction(
         wallet: wallet,
         recipientAddress: recipientAddress,
         amount: double.parse(amount) / 100,
       );
 
-      // Wait for transaction confirmation
-      TransactionDetails? txDetails;
-      int retryCount = 0;
-      const int maxRetries = 10;
-      const Duration retryDelay = Duration(seconds: 2);
+      final Duration duration = DateTime.now().difference(startTime);
+      debugPrint('Transaction duration: $duration');
 
-      while (retryCount < maxRetries) {
-        txDetails = await _repository.getTransactionDetails(txSignature);
-        if (txDetails != null) {
-          break;
-        }
-        await Future<void>.delayed(retryDelay);
-        retryCount++;
-      }
+      final DateTime startTime2 = DateTime.now();
+      final TransactionDetails? txDetails =
+          await _repository.getTransactionDetails(txSignature);
+      final Duration duration2 = DateTime.now().difference(startTime2);
+      debugPrint('Transaction details duration: $duration2');
 
       if (txDetails == null) {
         throw Exception('Transaction not confirmed after multiple attempts');
@@ -67,9 +62,9 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         txDetails.transaction.toJson()['signatures'][0],
       );
 
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
-      await walletProvider.onPaymentCompleted();
+      // final WalletProvider walletProvider =
+      //     Provider.of<WalletProvider>(context, listen: false);
+      // await walletProvider.onPaymentCompleted();
 
       _hasPaymentBeenMade = true;
       notifyListeners();
