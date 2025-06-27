@@ -101,16 +101,20 @@ class _WalletScreenState extends State<WalletScreen>
                       opacity: viewModel.isExpanded ? 0.0 : 1.0,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                        child: Column(
-                          children: <Widget>[
-                            const SizedBox(height: 16),
-                            BalanceAmount(
-                              walletAmount: viewModel.walletAmount,
-                              walletAddress: viewModel.wallet?.address ?? '',
-                            ),
-                            const Spacer(),
-                            const QuickActions(),
-                          ],
+                        child: SingleChildScrollView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const SizedBox(height: 16),
+                              BalanceAmount(
+                                walletAmount: viewModel.walletAmount,
+                                walletAddress: viewModel.wallet?.address ?? '',
+                              ),
+                              const SizedBox(height: 16),
+                              const QuickActions(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
