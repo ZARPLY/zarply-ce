@@ -8,7 +8,9 @@ import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
-  const CreatePasswordScreen({super.key});
+  const CreatePasswordScreen({Key? key, this.extra}) : super(key: key);
+
+  final Object? extra;
 
   @override
   State<CreatePasswordScreen> createState() => _CreatePasswordScreenState();
@@ -16,6 +18,7 @@ class CreatePasswordScreen extends StatefulWidget {
 
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   late CreatePasswordViewModel _viewModel;
+  String? _from;
 
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
@@ -26,6 +29,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   void initState() {
     super.initState();
     _viewModel = CreatePasswordViewModel();
+    if (widget.extra is Map && (widget.extra as Map).containsKey('from')) {
+      _from = (widget.extra as Map)['from'] as String?;
+    }
   }
 
   @override
@@ -61,7 +67,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 padding:
                     const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
-                  onTap: () => context.go('/backup_wallet'),
+                  onTap: () => context.go(_from == 'restore'
+                      ? '/restore_wallet'
+                      : '/backup_wallet'),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: const Color(0xFFEBECEF),
