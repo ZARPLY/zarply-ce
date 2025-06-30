@@ -45,123 +45,125 @@ class _RequestQRCodeState extends State<RequestQRCode> {
           return !viewModel.isQRCodeShared
               ? Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              'Request Sent',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                'Request Sent',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        RepaintBoundary(
+                          key: _qrKey,
+                          child: FutureBuilder<ui.Image>(
+                            future: viewModel.loadImageFuture,
+                            builder: (
+                              BuildContext context,
+                              AsyncSnapshot<ui.Image> snapshot,
+                            ) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                if (snapshot.hasError) {
+                                  return const Text('Error loading image');
+                                }
+                                return CustomPaint(
+                                  size: const Size(300, 300),
+                                  painter: QRPainter(
+                                    data: viewModel.qrCodeData,
+                                    version: 10,
+                                    errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                    color: Colors.blue,
+                                    emptyColor: Colors.white,
+                                    gapless: true,
+                                    embeddedImageSize: const Size(60, 60),
+                                    loadedImage: snapshot.data,
                                   ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      RepaintBoundary(
-                        key: _qrKey,
-                        child: FutureBuilder<ui.Image>(
-                          future: viewModel.loadImageFuture,
-                          builder: (
-                            BuildContext context,
-                            AsyncSnapshot<ui.Image> snapshot,
-                          ) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              if (snapshot.hasError) {
-                                return const Text('Error loading image');
+                                );
+                              } else {
+                                return const CircularProgressIndicator();
                               }
-                              return CustomPaint(
-                                size: const Size(300, 300),
-                                painter: QRPainter(
-                                  data: viewModel.qrCodeData,
-                                  version: 10,
-                                  errorCorrectionLevel: QrErrorCorrectLevel.H,
-                                  color: Colors.blue,
-                                  emptyColor: Colors.white,
-                                  gapless: true,
-                                  embeddedImageSize: const Size(60, 60),
-                                  loadedImage: snapshot.data,
-                                ),
-                              );
-                            } else {
-                              return const CircularProgressIndicator();
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        Formatters.formatAmount(
-                          double.parse(widget.paymentRequest.amount) / 100,
-                        ),
-                        style: Theme.of(context).textTheme.headlineLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Valid for 24 hours',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.blue,
-                            ),
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => viewModel.shareQRCode(_qrKey),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.all(16),
-                            textStyle: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            foregroundColor: Colors.blue,
-                            side: const BorderSide(
-                              color: Colors.blue,
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Share Barcode'),
-                              SizedBox(width: 8),
-                              Icon(Icons.share, color: Colors.blue),
-                            ],
+                            },
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => context.go('/wallet'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.all(16),
-                            textStyle: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                        const SizedBox(height: 32),
+                        Text(
+                          Formatters.formatAmount(
+                            double.parse(widget.paymentRequest.amount) / 100,
+                          ),
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Valid for 24 hours',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.blue,
+                                  ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => viewModel.shareQRCode(_qrKey),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.all(16),
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              foregroundColor: Colors.blue,
+                              side: const BorderSide(
+                                color: Colors.blue,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text('Share Barcode'),
+                                SizedBox(width: 8),
+                                Icon(Icons.share, color: Colors.blue),
+                              ],
                             ),
                           ),
-                          child: const Text('Done'),
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => context.go('/wallet'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.all(16),
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text('Done'),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 )
               : RequestCompleted(paymentRequest: widget.paymentRequest);
