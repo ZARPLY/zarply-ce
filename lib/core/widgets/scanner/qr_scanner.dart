@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 
 import '../../../features/request/domain/entities/payment_request.dart';
+import '../../provider/payment_provider.dart';
 
 class QRScanner extends StatefulWidget {
   const QRScanner({super.key});
@@ -27,6 +29,11 @@ class _QRScannerState extends State<QRScanner> {
           if (parts.length >= 4) {
             final String amount = parts[2];
             final String recipientAddress = parts[3];
+
+            // Set recipient address in payment provider
+            final PaymentProvider paymentProvider =
+                Provider.of<PaymentProvider>(context, listen: false);
+            paymentProvider.setRecipientAddress(recipientAddress);
 
             if (context.mounted) {
               context.go(
@@ -109,6 +116,11 @@ class _QRScannerState extends State<QRScanner> {
             }
 
             if (mounted) {
+              // Set recipient address in payment provider
+              final PaymentProvider paymentProvider =
+                  Provider.of<PaymentProvider>(context, listen: false);
+              paymentProvider.setRecipientAddress(paymentRequest.walletAddress);
+
               context.go(
                 '/payment_amount',
                 extra: <String, String>{

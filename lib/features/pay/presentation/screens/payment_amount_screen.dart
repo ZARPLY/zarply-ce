@@ -70,6 +70,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         recipientAddress: widget.recipientAddress,
         initialAmount: widget.initialAmount,
         currentWalletAddress: currentWalletAddress,
+        context: context,
       ),
       child: Consumer<PaymentAmountViewModel>(
         builder: (BuildContext context, PaymentAmountViewModel viewModel, _) {

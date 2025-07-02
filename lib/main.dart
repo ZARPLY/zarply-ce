@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/provider/auth_provider.dart';
+import 'core/provider/payment_provider.dart';
 import 'core/provider/wallet_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
 
   final WalletProvider walletProvider = WalletProvider();
   final AuthProvider authProvider = AuthProvider();
+  final PaymentProvider paymentProvider = PaymentProvider();
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class MyApp extends StatelessWidget {
       providers: <ChangeNotifierProvider<dynamic>>[
         ChangeNotifierProvider<WalletProvider>.value(value: walletProvider),
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ChangeNotifierProvider<PaymentProvider>.value(value: paymentProvider),
       ],
       child: Builder(
         builder: (BuildContext context) {

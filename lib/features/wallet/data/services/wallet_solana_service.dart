@@ -9,6 +9,7 @@ import 'package:solana/dto.dart';
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/rpc_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
 
@@ -49,6 +50,7 @@ class WalletSolanaService {
   }
 
   final SolanaClient _client;
+  final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService =
       TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
@@ -161,11 +163,13 @@ class WalletSolanaService {
 
   Future<String> sendTransaction({
     required Wallet senderWallet,
-    required String recipientAddress,
+    required ProgramAccount? senderTokenAccount,
+    required ProgramAccount? recipientTokenAccount,
     required double zarpAmount,
   }) async {
     try {
-      final double solBalance = await getSolBalance(senderWallet.address);
+      final double solBalance =
+          await _balanceCacheService.getSolBalance(senderWallet.address);
       if (solBalance < 0.001) {
         throw WalletSolanaServiceException(
           'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
@@ -174,30 +178,16 @@ class WalletSolanaService {
 
       final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
 
-      final ProgramAccount? associatedRecipientAccount =
-          await _client.getAssociatedTokenAccount(
-        owner: Ed25519HDPublicKey.fromBase58(recipientAddress),
-        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
-        commitment: Commitment.confirmed,
-      );
-      final ProgramAccount? associatedSenderAccount =
-          await _client.getAssociatedTokenAccount(
-        owner: senderWallet.publicKey,
-        mint: Ed25519HDPublicKey.fromBase58(zarpMint),
-        commitment: Commitment.confirmed,
-      );
-
-      if (associatedRecipientAccount == null ||
-          associatedSenderAccount == null) {
+      if (recipientTokenAccount == null || senderTokenAccount == null) {
         throw WalletSolanaServiceException(
-          'Could not get associated token account for address: $recipientAddress or $senderWallet.address',
+          'RecipientTokenAccount or SenderTokenAccount is null',
         );
       }
 
       final TokenInstruction instruction = TokenInstruction.transfer(
-        source: Ed25519HDPublicKey.fromBase58(associatedSenderAccount.pubkey),
+        source: Ed25519HDPublicKey.fromBase58(senderTokenAccount.pubkey),
         destination:
-            Ed25519HDPublicKey.fromBase58(associatedRecipientAccount.pubkey),
+            Ed25519HDPublicKey.fromBase58(recipientTokenAccount.pubkey),
         owner: senderWallet.publicKey,
         amount: tokenAmount,
         tokenProgram: TokenProgramType.token2022Program,
