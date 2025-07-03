@@ -75,13 +75,7 @@ class _PaymentRequestDetailsScreenState
       );
 
       if (mounted) {
-        // Show success bottom sheet
         await _showSuccessBottomSheet();
-
-        // Navigate back to wallet screen
-        if (mounted) {
-          context.go('/wallet');
-        }
       }
     } catch (e) {
       if (mounted) {

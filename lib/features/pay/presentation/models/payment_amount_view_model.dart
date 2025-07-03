@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:solana/dto.dart';
 
+import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../../wallet/data/repositories/wallet_repository_impl.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
@@ -10,6 +12,7 @@ class PaymentAmountViewModel extends ChangeNotifier {
     required this.recipientAddress,
     required this.initialAmount,
     required this.currentWalletAddress,
+    required this.context,
   }) {
     if (initialAmount != null) {
       paymentAmountController.text = initialAmount!;
@@ -20,6 +23,7 @@ class PaymentAmountViewModel extends ChangeNotifier {
 
   final WalletRepository _walletRepository = WalletRepositoryImpl();
   final TextEditingController paymentAmountController = TextEditingController();
+  final BuildContext context;
   bool isFormValid = false;
   final String recipientAddress;
   final String? initialAmount;
@@ -35,9 +39,11 @@ class PaymentAmountViewModel extends ChangeNotifier {
     }
 
     try {
-      // Convert recipient wallet address to token account address
+      // Get recipient token account from provider
+      final PaymentProvider paymentProvider =
+          Provider.of<PaymentProvider>(context, listen: false);
       final ProgramAccount? recipientTokenAccountProgram =
-          await _walletRepository.getAssociatedTokenAccount(recipientAddress);
+          paymentProvider.recipientTokenAccount;
 
       if (recipientTokenAccountProgram == null) {
         _cachedLastTransaction = null;

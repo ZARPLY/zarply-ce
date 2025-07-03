@@ -80,8 +80,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
               title: const Padding(
                 padding: EdgeInsets.only(right: 24),
                 child: ProgressSteps(
-                  currentStep: 2,
-                  totalSteps: 3,
+                  currentStep: 3,
+                  totalSteps: 4,
                 ),
               ),
             ),
