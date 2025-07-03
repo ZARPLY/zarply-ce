@@ -4,7 +4,7 @@ class ProgressSteps extends StatelessWidget {
   const ProgressSteps({
     super.key,
     this.currentStep = 1,
-    this.totalSteps = 3,
+    this.totalSteps = 4,
   });
   final int currentStep;
   final int totalSteps;
@@ -21,12 +21,12 @@ class ProgressSteps extends StatelessWidget {
             child: Container(
               height: 4,
               margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: isActive ? Colors.blue : Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
+              decoration: BoxDecoration(
+                color: isActive ? Colors.blue : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-        );
+          );
         },
       ),
     );

@@ -8,6 +8,7 @@ import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';
 import '../../features/onboarding/presentation/screens/private_keys_screen.dart';
 import '../../features/onboarding/presentation/screens/restore_wallet_screen.dart';
+import '../../features/onboarding/presentation/screens/rpc_configuration_screen.dart';
 import '../../features/onboarding/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../features/pay/presentation/screens/pay_request_screen.dart';
@@ -47,6 +48,7 @@ GoRouter createRouter(
 
       final List<String> onboardingRoutes = <String>[
         '/welcome',
+        '/rpc_configuration',
         '/create_password',
         '/access_wallet',
         '/new_wallet',
@@ -93,6 +95,11 @@ GoRouter createRouter(
             path: '/welcome',
             builder: (BuildContext context, GoRouterState state) =>
                 const WelcomeScreen(),
+          ),
+          GoRoute(
+            path: '/rpc_configuration',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RpcConfigurationScreen(),
           ),
           GoRoute(
             path: '/backup_wallet',
