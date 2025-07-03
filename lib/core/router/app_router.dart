@@ -15,7 +15,11 @@ import '../../features/pay/presentation/screens/payment_amount_screen.dart';
 import '../../features/request/presentation/screens/payment_details_screen.dart';
 import '../../features/request/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
+import '../../features/wallet/presentation/screens/more_options_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
+import '../../features/wallet/presentation/screens/unlock_screen.dart';
+import '../../features/wallet/presentation/screens/view_recovery_phrase_screen.dart';
+import '../../features/wallet/presentation/screens/view_token_account_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
@@ -43,6 +47,9 @@ GoRouter createRouter(
         '/transaction_details',
         '/request_amount',
         '/scan',
+        '/backup_wallet',
+        '/private_keys',
+        '/unlock',
       ];
 
       final List<String> onboardingRoutes = <String>[
@@ -51,8 +58,6 @@ GoRouter createRouter(
         '/create_password',
         '/access_wallet',
         '/new_wallet',
-        '/backup_wallet',
-        '/private_keys',
         '/restore_wallet',
       ];
 
@@ -76,14 +81,38 @@ GoRouter createRouter(
         builder: (BuildContext context, GoRouterState state) =>
             const SplashScreen(),
       ),
-      ShellRoute(
-        builder: (BuildContext context, GoRouterState state, Widget child) {
-          return ListenableBuilder(
-            listenable: walletProvider,
-            builder: (BuildContext context, _) => child,
+      GoRoute(
+        path: '/more',
+        builder: (BuildContext context, GoRouterState state) =>
+        MoreOptionsScreen(),
+          ),
+      GoRoute(
+        path: '/unlock',
+        builder: (BuildContext context, GoRouterState state) {
+        final extra = state.extra;
+        final params = (extra is Map<String, String>) ? extra : <String, String>{};
+        final String title = params['title'] ?? 'Unlock';
+        final String nextRoute = params['nextRoute'] ?? '/';
+
+        return UnlockScreen(
+        title: title,
+        nextRoute: nextRoute,
           );
         },
-        routes: <RouteBase>[
+      ),
+      ShellRoute(
+        builder: (BuildContext context, GoRouterState state, Widget child) => child,
+        routes:<RouteBase>[
+          GoRoute(
+            path: '/view_recovery_phrase',
+            builder: (BuildContext context, GoRouterState state) =>
+                const ViewRecoveryPhraseScreen(),
+          ), 
+          GoRoute(
+            path: '/view_token_account',
+            builder: (BuildContext context, GoRouterState state) =>
+                const ViewTokenAccountScreen(),
+          ),
           GoRoute(
             path: '/welcome',
             builder: (BuildContext context, GoRouterState state) =>
@@ -96,8 +125,10 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/private_keys',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PrivateKeysScreen(),
+            builder: (BuildContext context, GoRouterState state) { 
+                final fromMore = state.uri.queryParameters['fromMore'] == 'true';
+                return PrivateKeysScreen(fromMore: fromMore);
+            },
           ),
           GoRoute(
             path: '/restore_wallet',

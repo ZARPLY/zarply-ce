@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../../wallet/data/services/wallet_storage_service.dart';
 import '../../domain/repositories/welcome_repository.dart';
@@ -21,6 +22,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
 
   final WalletSolanaService _walletService;
   final WalletStorageService _storageService;
+  final SecureStorageService _secure = SecureStorageService();
 
   @override
   Future<
@@ -32,6 +34,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
       })> createWallet() async {
     try {
       final String recoveryPhrase = bip39.generateMnemonic();
+      await _secure.saveRecoveryPhrase(recoveryPhrase);
       final Wallet wallet =
           await _walletService.createWalletFromMnemonic(recoveryPhrase);
       debugPrint('Wallet created: ${wallet.publicKey}');

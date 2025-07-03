@@ -6,7 +6,12 @@ import '../models/private_keys_view_model.dart';
 import '../widgets/progress_steps.dart';
 
 class PrivateKeysScreen extends StatelessWidget {
-  const PrivateKeysScreen({super.key});
+  final bool fromMore;
+
+  const PrivateKeysScreen({
+    Key? key,
+    this.fromMore = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +19,10 @@ class PrivateKeysScreen extends StatelessWidget {
       create: (_) => PrivateKeysViewModel(),
       child: Consumer<PrivateKeysViewModel>(
         builder: (BuildContext context, PrivateKeysViewModel viewModel, _) {
-          return PrivateKeysView(viewModel: viewModel);
+          return PrivateKeysView(
+            viewModel: viewModel,
+            fromMore: fromMore,
+            );
         },
       ),
     );
@@ -22,24 +30,37 @@ class PrivateKeysScreen extends StatelessWidget {
 }
 
 class PrivateKeysView extends StatelessWidget {
-  const PrivateKeysView({required this.viewModel, super.key});
-
   final PrivateKeysViewModel viewModel;
+  final bool fromMore;
+
+  const PrivateKeysView({
+    Key? key,
+    required this.viewModel,
+    required this.fromMore,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.errorMessage!)),
-      );
+    void goBack() {
+      if (fromMore) {
+        context.go('/more');      } else {
+      context.pop();
+      }
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (viewModel.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(viewModel.errorMessage!)),
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/backup_wallet'), 
+            onTap: goBack, 
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -49,10 +70,9 @@ class PrivateKeysView extends StatelessWidget {
             ),
           ),
         ),
-        title: const ProgressSteps(
-          currentStep: 1,
-          totalSteps: 3,
-        ),
+        title: fromMore
+            ? null
+            : const ProgressSteps(currentStep: 1, totalSteps: 3),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -75,9 +95,7 @@ class PrivateKeysView extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  context.go('/backup_wallet');
-                },
+                onPressed: goBack,
                 child: const Text('Close'),
               ),
             ),
