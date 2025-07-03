@@ -171,4 +171,8 @@ class BalanceCacheService {
 
     return 'ZARP: ${zarpAge.inMinutes}m ago, SOL: ${solAge.inMinutes}m ago';
   }
+
+  Future<void> updateZarpBalance(double newBalance) async {
+    await _secureStorageService.saveZarpBalance(newBalance);
+  }
 }

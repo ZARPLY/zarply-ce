@@ -1,4 +1,4 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:bip39/bip39.dart' as bip39;
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
@@ -11,34 +11,38 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   RestoreWalletRepositoryImpl({
     WalletSolanaService? walletService,
     WalletStorageService? storageService,
-  })  : _walletService = walletService ??
-            WalletSolanaService(
-              rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-              websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-            ),
+  })  : _walletService = walletService,
         _storageService = storageService ?? WalletStorageService();
 
-  final WalletSolanaService _walletService;
+  final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
+
+  Future<WalletSolanaService> get _service async {
+    return _walletService ?? await WalletSolanaService.create();
+  }
 
   @override
   bool isValidMnemonic(String mnemonic) {
-    return _walletService.isValidMnemonic(mnemonic);
+    // Use BIP39 validation directly - this doesn't require RPC connection
+    return bip39.validateMnemonic(mnemonic);
   }
 
   @override
   bool isValidPrivateKey(String privateKey) {
-    return _walletService.isValidPrivateKey(privateKey);
+    // Basic validation - this doesn't require RPC connection
+    return privateKey.length == 64;
   }
 
   @override
-  Future<Wallet> restoreWalletFromMnemonic(String mnemonic) {
-    return _walletService.restoreWalletFromMnemonic(mnemonic);
+  Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
+    final WalletSolanaService service = await _service;
+    return service.restoreWalletFromMnemonic(mnemonic);
   }
 
   @override
-  Future<Wallet> restoreWalletFromPrivateKey(String privateKey) {
-    return _walletService.restoreWalletFromPrivateKey(privateKey);
+  Future<Wallet> restoreWalletFromPrivateKey(String privateKey) async {
+    final WalletSolanaService service = await _service;
+    return service.restoreWalletFromPrivateKey(privateKey);
   }
 
   @override
@@ -54,8 +58,9 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
     WalletProvider walletProvider,
   ) async {
     try {
+      final WalletSolanaService service = await _service;
       final ProgramAccount? tokenAccount =
-          await _walletService.getAssociatedTokenAccount(wallet.address);
+          await service.getAssociatedTokenAccount(wallet.address);
       if (tokenAccount == null) return;
       await walletProvider.storeAssociatedTokenAccount(tokenAccount);
     } catch (e) {

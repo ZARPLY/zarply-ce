@@ -1,4 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 
 import '../../../../core/services/transaction_parser_service.dart';
@@ -10,16 +9,17 @@ class WalletRepositoryImpl implements WalletRepository {
   factory WalletRepositoryImpl() => _instance;
 
   WalletRepositoryImpl._internal()
-      : _walletSolanaService = WalletSolanaService(
-          rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-          websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-        ),
-        _transactionStorageService = TransactionStorageService();
+      : _transactionStorageService = TransactionStorageService();
   static final WalletRepositoryImpl _instance =
       WalletRepositoryImpl._internal();
 
-  final WalletSolanaService _walletSolanaService;
+  WalletSolanaService? _walletSolanaService;
   final TransactionStorageService _transactionStorageService;
+
+  Future<WalletSolanaService> get _service async {
+    _walletSolanaService ??= await WalletSolanaService.create();
+    return _walletSolanaService!;
+  }
 
   bool _isCancelled = false;
 
@@ -34,13 +34,15 @@ class WalletRepositoryImpl implements WalletRepository {
   bool get isCancelled => _isCancelled;
 
   @override
-  Future<double> getZarpBalance(String address) {
-    return _walletSolanaService.getZarpBalance(address);
+  Future<double> getZarpBalance(String address) async {
+    final WalletSolanaService service = await _service;
+    return service.getZarpBalance(address);
   }
 
   @override
-  Future<double> getSolBalance(String address) {
-    return _walletSolanaService.getSolBalance(address);
+  Future<double> getSolBalance(String address) async {
+    final WalletSolanaService service = await _service;
+    return service.getSolBalance(address);
   }
 
   @override
@@ -48,8 +50,9 @@ class WalletRepositoryImpl implements WalletRepository {
     required String walletAddress,
     String? lastKnownSignature,
     Function(List<TransactionDetails?>)? onBatchLoaded,
-  }) {
-    return _walletSolanaService.getAccountTransactions(
+  }) async {
+    final WalletSolanaService service = await _service;
+    return service.getAccountTransactions(
       walletAddress: walletAddress,
       until: lastKnownSignature,
       onBatchLoaded: (List<TransactionDetails?> batch) {
@@ -65,8 +68,9 @@ class WalletRepositoryImpl implements WalletRepository {
     required String walletAddress,
     required String oldestSignature,
     Function(List<TransactionDetails?>)? onBatchLoaded,
-  }) {
-    return _walletSolanaService.getAccountTransactions(
+  }) async {
+    final WalletSolanaService service = await _service;
+    return service.getAccountTransactions(
       walletAddress: walletAddress,
       before: oldestSignature,
       limit: 20,
@@ -117,8 +121,9 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<int> getTransactionCount(String tokenAddress) {
-    return _walletSolanaService.getTransactionCount(tokenAddress);
+  Future<int> getTransactionCount(String tokenAddress) async {
+    final WalletSolanaService service = await _service;
+    return service.getTransactionCount(tokenAddress);
   }
 
   @override
@@ -132,7 +137,10 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<ProgramAccount?> getAssociatedTokenAccount(String walletAddress) {
-    return _walletSolanaService.getAssociatedTokenAccount(walletAddress);
+  Future<ProgramAccount?> getAssociatedTokenAccount(
+    String walletAddress,
+  ) async {
+    final WalletSolanaService service = await _service;
+    return service.getAssociatedTokenAccount(walletAddress);
   }
 }

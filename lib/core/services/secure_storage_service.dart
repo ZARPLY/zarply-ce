@@ -188,4 +188,45 @@ class SecureStorageService {
       throw SecureStorageException('Failed to save balances: $e');
     }
   }
+
+  Future<void> saveRpcConfiguration({
+    required String rpcUrl,
+    required String websocketUrl,
+  }) async {
+    try {
+      await Future.wait(<Future<void>>[
+        _secureStorage.write(key: 'custom_rpc_url', value: rpcUrl),
+        _secureStorage.write(key: 'custom_websocket_url', value: websocketUrl),
+      ]);
+    } catch (e) {
+      throw SecureStorageException('Failed to save RPC configuration: $e');
+    }
+  }
+
+  Future<({String? rpcUrl, String? websocketUrl})> getRpcConfiguration() async {
+    try {
+      final List<String?> values = await Future.wait(<Future<String?>>[
+        _secureStorage.read(key: 'custom_rpc_url'),
+        _secureStorage.read(key: 'custom_websocket_url'),
+      ]);
+
+      return (
+        rpcUrl: values[0],
+        websocketUrl: values[1],
+      );
+    } catch (e) {
+      return (rpcUrl: null, websocketUrl: null);
+    }
+  }
+
+  Future<void> clearRpcConfiguration() async {
+    try {
+      await Future.wait(<Future<void>>[
+        _secureStorage.delete(key: 'custom_rpc_url'),
+        _secureStorage.delete(key: 'custom_websocket_url'),
+      ]);
+    } catch (e) {
+      throw SecureStorageException('Failed to clear RPC configuration: $e');
+    }
+  }
 }
