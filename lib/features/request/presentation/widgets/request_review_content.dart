@@ -104,17 +104,28 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _requestReadyForPayment,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                Center(
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(minWidth: 250, maxWidth: 350),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _requestReadyForPayment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text('Continue'),
                       ),
                     ),
-                    child: const Text('Confirm Request'),
                   ),
                 ),
                 const SizedBox(height: 20),
