@@ -1,5 +1,4 @@
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
@@ -11,15 +10,15 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   WelcomeRepositoryImpl({
     WalletSolanaService? walletService,
     WalletStorageService? storageService,
-  })  : _walletService = walletService ??
-            WalletSolanaService(
-              rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-              websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-            ),
+  })  : _walletService = walletService,
         _storageService = storageService ?? WalletStorageService();
 
-  final WalletSolanaService _walletService;
+  final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
+
+  Future<WalletSolanaService> get _service async {
+    return _walletService ?? await WalletSolanaService.create();
+  }
 
   @override
   Future<
@@ -30,14 +29,15 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
         String? errorMessage
       })> createWallet() async {
     try {
+      final WalletSolanaService service = await _service;
       final String recoveryPhrase = bip39.generateMnemonic();
       final Wallet wallet =
-          await _walletService.createWalletFromMnemonic(recoveryPhrase);
+          await service.createWalletFromMnemonic(recoveryPhrase);
       await Future<void>.delayed(const Duration(seconds: 20));
       final ProgramAccount tokenAccount =
-          await _walletService.createAssociatedTokenAccount(wallet);
+          await service.createAssociatedTokenAccount(wallet);
 
-      await _walletService.requestZARP(wallet);
+      await service.requestZARP(wallet);
 
       return (
         recoveryPhrase: recoveryPhrase,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/widgets/clear_icon_button.dart';
 import '../models/payment_details_view_model.dart';
 
@@ -114,16 +115,27 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                       focusNode: _descriptionFocus,
                       controller: viewModel.descriptionController,
                       textInputAction: TextInputAction.done,
-                      onSubmitted: (_) {
+                      onSubmitted: (_) async {
                         if (viewModel.isFormValid) {
-                          context.go(
-                            '/payment_amount',
-                            extra: <String, String>{
-                              'recipientAddress':
-                                  viewModel.publicKeyController.text,
-                              'source': '/payment_details',
-                            },
+                          final PaymentProvider paymentProvider =
+                              Provider.of<PaymentProvider>(
+                            context,
+                            listen: false,
                           );
+                          await paymentProvider.setRecipientAddress(
+                            viewModel.publicKeyController.text,
+                          );
+
+                          if (context.mounted) {
+                            context.go(
+                              '/payment_amount',
+                              extra: <String, String>{
+                                'recipientAddress':
+                                    viewModel.publicKeyController.text,
+                                'source': '/payment_details',
+                              },
+                            );
+                          }
                         }
                       },
                       style: const TextStyle(
@@ -140,14 +152,27 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   const Spacer(),
                   ElevatedButton(
                     onPressed: viewModel.isFormValid
-                        ? () => context.go(
-                              '/payment_amount',
-                              extra: <String, String>{
-                                'recipientAddress':
-                                    viewModel.publicKeyController.text,
-                                'source': '/payment_details',
-                              },
-                            )
+                        ? () async {
+                            final PaymentProvider paymentProvider =
+                                Provider.of<PaymentProvider>(
+                              context,
+                              listen: false,
+                            );
+                            await paymentProvider.setRecipientAddress(
+                              viewModel.publicKeyController.text,
+                            );
+
+                            if (context.mounted) {
+                              context.go(
+                                '/payment_amount',
+                                extra: <String, String>{
+                                  'recipientAddress':
+                                      viewModel.publicKeyController.text,
+                                  'source': '/payment_details',
+                                },
+                              );
+                            }
+                          }
                         : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(

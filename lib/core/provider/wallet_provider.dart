@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
@@ -16,12 +15,14 @@ class WalletProvider extends ChangeNotifier {
     );
   }
   final WalletStorageService _walletStorageService = WalletStorageService();
-  final WalletSolanaService _walletSolanaService = WalletSolanaService(
-    rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? '',
-    websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? '',
-  );
+  WalletSolanaService? _walletSolanaService;
   final WalletRepository _walletRepository = WalletRepositoryImpl();
   late final BalanceCacheService _balanceCacheService;
+
+  Future<WalletSolanaService> get _service async {
+    _walletSolanaService ??= await WalletSolanaService.create();
+    return _walletSolanaService!;
+  }
 
   Wallet? _wallet;
   ProgramAccount? _userTokenAccount;
@@ -55,8 +56,9 @@ class WalletProvider extends ChangeNotifier {
         return false;
       }
 
-      _userTokenAccount = await _walletSolanaService
-          .getAssociatedTokenAccount(_wallet!.address);
+      final WalletSolanaService service = await _service;
+      _userTokenAccount =
+          await service.getAssociatedTokenAccount(_wallet!.address);
 
       notifyListeners();
       return true;
@@ -76,7 +78,8 @@ class WalletProvider extends ChangeNotifier {
           await _walletRepository.getLastTransactionSignature();
 
       (_walletRepository as WalletRepositoryImpl).resetCancellation();
-      await _walletSolanaService.getAccountTransactions(
+      final WalletSolanaService service = await _service;
+      await service.getAccountTransactions(
         walletAddress: _userTokenAccount!.pubkey,
         until: lastSignature,
         limit: 10,
