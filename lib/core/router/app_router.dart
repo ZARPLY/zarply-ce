@@ -121,8 +121,9 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/create_password',
-            builder: (BuildContext context, GoRouterState state) =>
-                const CreatePasswordScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              return CreatePasswordScreen(extra: state.extra);
+            },
           ),
           GoRoute(
             path: '/login',

@@ -28,107 +28,117 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       child: Consumer<WelcomeViewModel>(
         builder: (BuildContext context, WelcomeViewModel viewModel, _) {
           return Scaffold(
+            resizeToAvoidBottomInset: true,
             backgroundColor: Colors.white,
-            body: Column(
-              children: <Widget>[
-                Stack(
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Column(
                   children: <Widget>[
-                    ClipPath(
-                      clipper: SteeperCurvedBottomClipper(),
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * 0.43,
-                        color: const Color(0xFF4169E1).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    ClipPath(
-                      clipper: CurvedBottomClipper(),
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * 0.40,
-                        color: const Color(0xFF4169E1),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 300,
-                            height: 300,
-                            child: Image(
-                              image: AssetImage('images/splash.png'),
-                              fit: BoxFit.contain,
-                              color: Colors.white,
+                    Stack(
+                      children: <Widget>[
+                        ClipPath(
+                          clipper: SteeperCurvedBottomClipper(),
+                          child: Container(
+                            height: MediaQuery.of(context).size.height * 0.43,
+                            color:
+                                const Color(0xFF4169E1).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        ClipPath(
+                          clipper: CurvedBottomClipper(),
+                          child: Container(
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            color: const Color(0xFF4169E1),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 300,
+                                height: 300,
+                                child: Image(
+                                  image: AssetImage('images/splash.png'),
+                                  fit: BoxFit.contain,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 20, 32, 48),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.2,
+                              ),
+                              children: <InlineSpan>[
+                                TextSpan(text: 'ZARPLY the '),
+                                TextSpan(
+                                  text: 'Rand\nstable-coin\nwallet',
+                                  style: TextStyle(
+                                    color: Color(0xFF1F75DC), // Purple color
+                                  ),
+                                ),
+                                TextSpan(text: ' on Solana.'),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 64),
+                          SizedBox(
+                            width: double.infinity,
+                            child: LoadingButton(
+                              isLoading: viewModel.isLoading,
+                              onPressed: () {
+                                context.go('/rpc_configuration');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4169E1),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text(
+                                'Create new wallet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextButton(
+                              onPressed: () {
+                                context.go('/rpc_configuration?restore=true');
+                              },
+                              child: const Text(
+                                'I already have a wallet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF181C1F),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 20, 32, 48),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            height: 1.2,
-                          ),
-                          children: <InlineSpan>[
-                            TextSpan(text: 'ZARPLY the '),
-                            TextSpan(
-                              text: 'Rand\nstable-coin\nwallet',
-                              style: TextStyle(
-                                color: Color(0xFF1F75DC), // Purple color
-                              ),
-                            ),
-                            TextSpan(text: ' on Solana.'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 64),
-                      SizedBox(
-                        width: double.infinity,
-                        child: LoadingButton(
-                          isLoading: viewModel.isLoading,
-                          onPressed: () {
-                            context.go('/rpc_configuration');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4169E1),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text(
-                            'Create new wallet',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () {
-                            context.go('/rpc_configuration?restore=true');
-                          },
-                          child: const Text(
-                            'I already have a wallet',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF181C1F),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           );
         },
