@@ -1,5 +1,5 @@
 @startuml
-title User Journey
+title ZARPLY Wallet App - Full User Flow
 
 start
 
@@ -15,6 +15,42 @@ elseif ([I already have a wallet])
   --> :Home Screen;
 endif
 
-stop
+:Home Screen;
 
+partition "Home Options" {
+  fork
+    :Scan QR;
+    :Open Camera;
+    :Payment Confirmation;
+    :Payment Made;
+    --> :Home Screen;
+  fork again
+    :More;
+    note right
+      To be elaborated later
+    end note
+    --> :Home Screen;
+  fork again
+    :Info;
+    note right
+      To be elaborated later
+    end note
+    --> :Home Screen;
+  fork again
+    if ("ZARPLY Logo Action") then ([Pay])
+      :Enter Recipient Address;
+      :Enter Amount to Pay;
+      :Confirm Amount;
+      --> :Home Screen;
+    else ([Request])
+      :Enter Requested Amount;
+      :Confirm Requested Amount;
+      :Display QR Code;
+      :Done Clicked;
+      --> :Home Screen;
+    endif
+  end fork
+}
+
+stop
 @enduml
