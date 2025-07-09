@@ -114,7 +114,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            context.go('/restore_wallet');
+                            context.go('/rpc_configuration?restore=true');
                           },
                           child: const Text(
                             'I already have a wallet',

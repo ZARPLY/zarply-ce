@@ -98,8 +98,11 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/rpc_configuration',
-            builder: (BuildContext context, GoRouterState state) =>
-                const RpcConfigurationScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return RpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
           ),
           GoRoute(
             path: '/backup_wallet',
