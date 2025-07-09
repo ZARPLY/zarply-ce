@@ -1,37 +1,20 @@
 @startuml
-!define RECTANGLE class
-skinparam rectangle {
-  BackgroundColor #FDF6E3
-  BorderColor #657B83
-}
+title User Journey
 
 start
-:Splash Screen;
-:Welcome Screen;
-partition "Authentication" {
-  :Login or Create Account?;
-  if (Login?) then (yes)
-    :Enter Credentials;
-    if (Credentials Valid?) then (yes)
-      :Dashboard;
-      stop
-    else (no)
-      :Show Login Error;
-      :Retry Login;
-      back to :Enter Credentials;
-    endif
-  else (no)
-    :Set Password;
-    if (Password Valid?) then (yes)
-      :Dashboard;
-      stop
-    else (no)
-      :Show Password Error;
-      :Retry Set Password;
-      back to :Set Password;
-    endif
-  endif
-}
-:Logout;
+
+:Login Screen;
+
+if ("User choice") then ([Create New Wallet])
+  :Backup your wallet;
+  :View Wallet Private Keys;
+  --> :Home Screen;
+elseif ([I already have a wallet])
+  :Restore Wallet (Enter Phrase);
+  :Create Password;
+  --> :Home Screen;
+endif
+
 stop
+
 @enduml
