@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/solana.dart';
 import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/widgets/clear_icon_button.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
-  const PaymentDetails({super.key});
+  const PaymentDetails({Key? key}) : super(key: key);
 
   @override
   State<PaymentDetails> createState() => _PaymentDetailsState();
@@ -14,14 +16,19 @@ class PaymentDetails extends StatefulWidget {
 
 class _PaymentDetailsState extends State<PaymentDetails> {
   late PaymentDetailsViewModel _viewModel;
+  bool _didInitViewModel = false;
 
   final FocusNode _publicKeyFocus = FocusNode();
   final FocusNode _descriptionFocus = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-    _viewModel = PaymentDetailsViewModel();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInitViewModel) return;
+
+    final Wallet wallet = AppInitializer.of(context).wallet;
+    _viewModel = PaymentDetailsViewModel(ownPublicKey: wallet.address);
+    _didInitViewModel = true;
   }
 
   @override
@@ -38,6 +45,15 @@ class _PaymentDetailsState extends State<PaymentDetails> {
       value: _viewModel,
       child: Consumer<PaymentDetailsViewModel>(
         builder: (BuildContext context, PaymentDetailsViewModel viewModel, _) {
+          Color borderColor;
+          if (viewModel.accountExists == null) {
+            borderColor = Colors.grey;
+          } else if (viewModel.accountExists == true) {
+            borderColor = Theme.of(context).primaryColor;
+          } else {
+            borderColor = Colors.red;
+          }
+
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
@@ -99,96 +115,48 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                         suffixIcon: ClearIconButton(
                           controller: viewModel.publicKeyController,
                         ),
-                        border: const OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.red,
-                          ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: borderColor),
                         ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: borderColor, width: 2),
+                          ),
                         errorText: viewModel.publicKeyError,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  if (viewModel.accountExists == false) ...[
+                    const Text(
+                      'Account not found on Solana',
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   SizedBox(
                     width: 250,
                     child: TextField(
                       focusNode: _descriptionFocus,
                       controller: viewModel.descriptionController,
                       textInputAction: TextInputAction.done,
-                      onSubmitted: (_) async {
-                        if (viewModel.isFormValid) {
-                          final PaymentProvider paymentProvider =
-                              Provider.of<PaymentProvider>(
-                            context,
-                            listen: false,
-                          );
-                          await paymentProvider.setRecipientAddress(
-                            viewModel.publicKeyController.text,
-                          );
-
-                          if (context.mounted) {
-                            context.go(
-                              '/payment_amount',
-                              extra: <String, String>{
-                                'recipientAddress':
-                                    viewModel.publicKeyController.text,
-                                'source': '/payment_details',
-                              },
-                            );
-                          }
-                        }
-                      },
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
+                      onSubmitted: (_) => _onContinue(viewModel, context),
+                      style: const TextStyle(fontSize: 14),
+                      decoration: const InputDecoration(
                         labelText: 'Description (Optional)',
-                        suffixIcon: ClearIconButton(
-                          controller: viewModel.descriptionController,
-                        ),
-                      ),
+                          ),
                     ),
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: viewModel.isFormValid
-                        ? () async {
-                            final PaymentProvider paymentProvider =
-                                Provider.of<PaymentProvider>(
-                              context,
-                              listen: false,
-                            );
-                            await paymentProvider.setRecipientAddress(
-                              viewModel.publicKeyController.text,
-                            );
-
-                            if (context.mounted) {
-                              context.go(
-                                '/payment_amount',
-                                extra: <String, String>{
-                                  'recipientAddress':
-                                      viewModel.publicKeyController.text,
-                                  'source': '/payment_details',
-                                },
-                              );
-                            }
-                          }
-                        : null,
+                    onPressed: viewModel.canContinue ? () => _onContinue(viewModel, context) : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: viewModel.isFormValid
-                            ? Colors.white
-                            : Colors.grey[600],
-                      ),
-                    ),
+                    child: const Text('Continue'),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -197,6 +165,21 @@ class _PaymentDetailsState extends State<PaymentDetails> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _onContinue(PaymentDetailsViewModel viewModel, BuildContext context) async {
+    final PaymentProvider paymentProvider =
+        Provider.of<PaymentProvider>(context, listen: false);
+    await paymentProvider.setRecipientAddress(viewModel.publicKeyController.text);
+
+    if (!context.mounted) return;
+    context.go(
+      '/payment_amount',
+      extra: {
+        'recipientAddress': viewModel.publicKeyController.text,
+        'source'          : '/payment_details',
+      },
     );
   }
 }

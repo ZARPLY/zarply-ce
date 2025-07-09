@@ -28,6 +28,9 @@ class WalletProvider extends ChangeNotifier {
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
 
+  double _zarpBalance = 0.0;
+  double _solBalance = 0.0;
+
   Wallet? get wallet => _wallet;
 
   ProgramAccount? get userTokenAccount => _userTokenAccount;
@@ -37,6 +40,9 @@ class WalletProvider extends ChangeNotifier {
   String? get recoveryPhrase => _recoveryPhrase;
 
   bool get hasRecoveryPhrase => _recoveryPhrase != null;
+
+  double get walletBalance => _zarpBalance;
+  double get solBalance => _solBalance;
 
   void setRecoveryPhrase(String phrase) {
     _recoveryPhrase = phrase;
@@ -60,11 +66,21 @@ class WalletProvider extends ChangeNotifier {
       _userTokenAccount =
           await service.getAssociatedTokenAccount(_wallet!.address);
 
+      if (_userTokenAccount == null) {
+        _zarpBalance = 0.0;
+      } else {
+        _zarpBalance = 
+          await service.getZarpBalance(_userTokenAccount!.pubkey);
+      }
+      _solBalance = await service.getSolBalance(_wallet!.address);
+
       notifyListeners();
       return true;
     } catch (e) {
       _wallet = null;
       _userTokenAccount = null;
+      _zarpBalance = 0.0;
+      _solBalance = 0.0;
       notifyListeners();
       return false;
     }
@@ -156,11 +172,15 @@ class WalletProvider extends ChangeNotifier {
     if (_wallet == null || _userTokenAccount == null) return;
 
     try {
-      await _balanceCacheService.getBothBalances(
+      final ({double solBalance, double zarpBalance}) balances =
+          await _balanceCacheService.getBothBalances(
         zarpAddress: _userTokenAccount!.pubkey,
         solAddress: _wallet!.address,
         forceRefresh: true,
       );
+      _zarpBalance = balances.zarpBalance; 
+      _solBalance  = balances.solBalance; 
+      notifyListeners();
     } catch (e) {
       throw Exception(e);
     }
@@ -204,11 +224,15 @@ class WalletProvider extends ChangeNotifier {
   Future<void> onPaymentCompleted() async {
     if (_wallet != null && _userTokenAccount != null) {
       try {
-        await _balanceCacheService.getBothBalances(
+        final ({double solBalance, double zarpBalance}) balances =
+            await _balanceCacheService.getBothBalances(
           zarpAddress: _userTokenAccount!.pubkey,
           solAddress: _wallet!.address,
           forceRefresh: true,
         );
+        _zarpBalance = balances.zarpBalance;
+        _solBalance  = balances.solBalance;
+        notifyListeners();
       } catch (e) {
         throw Exception(e);
       }
