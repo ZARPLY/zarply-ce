@@ -31,7 +31,7 @@ class MoreOptionsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Public Key',
+              'Wallet Public Key',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium

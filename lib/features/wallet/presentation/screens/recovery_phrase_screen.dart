@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/widgets/shared/recovery_phrase_box.dart';
 
 class RecoveryPhraseScreen extends StatefulWidget {
   const RecoveryPhraseScreen({Key? key}) : super(key: key);
@@ -18,6 +18,7 @@ class _RecoveryPhraseScreenState
   String? _phrase;
   bool _isLoading = true;
   bool _obscure = true;
+  List<String> _words = const [];
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _RecoveryPhraseScreenState
     final String? stored = await _storage.getRecoveryPhrase();
     setState(() {
       _phrase = stored;
+      _words = stored?.split(' ') ?? [];
       _isLoading = false;
     });
   }
@@ -69,55 +71,12 @@ class _RecoveryPhraseScreenState
                          style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 32),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height * 0.4,
-                        ),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F8F9),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: SingleChildScrollView(
-                                child: ImageFiltered(
-                                  imageFilter: _obscure
-                                    ? ImageFilter.blur(sigmaX: 4, sigmaY: 4)
-                                    : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                                  child: Text(
-                                    _phrase!,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      height: 1.4,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: -4,
-                              right: -4,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                iconSize: 24,
-                                icon: Icon(
-                                  _obscure
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                ),
-                                onPressed: () => setState(() => _obscure = !_obscure),
-                              ),
-                            ),
-                          ],
-                        ),
+                      RecoveryPhraseBox(
+                        words: _words, 
+                        obscure: _obscure, 
+                        onToggleVisibility: () =>
+                            setState(() => _obscure = !_obscure),
                       ),
-
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
@@ -136,7 +95,7 @@ class _RecoveryPhraseScreenState
                 bottomNavigationBar: Padding(
                   padding: const EdgeInsets.all(16),
                   child: ElevatedButton(
-                    onPressed: () => context.go('/wallet'),
+                    onPressed: () => context.go('/more'),
                     child: const Text('Close'),
             ),
           ),

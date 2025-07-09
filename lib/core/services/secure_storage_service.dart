@@ -11,7 +11,7 @@ class SecureStorageException implements Exception {
 class SecureStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  static const _recoverPhraseKey = 'recovery_phrase';
+  static const String _recoverPhraseKey = 'recovery_phrase';
 
   Future<void> savePin(String pin) async {
     try {
