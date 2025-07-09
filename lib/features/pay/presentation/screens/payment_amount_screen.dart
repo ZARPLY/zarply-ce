@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
@@ -13,8 +14,8 @@ class PaymentAmountScreen extends StatefulWidget {
     required this.recipientAddress,
     required this.source,
     this.initialAmount,
-    super.key,
-  });
+    Key? key,
+  }) : super(key: key);
 
   final String recipientAddress;
   final String? initialAmount;
@@ -34,6 +35,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   }
 
   void _showPaymentReviewModal(BuildContext context, String amount) {
+    final double walletBalance = AppInitializer.of(context).walletBalance;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -50,6 +52,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         child: PaymentReviewContent(
           amount: amount,
           recipientAddress: widget.recipientAddress,
+          walletBalance: walletBalance,
           onCancel: () => Navigator.pop(context),
         ),
       ),
@@ -102,7 +105,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
               padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
+                children: [
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,
