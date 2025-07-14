@@ -23,7 +23,9 @@ import '../../features/wallet/presentation/screens/unlock_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
+import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
+
 
 GoRouter createRouter(
   WalletProvider walletProvider,
@@ -88,10 +90,7 @@ GoRouter createRouter(
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
-          return ListenableBuilder(
-            listenable: walletProvider,
-            builder: (BuildContext context, _) => child,
-          );
+          return AppInitializer(child: child);
         },
         routes: <RouteBase>[
           GoRoute(
