@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../models/welcome_view_model.dart';
-import '../../../../core/provider/wallet_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -34,7 +34,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             body: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: Column(
                   children: <Widget>[
                     Stack(

@@ -1,7 +1,7 @@
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
-
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../../wallet/data/services/wallet_storage_service.dart';
 import '../../domain/repositories/welcome_repository.dart';
@@ -15,6 +15,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
 
   final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   Future<WalletSolanaService> get _service async {
     return _walletService ?? await WalletSolanaService.create();
@@ -31,6 +32,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
     try {
       final WalletSolanaService service = await _service;
       final String recoveryPhrase = bip39.generateMnemonic();
+      await _secureStorage.saveRecoveryPhrase(recoveryPhrase);
       final Wallet wallet =
           await service.createWalletFromMnemonic(recoveryPhrase);
       await Future<void>.delayed(const Duration(seconds: 20));
