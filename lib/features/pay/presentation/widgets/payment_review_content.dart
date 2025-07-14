@@ -16,8 +16,8 @@ class PaymentReviewContent extends StatefulWidget {
     required this.recipientAddress,
     required this.walletBalance,
     required this.onCancel,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String amount;
   final String recipientAddress;
@@ -48,7 +48,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
-      if (mounted) return; 
+      if (mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error: Wallet not found. Please try again.'),
@@ -75,19 +75,18 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         SnackBar(
           content: Text('Payment failed: ${e.toString()}'),
           backgroundColor: Colors.red,
-          ),
-        );
-      }
+        ),
+      );
     }
+  }
 
   @override
   Widget build(BuildContext context) {
-
     final double zarpAmount = (double.tryParse(widget.amount) ?? 0) / 100;
     final bool insufficientTokens = zarpAmount > widget.walletBalance;
 
     const double minSolNeeded = 0.001;
-    final double solBalance   = AppInitializer.of(context).solBalance;
+    final double solBalance = AppInitializer.of(context).solBalance;
     final bool insufficientSol = solBalance < minSolNeeded;
 
     return ListenableBuilder(
@@ -154,8 +153,8 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 12), 
-              if (insufficientTokens) ...[
+              const SizedBox(height: 12),
+              if (insufficientTokens) ...<Widget>[
                 Text(
                   'Insufficient ZARP balance '
                   '(Balance: ${Formatters.formatAmount(widget.walletBalance)})',
@@ -164,7 +163,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 ),
                 const SizedBox(height: 8),
               ],
-              if (insufficientSol) ...[
+              if (insufficientSol) ...<Widget>[
                 Text(
                   'Insufficient SOL for fees. '
                   'Need ≥ ${minSolNeeded.toStringAsFixed(3)} SOL '
@@ -178,11 +177,16 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 width: double.infinity,
                 child: LoadingButton(
                   isLoading: _viewModel.isLoading,
-                  onPressed: (_viewModel.isLoading || insufficientTokens || insufficientSol)
+                  onPressed: (_viewModel.isLoading ||
+                          insufficientTokens ||
+                          insufficientSol)
                       ? null
                       : _makeTransaction,
                   style: ElevatedButton.styleFrom(
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   child: const Text('Confirm Payment'),
                 ),

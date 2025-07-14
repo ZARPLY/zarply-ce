@@ -8,7 +8,7 @@ import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
-  const PaymentDetails({Key? key}) : super(key: key);
+  const PaymentDetails({super.key});
 
   @override
   State<PaymentDetails> createState() => _PaymentDetailsState();
@@ -120,13 +120,13 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: borderColor, width: 2),
-                          ),
+                        ),
                         errorText: viewModel.publicKeyError,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (viewModel.accountExists == false) ...[
+                  if (viewModel.accountExists == false) ...<Widget>[
                     const Text(
                       'Account not found on Solana',
                       style: TextStyle(color: Colors.red),
@@ -144,12 +144,14 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                       style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
                         labelText: 'Description (Optional)',
-                          ),
+                      ),
                     ),
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: viewModel.canContinue ? () => _onContinue(viewModel, context) : null,
+                    onPressed: viewModel.canContinue
+                        ? () => _onContinue(viewModel, context)
+                        : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(
                         fontSize: 18,
@@ -168,17 +170,21 @@ class _PaymentDetailsState extends State<PaymentDetails> {
     );
   }
 
-  Future<void> _onContinue(PaymentDetailsViewModel viewModel, BuildContext context) async {
+  Future<void> _onContinue(
+    PaymentDetailsViewModel viewModel,
+    BuildContext context,
+  ) async {
     final PaymentProvider paymentProvider =
         Provider.of<PaymentProvider>(context, listen: false);
-    await paymentProvider.setRecipientAddress(viewModel.publicKeyController.text);
+    await paymentProvider
+        .setRecipientAddress(viewModel.publicKeyController.text);
 
     if (!context.mounted) return;
     context.go(
       '/payment_amount',
-      extra: {
+      extra: <String, String>{
         'recipientAddress': viewModel.publicKeyController.text,
-        'source'          : '/payment_details',
+        'source': '/payment_details',
       },
     );
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart'; 
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
@@ -14,8 +14,8 @@ class PaymentRequestDetailsScreen extends StatefulWidget {
   const PaymentRequestDetailsScreen({
     required this.amount,
     required this.recipientAddress,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String amount;
   final String recipientAddress;
@@ -46,23 +46,26 @@ class _PaymentRequestDetailsScreenState
 
   double get _amountInZarp => (double.tryParse(widget.amount) ?? 0) / 100;
   double get _walletZarpBalance => AppInitializer.of(context).walletBalance;
-  double get _walletSolBalance  => AppInitializer.of(context).solBalance;
+  double get _walletSolBalance => AppInitializer.of(context).solBalance;
 
-  bool get _insufficientTokens  => _amountInZarp > _walletZarpBalance;
+  bool get _insufficientTokens => _amountInZarp > _walletZarpBalance;
   bool get _insufficientSol => _walletSolBalance < 0.001;
 
   bool get _payingSelf {
-    final WalletProvider wp = Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider wp =
+        Provider.of<WalletProvider>(context, listen: false);
     final Wallet? w = wp.wallet;
-    final ProgramAccount? token  = wp.userTokenAccount;
+    final ProgramAccount? token = wp.userTokenAccount;
     final String dest = widget.recipientAddress;
     return dest == w?.address || dest == token?.pubkey;
   }
-  bool get _buttonDisabled => _isProcessing || _insufficientTokens || _insufficientSol || _payingSelf;
+
+  bool get _buttonDisabled =>
+      _isProcessing || _insufficientTokens || _insufficientSol || _payingSelf;
 
   Future<void> _handlePaymentConfirmation() async {
     if (_buttonDisabled) return;
-    setState(() =>_isProcessing = true);
+    setState(() => _isProcessing = true);
 
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
@@ -77,7 +80,7 @@ class _PaymentRequestDetailsScreenState
           ),
         );
       }
-      setState(() =>_isProcessing = false);
+      setState(() => _isProcessing = false);
       return;
     }
 
@@ -102,7 +105,7 @@ class _PaymentRequestDetailsScreenState
       if (mounted) setState(() => _isProcessing = false);
     }
   }
-  
+
   Future<void> _showSuccessBottomSheet() {
     return showModalBottomSheet(
       context: context,
@@ -160,17 +163,17 @@ class _PaymentRequestDetailsScreenState
         _showCheckmarkTo = true;
       }
     });
-    await Future<void>.delayed(const Duration(seconds: 2)); 
-      if (!mounted) return;
-      setState(() {
-        if (isFrom) {
-          _showCheckmarkFrom = false;
-        } else {
-          _showCheckmarkTo = false;
-        }
-      });
-    }
- 
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      if (isFrom) {
+        _showCheckmarkFrom = false;
+      } else {
+        _showCheckmarkTo = false;
+      }
+    });
+  }
+
   Widget _buildCopyableAddress(String label, String address, bool isFrom) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,8 +272,10 @@ class _PaymentRequestDetailsScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Text("You're about to pay",
-                            style: TextStyle(color: Colors.white, fontSize: 16)),
+                        const Text(
+                          "You're about to pay",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           Formatters.formatAmount(amountInRands),
@@ -316,13 +321,14 @@ class _PaymentRequestDetailsScreenState
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  if (_payingSelf) ...[
-                    const Text('You cannot pay yourself',
-                        style: TextStyle(color: Colors.red)),
+                  if (_payingSelf) ...<Widget>[
+                    const Text(
+                      'You cannot pay yourself',
+                      style: TextStyle(color: Colors.red),
+                    ),
                     const SizedBox(height: 8),
                   ],
-                  if (_insufficientTokens) ...[
+                  if (_insufficientTokens) ...<Widget>[
                     Text(
                       'Insufficient ZARP balance '
                       '(Balance: ${Formatters.formatAmount(_walletZarpBalance)})',
@@ -331,7 +337,7 @@ class _PaymentRequestDetailsScreenState
                     ),
                     const SizedBox(height: 8),
                   ],
-                  if (_insufficientSol) ...[
+                  if (_insufficientSol) ...<Widget>[
                     Text(
                       'Insufficient SOL for fees (need ≥ 0.001 SOL, '
                       'have ${_walletSolBalance.toStringAsPrecision(3)}).',
@@ -345,7 +351,8 @@ class _PaymentRequestDetailsScreenState
                     width: double.infinity,
                     child: LoadingButton(
                       isLoading: _isProcessing,
-                      onPressed: _buttonDisabled ? null : _handlePaymentConfirmation,
+                      onPressed:
+                          _buttonDisabled ? null : _handlePaymentConfirmation,
                       child: const Text('Confirm Payment'),
                     ),
                   ),
