@@ -119,16 +119,19 @@ class _QRScannerState extends State<QRScanner> {
               // Set recipient address in payment provider
               final PaymentProvider paymentProvider =
                   Provider.of<PaymentProvider>(context, listen: false);
-              paymentProvider.setRecipientAddress(paymentRequest.walletAddress);
+              await paymentProvider
+                  .setRecipientAddress(paymentRequest.walletAddress);
 
-              context.go(
-                '/payment_amount',
-                extra: <String, String>{
-                  'amount': paymentRequest.amount,
-                  'recipientAddress': paymentRequest.walletAddress,
-                  'source': '/scan',
-                },
-              );
+              if (context.mounted) {
+                context.go(
+                  '/payment_amount',
+                  extra: <String, String>{
+                    'amount': paymentRequest.amount,
+                    'recipientAddress': paymentRequest.walletAddress,
+                    'source': '/scan',
+                  },
+                );
+              }
             }
           }
         }

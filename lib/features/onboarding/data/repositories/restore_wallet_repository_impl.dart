@@ -3,6 +3,7 @@ import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../../wallet/data/services/wallet_storage_service.dart';
 import '../../domain/repositories/restore_wallet_repository.dart';
@@ -11,11 +12,14 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   RestoreWalletRepositoryImpl({
     WalletSolanaService? walletService,
     WalletStorageService? storageService,
+    SecureStorageService? secureStorage,
   })  : _walletService = walletService,
-        _storageService = storageService ?? WalletStorageService();
+        _storageService = storageService ?? WalletStorageService(),
+        _secureStorage = secureStorage ?? SecureStorageService();
 
   final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
+  final SecureStorageService _secureStorage;
 
   Future<WalletSolanaService> get _service async {
     return _walletService ?? await WalletSolanaService.create();
@@ -36,7 +40,9 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   @override
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
     final WalletSolanaService service = await _service;
-    return service.restoreWalletFromMnemonic(mnemonic);
+    final Wallet wallet = await service.restoreWalletFromMnemonic(mnemonic);
+    await _secureStorage.saveRecoveryPhrase(mnemonic);
+    return wallet;
   }
 
   @override

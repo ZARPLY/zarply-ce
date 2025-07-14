@@ -8,7 +8,7 @@ import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
-  const CreatePasswordScreen({Key? key, this.extra}) : super(key: key);
+  const CreatePasswordScreen({super.key, this.extra});
 
   final Object? extra;
 
@@ -29,8 +29,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   void initState() {
     super.initState();
     _viewModel = CreatePasswordViewModel();
-    if (widget.extra is Map && (widget.extra as Map).containsKey('from')) {
-      _from = (widget.extra as Map)['from'] as String?;
+    if (widget.extra is Map<String, dynamic> &&
+        (widget.extra as Map<String, dynamic>).containsKey('from')) {
+      _from = (widget.extra as Map<String, dynamic>)['from'] as String?;
     }
   }
 
@@ -67,9 +68,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 padding:
                     const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
-                  onTap: () => context.go(_from == 'restore'
-                      ? '/restore_wallet'
-                      : '/backup_wallet'),
+                  onTap: () => context.go(
+                    _from == 'restore' ? '/restore_wallet' : '/backup_wallet',
+                  ),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: const Color(0xFFEBECEF),
@@ -148,7 +149,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                       onChanged: (bool? value) {
                                         if (value != null) {
                                           viewModel.setRememberPassword(
-                                              value: value);
+                                            value: value,
+                                          );
                                         }
                                       },
                                     ),
@@ -189,7 +191,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                                 const Color(0xFF4169E1),
                                             onChanged: (bool? value) {
                                               viewModel.setChecked(
-                                                  value: value ?? false);
+                                                value: value ?? false,
+                                              );
                                             },
                                           ),
                                           Expanded(
