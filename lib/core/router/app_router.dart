@@ -16,11 +16,16 @@ import '../../features/pay/presentation/screens/payment_amount_screen.dart';
 import '../../features/pay/presentation/screens/payment_details_screen.dart';
 import '../../features/request/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
+import '../../features/wallet/presentation/screens/more_options_screen.dart';
+import '../../features/wallet/presentation/screens/recovery_phrase_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
+import '../../features/wallet/presentation/screens/unlock_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
+import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
+
 
 GoRouter createRouter(
   WalletProvider walletProvider,
@@ -85,16 +90,36 @@ GoRouter createRouter(
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
-          return ListenableBuilder(
-            listenable: walletProvider,
-            builder: (BuildContext context, _) => child,
-          );
+          return AppInitializer(child: child);
         },
         routes: <RouteBase>[
           GoRoute(
             path: '/welcome',
             builder: (BuildContext context, GoRouterState state) =>
                 const WelcomeScreen(),
+          ),
+          GoRoute(
+            path: '/more',
+            name: 'more',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MoreOptionsScreen(),
+          ),
+          GoRoute(
+            path: '/unlock',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extraMap =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              return UnlockScreen(
+                nextRoute: extraMap['nextRoute'] as String? ?? '/wallet',
+                title: extraMap['title'] as String? ?? 'Unlock',
+                extra: extraMap,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/recovery_phrase',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RecoveryPhraseScreen(),
           ),
           GoRoute(
             path: '/rpc_configuration',
@@ -111,8 +136,14 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/private_keys',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PrivateKeysScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extra =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final bool hideProgress = extra['hideProgress'] as bool? ?? false;
+              return PrivateKeysScreen(
+                hideProgress: hideProgress,
+              );
+            },
           ),
           GoRoute(
             path: '/restore_wallet',

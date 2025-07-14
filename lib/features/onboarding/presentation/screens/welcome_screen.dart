@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../models/welcome_view_model.dart';
 

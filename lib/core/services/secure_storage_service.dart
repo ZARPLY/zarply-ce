@@ -11,6 +11,8 @@ class SecureStorageException implements Exception {
 class SecureStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
+  static const String _recoverPhraseKey = 'recovery_phrase';
+
   Future<void> savePin(String pin) async {
     try {
       if (pin.isEmpty) {
@@ -43,6 +45,22 @@ class SecureStorageService {
       await _secureStorage.delete(key: 'user_pin');
     } catch (e) {
       throw SecureStorageException('Failed to delete PIN: $e');
+    }
+  }
+
+   Future<void> saveRecoveryPhrase(String phrase) async {
+    try{
+      await _secureStorage.write(key: _recoverPhraseKey, value: phrase);
+    }catch (e) {
+      throw SecureStorageException('Failed to save recovery phrase: $e');
+    }
+  }
+
+  Future<String?> getRecoveryPhrase() async {
+    try {
+      return await _secureStorage.read(key: _recoverPhraseKey);
+    } catch (e) {
+      throw SecureStorageException('Failed to load recovery phrase: $e');
     }
   }
 

@@ -83,7 +83,8 @@ class RequestAmountScreen extends StatelessWidget {
                       constraints:
                           const BoxConstraints(minWidth: 250, maxWidth: 350),
                       child: AmountInput(
-                          controller: viewModel.paymentAmountController),
+                        controller: viewModel.paymentAmountController,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

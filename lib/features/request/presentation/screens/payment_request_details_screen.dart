@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../pay/presentation/models/payment_review_content_view_model.dart';
 
@@ -42,10 +44,28 @@ class _PaymentRequestDetailsScreenState
     super.dispose();
   }
 
+  double get _amountInZarp => (double.tryParse(widget.amount) ?? 0) / 100;
+  double get _walletZarpBalance => AppInitializer.of(context).walletBalance;
+  double get _walletSolBalance => AppInitializer.of(context).solBalance;
+
+  bool get _insufficientTokens => _amountInZarp > _walletZarpBalance;
+  bool get _insufficientSol => _walletSolBalance < 0.001;
+
+  bool get _payingSelf {
+    final WalletProvider wp =
+        Provider.of<WalletProvider>(context, listen: false);
+    final Wallet? w = wp.wallet;
+    final ProgramAccount? token = wp.userTokenAccount;
+    final String dest = widget.recipientAddress;
+    return dest == w?.address || dest == token?.pubkey;
+  }
+
+  bool get _buttonDisabled =>
+      _isProcessing || _insufficientTokens || _insufficientSol || _payingSelf;
+
   Future<void> _handlePaymentConfirmation() async {
-    setState(() {
-      _isProcessing = true;
-    });
+    if (_buttonDisabled) return;
+    setState(() => _isProcessing = true);
 
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
@@ -59,10 +79,8 @@ class _PaymentRequestDetailsScreenState
             backgroundColor: Colors.red,
           ),
         );
-        setState(() {
-          _isProcessing = false;
-        });
       }
+      setState(() => _isProcessing = false);
       return;
     }
 
@@ -73,10 +91,7 @@ class _PaymentRequestDetailsScreenState
         amount: widget.amount,
         context: context,
       );
-
-      if (mounted) {
-        await _showSuccessBottomSheet();
-      }
+      if (mounted) await _showSuccessBottomSheet();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,10 +100,9 @@ class _PaymentRequestDetailsScreenState
             backgroundColor: Colors.red,
           ),
         );
-        setState(() {
-          _isProcessing = false;
-        });
       }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -138,29 +152,26 @@ class _PaymentRequestDetailsScreenState
     bool isFrom,
   ) async {
     await Clipboard.setData(ClipboardData(text: text));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Address copied to clipboard')),
-      );
-      setState(() {
-        if (isFrom) {
-          _showCheckmarkFrom = true;
-        } else {
-          _showCheckmarkTo = true;
-        }
-      });
-      Future<void>.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            if (isFrom) {
-              _showCheckmarkFrom = false;
-            } else {
-              _showCheckmarkTo = false;
-            }
-          });
-        }
-      });
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Address copied to clipboard')),
+    );
+    setState(() {
+      if (isFrom) {
+        _showCheckmarkFrom = true;
+      } else {
+        _showCheckmarkTo = true;
+      }
+    });
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      if (isFrom) {
+        _showCheckmarkFrom = false;
+      } else {
+        _showCheckmarkTo = false;
+      }
+    });
   }
 
   Widget _buildCopyableAddress(String label, String address, bool isFrom) {
@@ -254,49 +265,37 @@ class _PaymentRequestDetailsScreenState
             Container(
               padding: const EdgeInsets.all(24),
               color: Colors.blue,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            const Text(
-                              "You're about to pay",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              Formatters.formatAmount(amountInRands),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Text(
+                          "You're about to pay",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
-                      ),
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: const BoxDecoration(
-                          color: Colors.white24,
-                          shape: BoxShape.circle,
+                        const SizedBox(height: 8),
+                        Text(
+                          Formatters.formatAmount(amountInRands),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_upward,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: const BoxDecoration(
+                      color: Colors.white24,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_upward, color: Colors.white),
                   ),
                 ],
               ),
@@ -321,12 +320,39 @@ class _PaymentRequestDetailsScreenState
                       false,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  if (_payingSelf) ...<Widget>[
+                    const Text(
+                      'You cannot pay yourself',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (_insufficientTokens) ...<Widget>[
+                    Text(
+                      'Insufficient ZARP balance '
+                      '(Balance: ${Formatters.formatAmount(_walletZarpBalance)})',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (_insufficientSol) ...<Widget>[
+                    Text(
+                      'Insufficient SOL for fees (need ≥ 0.001 SOL, '
+                      'have ${_walletSolBalance.toStringAsPrecision(3)}).',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: LoadingButton(
                       isLoading: _isProcessing,
-                      onPressed: _handlePaymentConfirmation,
+                      onPressed:
+                          _buttonDisabled ? null : _handlePaymentConfirmation,
                       child: const Text('Confirm Payment'),
                     ),
                   ),
