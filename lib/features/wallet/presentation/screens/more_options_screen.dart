@@ -16,20 +16,22 @@ class MoreOptionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
     final String publicKey = walletProvider.wallet?.address ?? '— not set —';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('More'),
-        leading: BackButton(onPressed: () => context.go('/wallet'),
+        leading: BackButton(
+          onPressed: () => context.go('/wallet'),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Text(
               'Wallet Public Key',
               style: Theme.of(context)
@@ -39,14 +41,13 @@ class MoreOptionsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
-                children: [
+                children: <Widget>[
                   Expanded(
                     child: SelectableText(
                       publicKey,
@@ -64,7 +65,6 @@ class MoreOptionsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-
             ListTile(
               leading: const Icon(Icons.phonelink_lock),
               title: const Text('BIP39 Recovery Phrase'),
@@ -77,7 +77,6 @@ class MoreOptionsScreen extends StatelessWidget {
                 },
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.vpn_key),
               title: const Text('View Private Keys'),
@@ -91,7 +90,6 @@ class MoreOptionsScreen extends StatelessWidget {
                 },
               ),
             ),
-
             const Spacer(),
           ],
         ),

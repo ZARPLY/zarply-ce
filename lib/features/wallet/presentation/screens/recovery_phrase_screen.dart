@@ -5,20 +5,18 @@ import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/widgets/shared/recovery_phrase_box.dart';
 
 class RecoveryPhraseScreen extends StatefulWidget {
-  const RecoveryPhraseScreen({Key? key}) : super(key: key);
+  const RecoveryPhraseScreen({super.key});
 
   @override
-  State<RecoveryPhraseScreen> createState() =>
-      _RecoveryPhraseScreenState();
+  State<RecoveryPhraseScreen> createState() => _RecoveryPhraseScreenState();
 }
 
-class _RecoveryPhraseScreenState
-    extends State<RecoveryPhraseScreen> {
+class _RecoveryPhraseScreenState extends State<RecoveryPhraseScreen> {
   final SecureStorageService _storage = SecureStorageService();
   String? _phrase;
   bool _isLoading = true;
   bool _obscure = true;
-  List<String> _words = const [];
+  List<String> _words = <String>[];
 
   @override
   void initState() {
@@ -30,7 +28,7 @@ class _RecoveryPhraseScreenState
     final String? stored = await _storage.getRecoveryPhrase();
     setState(() {
       _phrase = stored;
-      _words = stored?.split(' ') ?? [];
+      _words = stored?.split(' ') ?? <String>[];
       _isLoading = false;
     });
   }
@@ -60,27 +58,27 @@ class _RecoveryPhraseScreenState
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    children: <Widget>[
                       Text(
                         'Your BIP-39 Recovery Phrase',
                         style: Theme.of(context).textTheme.headlineLarge,
-                        ),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'Keep this phrase safe. It is one way to recover your wallet.',
-                         style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 32),
                       RecoveryPhraseBox(
-                        words: _words, 
-                        obscure: _obscure, 
+                        words: _words,
+                        obscure: _obscure,
                         onToggleVisibility: () =>
                             setState(() => _obscure = !_obscure),
                       ),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
-                         child: TextButton.icon(
+                        child: TextButton.icon(
                           onPressed: _copyToClipboard,
                           icon: const Icon(Icons.copy, color: Colors.blue),
                           label: const Text(
@@ -92,13 +90,13 @@ class _RecoveryPhraseScreenState
                     ],
                   ),
                 ),
-                bottomNavigationBar: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/more'),
-                    child: const Text('Close'),
-            ),
-          ),
-        );
-      }
-    }
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: () => context.go('/more'),
+          child: const Text('Close'),
+        ),
+      ),
+    );
+  }
+}

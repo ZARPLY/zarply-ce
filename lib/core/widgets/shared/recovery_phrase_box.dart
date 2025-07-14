@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 
 class RecoveryPhraseBox extends StatelessWidget {
   const RecoveryPhraseBox({
-    super.key,
     required this.words,
     required this.obscure,
     required this.onToggleVisibility,
+    super.key,
   });
 
   final List<String> words;
@@ -25,7 +25,7 @@ class RecoveryPhraseBox extends StatelessWidget {
       ),
       child: IntrinsicHeight(
         child: Row(
-          children: [
+          children: <Widget>[
             Expanded(
               child: ImageFiltered(
                 imageFilter: ui.ImageFilter.blur(
@@ -38,13 +38,12 @@ class RecoveryPhraseBox extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: words
-                        .map((w) => Text(w, style: textStyle))
+                        .map((String w) => Text(w, style: textStyle))
                         .toList(),
                   ),
                 ),
               ),
             ),
-
             DecoratedBox(
               decoration: const BoxDecoration(
                 color: Color(0xFFD3D9DF),

@@ -102,12 +102,14 @@ GoRouter createRouter(
           GoRoute(
             path: '/more',
             name: 'more',
-            builder: (BuildContext context, GoRouterState state) => const MoreOptionsScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const MoreOptionsScreen(),
           ),
           GoRoute(
             path: '/unlock',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, dynamic> extraMap = (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final Map<String, dynamic> extraMap =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
               return UnlockScreen(
                 nextRoute: extraMap['nextRoute'] as String? ?? '/wallet',
                 title: extraMap['title'] as String? ?? 'Unlock',
@@ -117,7 +119,8 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/recovery_phrase',
-            builder: (BuildContext context, GoRouterState state) => const RecoveryPhraseScreen(),
+            builder: (BuildContext context, GoRouterState state) =>
+                const RecoveryPhraseScreen(),
           ),
           GoRoute(
             path: '/rpc_configuration',
@@ -132,12 +135,13 @@ GoRouter createRouter(
           GoRoute(
             path: '/private_keys',
             builder: (BuildContext context, GoRouterState state) {
-              final extra = (state.extra as Map<String, dynamic>?) ?? {};
+              final Map<String, dynamic> extra =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
               final bool hideProgress = extra['hideProgress'] as bool? ?? false;
               return PrivateKeysScreen(
-              hideProgress: hideProgress,
+                hideProgress: hideProgress,
               );
-            },                
+            },
           ),
           GoRoute(
             path: '/restore_wallet',

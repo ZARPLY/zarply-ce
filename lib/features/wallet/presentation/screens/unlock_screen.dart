@@ -4,15 +4,13 @@ import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input.dart';
 
-
 class UnlockScreen extends StatefulWidget {
   const UnlockScreen({
-    Key? key,
     required this.nextRoute,
     required this.title,
+    super.key,
     this.extra = const <String, dynamic>{},
-  }) : super(key: key);
-
+  });
 
   final String nextRoute;
   final String title;
@@ -34,12 +32,12 @@ class _UnlockScreenState extends State<UnlockScreen> {
     });
 
     try {
-      final storedPin = await SecureStorageService().getPin();
+      final String storedPin = await SecureStorageService().getPin();
       if (_pinController.text == storedPin) {
         context.go(
           widget.nextRoute,
           extra: widget.extra,
-          );
+        );
       } else {
         setState(() {
           _errorText = 'Incorrect password';
@@ -67,12 +65,12 @@ class _UnlockScreenState extends State<UnlockScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        leading: BackButton(),
+        leading: const BackButton(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
-          children: [
+          children: <Widget>[
             PasswordInput(
               controller: _pinController,
               labelText: 'Enter your password',

@@ -6,9 +6,8 @@ import '../models/private_keys_view_model.dart';
 import '../widgets/progress_steps.dart';
 
 class PrivateKeysScreen extends StatelessWidget {
-  const PrivateKeysScreen({Key? key, this.hideProgress = false}): super(key: key);
+  const PrivateKeysScreen({super.key, this.hideProgress = false});
   final bool hideProgress;
-  
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,7 @@ class PrivateKeysScreen extends StatelessWidget {
           return PrivateKeysView(
             viewModel: viewModel,
             hideProgress: hideProgress,
-            );
+          );
         },
       ),
     );
@@ -28,10 +27,10 @@ class PrivateKeysScreen extends StatelessWidget {
 
 class PrivateKeysView extends StatelessWidget {
   const PrivateKeysView({
-    Key? key,
     required this.viewModel,
     required this.hideProgress,
-    }) : super(key: key);
+    super.key,
+  });
 
   final PrivateKeysViewModel viewModel;
   final bool hideProgress;
@@ -42,8 +41,8 @@ class PrivateKeysView extends StatelessWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(viewModel.errorMessage!)),
-      );
-    });
+        );
+      });
     }
 
     return Scaffold(
@@ -51,7 +50,7 @@ class PrivateKeysView extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go(hideProgress ? '/more' : '/backup_wallet'), 
+            onTap: () => context.go(hideProgress ? '/more' : '/backup_wallet'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -62,9 +61,9 @@ class PrivateKeysView extends StatelessWidget {
           ),
         ),
         title: hideProgress
-        ? const SizedBox.shrink()
-        : const ProgressSteps(currentStep: 1, totalSteps: 3),
-        ),
+            ? const SizedBox.shrink()
+            : const ProgressSteps(currentStep: 1, totalSteps: 3),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -86,7 +85,8 @@ class PrivateKeysView extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => context.go(hideProgress ? '/more' : '/backup_wallet'),
+                onPressed: () =>
+                    context.go(hideProgress ? '/more' : '/backup_wallet'),
                 child: const Text('Close'),
               ),
             ),
