@@ -14,8 +14,8 @@ class PaymentAmountScreen extends StatefulWidget {
     required this.recipientAddress,
     required this.source,
     this.initialAmount,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String recipientAddress;
   final String? initialAmount;
@@ -105,7 +105,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
               padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+                children: <Widget>[
                   const SizedBox(height: 40),
                   AmountInput(
                     controller: viewModel.paymentAmountController,

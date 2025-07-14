@@ -28,8 +28,8 @@ class WalletProvider extends ChangeNotifier {
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
 
-  double _zarpBalance = 0.0;
-  double _solBalance = 0.0;
+  double _zarpBalance = 0;
+  double _solBalance = 0;
 
   Wallet? get wallet => _wallet;
 
@@ -69,8 +69,7 @@ class WalletProvider extends ChangeNotifier {
       if (_userTokenAccount == null) {
         _zarpBalance = 0.0;
       } else {
-        _zarpBalance = 
-          await service.getZarpBalance(_userTokenAccount!.pubkey);
+        _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
       }
       _solBalance = await service.getSolBalance(_wallet!.address);
 
@@ -178,8 +177,8 @@ class WalletProvider extends ChangeNotifier {
         solAddress: _wallet!.address,
         forceRefresh: true,
       );
-      _zarpBalance = balances.zarpBalance; 
-      _solBalance  = balances.solBalance; 
+      _zarpBalance = balances.zarpBalance;
+      _solBalance = balances.solBalance;
       notifyListeners();
     } catch (e) {
       throw Exception(e);
@@ -231,7 +230,7 @@ class WalletProvider extends ChangeNotifier {
           forceRefresh: true,
         );
         _zarpBalance = balances.zarpBalance;
-        _solBalance  = balances.solBalance;
+        _solBalance = balances.solBalance;
         notifyListeners();
       } catch (e) {
         throw Exception(e);

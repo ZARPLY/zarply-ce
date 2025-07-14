@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import '../../data/repositories/private_keys_repository_impl.dart';
 import '../../domain/repositories/private_keys_repository.dart';
 
@@ -32,10 +32,11 @@ class PrivateKeysViewModel extends ChangeNotifier {
   }
 
   void copyKeysToClipboard(BuildContext context) {
-    _repository.copyKeysToClipboard(
-      walletAddress ?? '',
-      tokenAccountAddress ?? '',
-    );
+    final String formatted = '''
+Zarp Token: ${tokenAccountAddress ?? ''}
+Solana Wallet: ${walletAddress ?? ''}
+''';
+    Clipboard.setData(ClipboardData(text: formatted));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Private keys copied to clipboard'),
