@@ -8,7 +8,7 @@ import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../models/payment_details_view_model.dart';
 
 class PaymentDetails extends StatefulWidget {
-  const PaymentDetails({Key? key}) : super(key: key);
+  const PaymentDetails({super.key});
 
   @override
   State<PaymentDetails> createState() => _PaymentDetailsState();
@@ -194,12 +194,15 @@ class _PaymentDetailsState extends State<PaymentDetails> {
         Provider.of<PaymentProvider>(context, listen: false);
     await paymentProvider
         .setRecipientAddress(viewModel.publicKeyController.text);
+    await paymentProvider
+        .setRecipientAddress(viewModel.publicKeyController.text);
 
     if (!context.mounted) return;
     context.go(
       '/payment_amount',
-      extra: {
+      extra: <String, String>{
         'recipientAddress': viewModel.publicKeyController.text,
+        'source': '/payment_details',
         'source': '/payment_details',
       },
     );

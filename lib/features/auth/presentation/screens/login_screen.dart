@@ -89,7 +89,9 @@ class _LoginScreenState extends State<LoginScreen> {
             resizeToAvoidBottomInset: true,
             body: SafeArea(
               child: SingleChildScrollView(
+                padding: EdgeInsets.zero,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Stack(
                       children: <Widget>[
@@ -104,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ClipPath(
                           clipper: CurvedBottomClipper(),
                           child: Container(
-                            height: MediaQuery.of(context).size.height * 0.40,
+                            height: 180, // Fixed height
                             color: const Color(0xFF4169E1),
                             child: const Center(
                               child: SizedBox(
@@ -200,6 +202,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    if (!viewModel.isKeyboardVisible)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: LoadingButton(
+                            isLoading: viewModel.isLoading,
+                            onPressed:
+                                viewModel.showSplash ? null : _performLogin,
+                            style: ElevatedButton.styleFrom(
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text('Login'),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

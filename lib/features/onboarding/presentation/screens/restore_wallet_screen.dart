@@ -72,8 +72,10 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   if (!context.mounted) return;
 
                   if (!hasPassword) {
-                    context.replace('/create_password',
-                        extra: {'from': 'restore'});
+                    context.replace(
+                      '/create_password',
+                      extra: <String, String>{'from': 'restore'},
+                    );
                   } else {
                     context.replace('/login');
                   }

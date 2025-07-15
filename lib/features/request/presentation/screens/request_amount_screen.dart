@@ -73,36 +73,33 @@ class RequestAmountScreen extends StatelessWidget {
               title: const Text('Request'),
             ),
             resizeToAvoidBottomInset: true,
-            body: SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+            body: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const SizedBox(height: 40),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(minWidth: 250, maxWidth: 350),
+                      child: AmountInput(
+                        controller: viewModel.paymentAmountController,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      const SizedBox(height: 40),
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                              minWidth: 250, maxWidth: 350),
-                          child: AmountInput(
-                              controller: viewModel.paymentAmountController),
-                        ),
+                      Text('Minimum amount is R5'),
+                      SizedBox(
+                        height: 40,
                       ),
-                      const SizedBox(height: 16),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Text('Minimum amount is R5'),
-                          SizedBox(
-                            height: 40,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
             bottomNavigationBar: Padding(

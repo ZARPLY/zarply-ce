@@ -14,8 +14,8 @@ class PaymentAmountScreen extends StatefulWidget {
     required this.recipientAddress,
     required this.source,
     this.initialAmount,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String recipientAddress;
   final String? initialAmount;
