@@ -88,141 +88,156 @@ class _LoginScreenState extends State<LoginScreen> {
           return Scaffold(
             resizeToAvoidBottomInset: true,
             body: SafeArea(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Stack(
-                      children: <Widget>[
-                        ClipPath(
-                          clipper: SteeperCurvedBottomClipper(),
-                          child: Container(
-                            height: 180, // Fixed height
-                            color:
-                                const Color(0xFF4169E1).withValues(alpha: 0.3),
-                          ),
-                        ),
-                        ClipPath(
-                          clipper: CurvedBottomClipper(),
-                          child: Container(
-                            height: 160, // Slightly less than above
-                            color: const Color(0xFF4169E1),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 180,
-                                height: 180,
-                                child: Image(
-                                  image: AssetImage('images/splash.png'),
-                                  fit: BoxFit.contain,
-                                  color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Stack(
+                            children: <Widget>[
+                              ClipPath(
+                                clipper: SteeperCurvedBottomClipper(),
+                                child: Container(
+                                  height: 180, // Fixed height
+                                  color: const Color(0xFF4169E1)
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
-                      child: Stack(
-                        children: <Widget>[
-                          // Login Form
-                          AnimatedOpacity(
-                            opacity: viewModel.showSplash ? 0.0 : 1.0,
-                            duration: const Duration(milliseconds: 500),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  'Welcome Back!',
-                                  style:
-                                      Theme.of(context).textTheme.headlineLarge,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 40),
-                                PasswordInput(
-                                  controller: viewModel.passwordController,
-                                  labelText: 'Enter your password',
-                                  errorText: viewModel.errorMessage.isNotEmpty
-                                      ? viewModel.errorMessage
-                                      : null,
-                                  focusNode: _passwordFocus,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _performLogin(),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: <Widget>[
-                                    Checkbox(
-                                      value: viewModel.rememberPassword,
-                                      activeColor: const Color(0xFF4169E1),
-                                      onChanged: (bool? value) {
-                                        if (value != null) {
-                                          viewModel.setRememberPassword(
-                                            value: value,
-                                          );
-                                        }
-                                      },
+                              ClipPath(
+                                clipper: CurvedBottomClipper(),
+                                child: Container(
+                                  height: 160, // Slightly less than above
+                                  color: const Color(0xFF4169E1),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 180,
+                                      height: 180,
+                                      child: Image(
+                                        image: AssetImage('images/splash.png'),
+                                        fit: BoxFit.contain,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                    const Text('Remember Password'),
-                                  ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+                            child: Stack(
+                              children: <Widget>[
+                                // Login Form
+                                AnimatedOpacity(
+                                  opacity: viewModel.showSplash ? 0.0 : 1.0,
+                                  duration: const Duration(milliseconds: 500),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        'Welcome Back!',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineLarge,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 40),
+                                      PasswordInput(
+                                        controller:
+                                            viewModel.passwordController,
+                                        labelText: 'Enter your password',
+                                        errorText:
+                                            viewModel.errorMessage.isNotEmpty
+                                                ? viewModel.errorMessage
+                                                : null,
+                                        focusNode: _passwordFocus,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _performLogin(),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: <Widget>[
+                                          Checkbox(
+                                            value: viewModel.rememberPassword,
+                                            activeColor:
+                                                const Color(0xFF4169E1),
+                                            onChanged: (bool? value) {
+                                              if (value != null) {
+                                                viewModel.setRememberPassword(
+                                                  value: value,
+                                                );
+                                              }
+                                            },
+                                          ),
+                                          const Text('Remember Password'),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Splash RichText
+                                AnimatedOpacity(
+                                  opacity: viewModel.showSplash ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 500),
+                                  child: IgnorePointer(
+                                    ignoring: viewModel.showSplash,
+                                    child: RichText(
+                                      text: const TextSpan(
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                          height: 1.2,
+                                        ),
+                                        children: <InlineSpan>[
+                                          TextSpan(text: 'ZARPLY the '),
+                                          TextSpan(
+                                            text: 'Rand\nstable-coin\nwallet',
+                                            style: TextStyle(
+                                              color: Color(0xFF1F75DC),
+                                            ),
+                                          ),
+                                          TextSpan(text: ' on Solana.'),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          // Splash RichText
-                          AnimatedOpacity(
-                            opacity: viewModel.showSplash ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 500),
-                            child: IgnorePointer(
-                              ignoring: viewModel.showSplash,
-                              child: RichText(
-                                text: const TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    height: 1.2,
-                                  ),
-                                  children: <InlineSpan>[
-                                    TextSpan(text: 'ZARPLY the '),
-                                    TextSpan(
-                                      text: 'Rand\nstable-coin\nwallet',
-                                      style: TextStyle(
-                                        color: Color(0xFF1F75DC),
-                                      ),
-                                    ),
-                                    TextSpan(text: ' on Solana.'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    if (!viewModel.isKeyboardVisible)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: LoadingButton(
-                            isLoading: viewModel.isLoading,
-                            onPressed:
-                                viewModel.showSplash ? null : _performLogin,
-                            style: ElevatedButton.styleFrom(
-                              textStyle: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            child: const Text('Login'),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            bottomNavigationBar: Padding(
+              padding: EdgeInsets.fromLTRB(
+                32,
+                0,
+                32,
+                48 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: LoadingButton(
+                  isLoading: viewModel.isLoading,
+                  onPressed: viewModel.showSplash ? null : _performLogin,
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: const Text('Login'),
                 ),
               ),
             ),
