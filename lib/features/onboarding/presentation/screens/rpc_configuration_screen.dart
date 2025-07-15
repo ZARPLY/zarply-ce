@@ -59,8 +59,9 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
   }
 
   Future<void> _onDefaultRpcChanged() async {
-    if (_useDefaultRpc || _isCreatingWallet)
+    if (_useDefaultRpc || _isCreatingWallet) {
       return; // Already selected or creating wallet
+    }
 
     setState(() {
       _useDefaultRpc = true;
@@ -109,8 +110,9 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
   }
 
   void _onCustomRpcChanged() {
-    if (_useCustomRpc || _isCreatingWallet)
+    if (_useCustomRpc || _isCreatingWallet) {
       return; // Already selected or creating wallet
+    }
 
     setState(() {
       _useCustomRpc = true;
