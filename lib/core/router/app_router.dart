@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';
+import '../../features/onboarding/presentation/screens/custom_rpc_configuration_screen.dart';
 import '../../features/onboarding/presentation/screens/private_keys_screen.dart';
 import '../../features/onboarding/presentation/screens/restore_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/rpc_configuration_screen.dart';
@@ -25,7 +26,6 @@ import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
 import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
-
 
 GoRouter createRouter(
   WalletProvider walletProvider,
@@ -54,6 +54,7 @@ GoRouter createRouter(
       final List<String> onboardingRoutes = <String>[
         '/welcome',
         '/rpc_configuration',
+        '/custom_rpc_configuration',
         '/create_password',
         '/access_wallet',
         '/new_wallet',
@@ -127,6 +128,14 @@ GoRouter createRouter(
               final bool isRestoreFlow =
                   state.uri.queryParameters['restore'] == 'true';
               return RpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
+          ),
+          GoRoute(
+            path: '/custom_rpc_configuration',
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return CustomRpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
             },
           ),
           GoRoute(
