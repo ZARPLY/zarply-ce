@@ -72,48 +72,65 @@ class RequestAmountScreen extends StatelessWidget {
               ),
               title: const Text('Request'),
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  const SizedBox(height: 40),
-                  Center(
-                    child: ConstrainedBox(
-                      constraints:
-                          const BoxConstraints(minWidth: 250, maxWidth: 350),
-                      child: AmountInput(
-                          controller: viewModel.paymentAmountController),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+            resizeToAvoidBottomInset: true,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text('Minimum amount is R5'),
-                      SizedBox(
-                        height: 40,
+                      const SizedBox(height: 40),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                              minWidth: 250, maxWidth: 350),
+                          child: AmountInput(
+                              controller: viewModel.paymentAmountController),
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Text('Minimum amount is R5'),
+                          SizedBox(
+                            height: 40,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
                     ],
                   ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: viewModel.isFormValid
-                        ? () => _showRequestReviewModal(
-                              context,
-                              viewModel.paymentAmountController.text,
-                            )
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                ),
+              ),
+            ),
+            bottomNavigationBar: Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                    ? MediaQuery.of(context).viewInsets.bottom
+                    : 16,
+                top: 8,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewModel.isFormValid
+                      ? () => _showRequestReviewModal(
+                            context,
+                            viewModel.paymentAmountController.text,
+                          )
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: const Text('Continue'),
                   ),
-                  const SizedBox(height: 20),
-                ],
+                  child: const Text('Continue'),
+                ),
               ),
             ),
           );

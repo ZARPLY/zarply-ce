@@ -172,139 +172,136 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const ProgressSteps(currentStep: 1, totalSteps: 4),
-            const SizedBox(height: 32),
-
-            Text(
-              'Network Configuration',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: !_useCustomRpc ? Colors.blue : Colors.grey[300]!,
-                  width: 2,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const ProgressSteps(currentStep: 1, totalSteps: 4),
+                const SizedBox(height: 32),
+                Text(
+                  'Network Configuration',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                 ),
-                borderRadius: BorderRadius.circular(12),
-                color: !_useCustomRpc ? Colors.blue[50] : Colors.white,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Radio<bool>(
-                        value: false,
-                        groupValue: _useCustomRpc,
-                        onChanged: (bool? value) {
-                          setState(() => _useCustomRpc = value!);
-                        },
-                        activeColor: Colors.blue,
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'Use Default (Recommended)',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Free public Solana RPC endpoint',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: !_useCustomRpc ? Colors.blue : Colors.grey[300]!,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: !_useCustomRpc ? Colors.blue[50] : Colors.white,
                   ),
-                  if (!_useCustomRpc) ...<Widget>[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
                         children: <Widget>[
-                          Text(
-                            'RPC: $_defaultRpcUrl',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                            ),
+                          Radio<bool>(
+                            value: false,
+                            groupValue: _useCustomRpc,
+                            onChanged: (bool? value) {
+                              setState(() => _useCustomRpc = value!);
+                            },
+                            activeColor: Colors.blue,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'WS: $_defaultWebsocketUrl',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  'Use Default (Recommended)',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Free public Solana RPC endpoint',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Colors.grey[600],
+                                      ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Custom RPC Option
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _useCustomRpc ? Colors.blue : Colors.grey[300]!,
-                  width: 2,
+                      if (!_useCustomRpc) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'RPC: $_defaultRpcUrl',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'WS: $_defaultWebsocketUrl',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(12),
-                color: _useCustomRpc ? Colors.blue[50] : Colors.white,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
+                const SizedBox(height: 16),
+                // Custom RPC Option
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _useCustomRpc ? Colors.blue : Colors.grey[300]!,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: _useCustomRpc ? Colors.blue[50] : Colors.white,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Radio<bool>(
-                        value: true,
-                        groupValue: _useCustomRpc,
-                        onChanged: (bool? value) {
-                          setState(() => _useCustomRpc = value!);
-                        },
-                        activeColor: Colors.blue,
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'Use QuickNode (Custom)',
+                      Row(
+                        children: <Widget>[
+                          Radio<bool>(
+                            value: true,
+                            groupValue: _useCustomRpc,
+                            onChanged: (bool? value) {
+                              setState(() => _useCustomRpc = value!);
+                            },
+                            activeColor: Colors.blue,
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Use Custom',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -312,148 +309,71 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Use your own QuickNode endpoint',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_useCustomRpc) ...<Widget>[
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _rpcController,
-                      decoration: const InputDecoration(
-                        labelText: 'RPC URL',
-                        hintText:
-                            'https://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                      keyboardType: TextInputType.url,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _websocketController,
-                      decoration: const InputDecoration(
-                        labelText: 'WebSocket URL',
-                        hintText:
-                            'wss://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                      keyboardType: TextInputType.url,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            if (_errorMessage != null) ...<Widget>[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red[200]!),
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(Icons.error_outline, color: Colors.red[700], size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: Colors.red[700], fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const Spacer(),
-
-            // Info card
-            if (_useCustomRpc) ...<Widget>[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange[200]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.orange[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'How to get QuickNode endpoints:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.orange[700],
                           ),
+                        ],
+                      ),
+                      if (_useCustomRpc) ...<Widget>[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _rpcController,
+                          decoration: const InputDecoration(
+                            labelText: 'RPC URL',
+                            hintText:
+                                'https://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                          ),
+                          keyboardType: TextInputType.url,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _websocketController,
+                          decoration: const InputDecoration(
+                            labelText: 'WebSocket URL',
+                            hintText:
+                                'wss://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                          ),
+                          keyboardType: TextInputType.url,
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '1. Sign up at quicknode.com\n'
-                      '2. Create a Solana endpoint\n'
-                      '3. Copy the HTTP and WebSocket URLs\n'
-                      '4. Paste them in the fields above',
-                      style: TextStyle(
-                        color: Colors.orange[700],
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // Continue button
-            SizedBox(
-              width: double.infinity,
-              child: LoadingButton(
-                isLoading: _isLoading,
-                onPressed: _saveConfigurationAndContinue,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4169E1),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    ],
                   ),
                 ),
-                child: const Text(
-                  'Continue & Create Wallet',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 16),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
-                ),
-              ),
+                // Add more content as needed
+              ],
             ),
-          ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0
+              ? MediaQuery.of(context).viewInsets.bottom
+              : 24,
+          top: 8,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: LoadingButton(
+            isLoading: _isLoading,
+            onPressed: _saveConfigurationAndContinue,
+            child: const Text('Continue'),
+          ),
         ),
       ),
     );

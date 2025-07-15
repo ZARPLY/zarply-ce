@@ -90,6 +90,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 ),
               ),
             ),
+            resizeToAvoidBottomInset: true,
             body: SafeArea(
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
@@ -207,22 +208,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
-                                child: LoadingButton(
-                                  isLoading: viewModel.isLoading,
-                                  onPressed: viewModel.isFormValid
-                                      ? _handleContinue
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    textStyle: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  child: const Text('Continue'),
-                                ),
-                              ),
+                              // Removed the button from here
                             ],
                           ),
                         ),
@@ -230,6 +216,30 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     ),
                   );
                 },
+              ),
+            ),
+            bottomNavigationBar: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                    ? MediaQuery.of(context).viewInsets.bottom
+                    : 24,
+                top: 8,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: LoadingButton(
+                  isLoading: viewModel.isLoading,
+                  onPressed: viewModel.isFormValid ? _handleContinue : null,
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: const Text('Continue'),
+                ),
               ),
             ),
           );

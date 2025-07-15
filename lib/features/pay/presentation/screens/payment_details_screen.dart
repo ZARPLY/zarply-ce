@@ -78,88 +78,108 @@ class _PaymentDetailsState extends State<PaymentDetails> {
               ),
               title: const Text('Pay'),
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Center(
-                    child: Column(
-                      children: <Widget>[
-                        Text(
-                          'Paste recipients public key',
-                          style: Theme.of(context).textTheme.headlineLarge,
+            resizeToAvoidBottomInset: true,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Center(
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              'Paste recipients public key',
+                              style: Theme.of(context).textTheme.headlineLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Initiating a payment',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: 250,
+                        child: TextField(
+                          focusNode: _publicKeyFocus,
+                          controller: viewModel.publicKeyController,
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (_) => _descriptionFocus.requestFocus(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Public Key',
+                            suffixIcon: ClearIconButton(
+                              controller: viewModel.publicKeyController,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: borderColor),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: borderColor, width: 2),
+                            ),
+                            errorText: viewModel.publicKeyError,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (viewModel.accountExists == false) ...[
+                        const Text(
+                          'Account not found on Solana',
+                          style: TextStyle(color: Colors.red),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Initiating a payment',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                        const SizedBox(height: 16),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: 250,
-                    child: TextField(
-                      focusNode: _publicKeyFocus,
-                      controller: viewModel.publicKeyController,
-                      textInputAction: TextInputAction.next,
-                      onSubmitted: (_) => _descriptionFocus.requestFocus(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Public Key',
-                        suffixIcon: ClearIconButton(
-                          controller: viewModel.publicKeyController,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: borderColor, width: 2),
+                      SizedBox(
+                        width: 250,
+                        child: TextField(
+                          focusNode: _descriptionFocus,
+                          controller: viewModel.descriptionController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _onContinue(viewModel, context),
+                          style: const TextStyle(fontSize: 14),
+                          decoration: const InputDecoration(
+                            labelText: 'Description (Optional)',
                           ),
-                        errorText: viewModel.publicKeyError,
+                        ),
                       ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            bottomNavigationBar: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                    ? MediaQuery.of(context).viewInsets.bottom
+                    : 24,
+                top: 8,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewModel.canContinue
+                      ? () => _onContinue(viewModel, context)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  if (viewModel.accountExists == false) ...[
-                    const Text(
-                      'Account not found on Solana',
-                      style: TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  SizedBox(
-                    width: 250,
-                    child: TextField(
-                      focusNode: _descriptionFocus,
-                      controller: viewModel.descriptionController,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _onContinue(viewModel, context),
-                      style: const TextStyle(fontSize: 14),
-                      decoration: const InputDecoration(
-                        labelText: 'Description (Optional)',
-                          ),
-                    ),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: viewModel.canContinue ? () => _onContinue(viewModel, context) : null,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    child: const Text('Continue'),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                  child: const Text('Continue'),
+                ),
               ),
             ),
           );
@@ -168,17 +188,19 @@ class _PaymentDetailsState extends State<PaymentDetails> {
     );
   }
 
-  Future<void> _onContinue(PaymentDetailsViewModel viewModel, BuildContext context) async {
+  Future<void> _onContinue(
+      PaymentDetailsViewModel viewModel, BuildContext context) async {
     final PaymentProvider paymentProvider =
         Provider.of<PaymentProvider>(context, listen: false);
-    await paymentProvider.setRecipientAddress(viewModel.publicKeyController.text);
+    await paymentProvider
+        .setRecipientAddress(viewModel.publicKeyController.text);
 
     if (!context.mounted) return;
     context.go(
       '/payment_amount',
       extra: {
         'recipientAddress': viewModel.publicKeyController.text,
-        'source'          : '/payment_details',
+        'source': '/payment_details',
       },
     );
   }
