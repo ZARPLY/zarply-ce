@@ -48,7 +48,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
           Color borderColor;
           if (viewModel.accountExists == null) {
             borderColor = Colors.grey;
-          } else if (viewModel.accountExists == true) {
+          } else if (viewModel.accountExists!) {
             borderColor = Theme.of(context).primaryColor;
           } else {
             borderColor = Colors.red;
