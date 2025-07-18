@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
 import '../models/payment_amount_view_model.dart';
@@ -34,6 +35,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   }
 
   void _showPaymentReviewModal(BuildContext context, String amount) {
+    final double walletBalance = AppInitializer.of(context).walletBalance;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -50,6 +52,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         child: PaymentReviewContent(
           amount: amount,
           recipientAddress: widget.recipientAddress,
+          walletBalance: walletBalance,
           onCancel: () => Navigator.pop(context),
         ),
       ),

@@ -78,7 +78,15 @@ class RequestAmountScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   const SizedBox(height: 40),
-                  AmountInput(controller: viewModel.paymentAmountController),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(minWidth: 250, maxWidth: 350),
+                      child: AmountInput(
+                        controller: viewModel.paymentAmountController,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.center,

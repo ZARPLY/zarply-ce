@@ -72,8 +72,10 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   if (!context.mounted) return;
 
                   if (!hasPassword) {
-                    context.replace('/create_password',
-                        extra: {'from': 'restore'});
+                    context.replace(
+                      '/create_password',
+                      extra: <String, String>{'from': 'restore'},
+                    );
                   } else {
                     context.replace('/login');
                   }
@@ -115,7 +117,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/welcome'),
+            onTap: () => context.go('/rpc_configuration?restore=true'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),
@@ -131,17 +133,19 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
             ),
           ),
         ),
-        title: Align(
-          alignment: Alignment.centerRight,
-          child: RestoreMethodDropdown(
-            selectedMethod: _viewModel.selectedRestoreMethod,
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                _viewModel.setRestoreMethod(newValue);
-                setState(() {});
-              }
-            },
-          ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            RestoreMethodDropdown(
+              selectedMethod: _viewModel.selectedRestoreMethod,
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  _viewModel.setRestoreMethod(newValue);
+                  setState(() {});
+                }
+              },
+            ),
+          ],
         ),
       ),
       body: AnimatedBuilder(

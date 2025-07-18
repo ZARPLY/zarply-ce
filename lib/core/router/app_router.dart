@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';
+import '../../features/onboarding/presentation/screens/custom_rpc_configuration_screen.dart';
 import '../../features/onboarding/presentation/screens/private_keys_screen.dart';
 import '../../features/onboarding/presentation/screens/restore_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/rpc_configuration_screen.dart';
@@ -16,10 +17,14 @@ import '../../features/pay/presentation/screens/payment_amount_screen.dart';
 import '../../features/pay/presentation/screens/payment_details_screen.dart';
 import '../../features/request/presentation/screens/payment_request_details_screen.dart';
 import '../../features/request/presentation/screens/request_amount_screen.dart';
+import '../../features/wallet/presentation/screens/more_options_screen.dart';
+import '../../features/wallet/presentation/screens/recovery_phrase_screen.dart';
 import '../../features/wallet/presentation/screens/transaction_details.dart';
+import '../../features/wallet/presentation/screens/unlock_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
+import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
 GoRouter createRouter(
@@ -49,6 +54,7 @@ GoRouter createRouter(
       final List<String> onboardingRoutes = <String>[
         '/welcome',
         '/rpc_configuration',
+        '/custom_rpc_configuration',
         '/create_password',
         '/access_wallet',
         '/new_wallet',
@@ -85,10 +91,7 @@ GoRouter createRouter(
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
-          return ListenableBuilder(
-            listenable: walletProvider,
-            builder: (BuildContext context, _) => child,
-          );
+          return AppInitializer(child: child);
         },
         routes: <RouteBase>[
           GoRoute(
@@ -97,9 +100,43 @@ GoRouter createRouter(
                 const WelcomeScreen(),
           ),
           GoRoute(
-            path: '/rpc_configuration',
+            path: '/more',
+            name: 'more',
             builder: (BuildContext context, GoRouterState state) =>
-                const RpcConfigurationScreen(),
+                const MoreOptionsScreen(),
+          ),
+          GoRoute(
+            path: '/unlock',
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extraMap =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              return UnlockScreen(
+                nextRoute: extraMap['nextRoute'] as String? ?? '/wallet',
+                title: extraMap['title'] as String? ?? 'Unlock',
+                extra: extraMap,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/recovery_phrase',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RecoveryPhraseScreen(),
+          ),
+          GoRoute(
+            path: '/rpc_configuration',
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return RpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
+          ),
+          GoRoute(
+            path: '/custom_rpc_configuration',
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return CustomRpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
           ),
           GoRoute(
             path: '/backup_wallet',
@@ -108,8 +145,14 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/private_keys',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PrivateKeysScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final Map<String, dynamic> extra =
+                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final bool hideProgress = extra['hideProgress'] as bool? ?? false;
+              return PrivateKeysScreen(
+                hideProgress: hideProgress,
+              );
+            },
           ),
           GoRoute(
             path: '/restore_wallet',

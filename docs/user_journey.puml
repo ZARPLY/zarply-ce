@@ -1,0 +1,59 @@
+' FIrstly install the plantUML extension
+' The right click anywhere inline with the code in the file and select "PlantUML: Preview Diagram"
+
+@startuml
+title ZARPLY Wallet App - Full User Flow
+
+start
+
+:Login Screen;
+
+if ("User choice") then ([Create New Wallet])
+  :Backup your wallet;
+  :View Wallet Private Keys;
+  :Home Screen;
+elseif ([I already have a wallet])
+  :Restore Wallet (Enter Phrase);
+  :Create Password;
+  :Home Screen;
+endif
+
+:Home Screen;
+
+partition "Home Options" {
+  fork
+    :Scan QR;
+    :Open Camera;
+    :Payment Confirmation;
+    :Payment Made;
+    :Home Screen;
+  fork again
+    :More;
+    note right
+      To be elaborated later
+    end note
+    :Home Screen;
+  fork again
+    :Info;
+    note right
+      To be elaborated later
+    end note
+    :Home Screen;
+  fork again
+    if ("ZARPLY Logo Action") then ([Pay])
+      :Enter Recipient Address;
+      :Enter Amount to Pay;
+      :Confirm Amount;
+      :Home Screen;
+    else ([Request])
+      :Enter Requested Amount;
+      :Confirm Requested Amount;
+      :Display QR Code;
+      :Done Clicked;
+      :Home Screen;
+    endif
+  end fork
+}
+
+stop
+@enduml

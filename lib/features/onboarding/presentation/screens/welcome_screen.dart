@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/widgets/loading_button.dart';
 import '../models/welcome_view_model.dart';
-import '../../../../core/provider/wallet_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -34,7 +33,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             body: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: Column(
                   children: <Widget>[
                     Stack(
@@ -97,37 +97,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             width: double.infinity,
                             child: LoadingButton(
                               isLoading: viewModel.isLoading,
-                              onPressed: () async {
-                                final WalletProvider walletProvider =
-                                    Provider.of<WalletProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                                final bool success = await viewModel
-                                    .createAndStoreWallet(walletProvider);
-                                if (!context.mounted) return;
-
-                                if (success) {
-                                  context.go('/backup_wallet');
-                                } else if (viewModel.errorMessage != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(viewModel.errorMessage!),
-                                      backgroundColor: Colors.red.shade700,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: const Duration(seconds: 5),
-                                      action: SnackBarAction(
-                                        label: 'Dismiss',
-                                        textColor: Colors.white,
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context)
-                                              .hideCurrentSnackBar();
-                                          viewModel.clearError();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                }
+                              onPressed: () {
+                                context.go('/rpc_configuration');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4169E1),
@@ -151,7 +122,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             width: double.infinity,
                             child: TextButton(
                               onPressed: () {
-                                context.go('/restore_wallet');
+                                context.go('/rpc_configuration?restore=true');
                               },
                               child: const Text(
                                 'I already have a wallet',
