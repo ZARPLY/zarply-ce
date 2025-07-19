@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input_with_tooltip_strength.dart';
 import '../models/create_password_view_model.dart';
@@ -118,7 +117,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 'Please set a password for your wallet backup and save it somewhere secure. We can\'t reset the password for you.',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 24),
                               PasswordInputWithTooltipStrength(
                                 controller: viewModel.passwordController,
                                 labelText: 'Password',
@@ -128,7 +127,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 onSubmitted: (_) =>
                                     _confirmFocus.requestFocus(),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
                               PasswordInputWithTooltipStrength(
                                 controller: viewModel.confirmPasswordController,
                                 labelText: 'Confirm Password',
@@ -149,6 +148,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                     Checkbox(
                                       value: viewModel.rememberPassword,
                                       activeColor: const Color(0xFF4169E1),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
                                       onChanged: (bool? value) {
                                         if (value != null) {
                                           viewModel.setRememberPassword(
@@ -157,6 +159,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                         }
                                       },
                                     ),
+                                    const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
                                         'Remember Password',
@@ -168,9 +171,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 32),
-                              _ImportedWalletInfoBox(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 8),
                               Focus(
                                 focusNode: _checkboxFocus,
                                 child: Builder(
@@ -188,10 +189,17 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: <Widget>[
                                           Radio<bool>(
                                             value: true,
                                             groupValue: viewModel.isChecked,
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize
+                                                    .shrinkWrap,
+                                            visualDensity:
+                                                VisualDensity.compact,
                                             activeColor:
                                                 const Color(0xFF4169E1),
                                             onChanged: (bool? value) {
@@ -200,12 +208,13 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                               );
                                             },
                                           ),
+                                          const SizedBox(width: 4),
                                           Expanded(
                                             child: Text(
                                               'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .bodySmall,
+                                                  .bodyMedium,
                                             ),
                                           ),
                                         ],
@@ -214,7 +223,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 32),
+                              _ImportedWalletInfoBox(),
+                              const SizedBox(height: 8),
                               SizedBox(
                                 width: double.infinity,
                                 child: LoadingButton(
@@ -290,9 +301,7 @@ class _ImportedWalletInfoBox extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            address.isNotEmpty
-                ? Formatters.shortenAddress(address)
-                : 'No wallet address found',
+            address.isNotEmpty ? address : 'No wallet address found',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
@@ -301,7 +310,6 @@ class _ImportedWalletInfoBox extends StatelessWidget {
             children: <Widget>[
               GestureDetector(
                 onTap: () async {
-                  // Clear secure storage and go to import wallet screen
                   const FlutterSecureStorage storage = FlutterSecureStorage();
                   await storage.deleteAll();
                   if (context.mounted) {
@@ -312,7 +320,6 @@ class _ImportedWalletInfoBox extends StatelessWidget {
                   'Import different wallet',
                   style: TextStyle(
                     color: Colors.blue,
-                    decoration: TextDecoration.underline,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
