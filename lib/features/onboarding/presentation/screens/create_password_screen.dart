@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input_with_tooltip_strength.dart';
 import '../models/create_password_view_model.dart';
 import '../widgets/progress_steps.dart';
-import '../../../../core/provider/wallet_provider.dart';
-import '../../../../core/utils/formatters.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
   const CreatePasswordScreen({super.key, this.extra});
@@ -250,22 +250,23 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 class _ImportedWalletInfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-    final address = walletProvider.wallet?.address ?? '';
-    final isValid = _isValidSolanaAddress(address);
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+    final String address = walletProvider.wallet?.address ?? '';
+    final bool isValid = _isValidSolanaAddress(address);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.15),
+        color: Colors.grey.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           Row(
-            children: [
+            children: <Widget>[
               Expanded(
                 child: Text(
                   'Imported Wallet',
@@ -297,17 +298,17 @@ class _ImportedWalletInfoBox extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [
+            children: <Widget>[
               GestureDetector(
                 onTap: () async {
                   // Clear secure storage and go to import wallet screen
-                  const storage = FlutterSecureStorage();
+                  const FlutterSecureStorage storage = FlutterSecureStorage();
                   await storage.deleteAll();
                   if (context.mounted) {
                     context.go('/restore_wallet');
                   }
                 },
-                child: Text(
+                child: const Text(
                   'Import different wallet',
                   style: TextStyle(
                     color: Colors.blue,
@@ -327,6 +328,6 @@ class _ImportedWalletInfoBox extends StatelessWidget {
 // Helper for Solana address validation (simple base58 length check)
 bool _isValidSolanaAddress(String address) {
   // Solana addresses are base58 and usually 32-44 chars
-  final base58 = RegExp(r'^[1-9A-HJ-NP-Za-km-z]{32,44} ?$');
+  final RegExp base58 = RegExp(r'^[1-9A-HJ-NP-Za-km-z]{32,44} ?$');
   return address.isNotEmpty && base58.hasMatch(address);
 }
