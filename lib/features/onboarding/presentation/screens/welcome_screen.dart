@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../models/welcome_view_model.dart';
 
@@ -98,37 +97,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             width: double.infinity,
                             child: LoadingButton(
                               isLoading: viewModel.isLoading,
-                              onPressed: () async {
-                                final WalletProvider walletProvider =
-                                    Provider.of<WalletProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                                final bool success = await viewModel
-                                    .createAndStoreWallet(walletProvider);
-                                if (!context.mounted) return;
-
-                                if (success) {
-                                  context.go('/backup_wallet');
-                                } else if (viewModel.errorMessage != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(viewModel.errorMessage!),
-                                      backgroundColor: Colors.red.shade700,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: const Duration(seconds: 5),
-                                      action: SnackBarAction(
-                                        label: 'Dismiss',
-                                        textColor: Colors.white,
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context)
-                                              .hideCurrentSnackBar();
-                                          viewModel.clearError();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                }
+                              onPressed: () {
+                                context.go('/rpc_configuration');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4169E1),
@@ -152,7 +122,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             width: double.infinity,
                             child: TextButton(
                               onPressed: () {
-                                context.go('/restore_wallet');
+                                context.go('/rpc_configuration?restore=true');
                               },
                               child: const Text(
                                 'I already have a wallet',
