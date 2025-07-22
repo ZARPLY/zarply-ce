@@ -8,6 +8,7 @@ import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../../../../core/widgets/password_input.dart';
+import '../../../../core/widgets/clear_icon_button.dart';
 import '../../../onboarding/presentation/screens/welcome_screen.dart';
 import '../models/login_view_model.dart';
 
@@ -85,159 +86,187 @@ class _LoginScreenState extends State<LoginScreen> {
       value: _viewModel,
       child: Consumer<LoginViewModel>(
         builder: (BuildContext context, LoginViewModel viewModel, _) {
+          final bool isPasswordTyped =
+              viewModel.passwordController.text.isNotEmpty;
+          // Only show checkmark if the password matches the stored password (correct password)
+          final bool isPasswordCorrect = viewModel.isPasswordCorrect;
           return Scaffold(
             resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF1F75DC),
+              elevation: 0,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: const Text('Close',
+                      style: TextStyle(color: Color(0xFF1F75DC), fontSize: 18)),
+                ),
+              ],
+              automaticallyImplyLeading: false,
+            ),
             body: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Stack(
-                            children: <Widget>[
-                              ClipPath(
-                                clipper: SteeperCurvedBottomClipper(),
-                                child: Container(
-                                  height: 180, // Fixed height
-                                  color: const Color(0xFF4169E1)
-                                      .withValues(alpha: 0.3),
-                                ),
-                              ),
-                              ClipPath(
-                                clipper: CurvedBottomClipper(),
-                                child: Container(
-                                  height: 160, // Slightly less than above
-                                  color: const Color(0xFF4169E1),
-                                  child: const Center(
-                                    child: SizedBox(
-                                      width: 180,
-                                      height: 180,
-                                      child: Image(
-                                        image: AssetImage('images/splash.png'),
-                                        fit: BoxFit.contain,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Login',
+                      style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    const Text(
+                      'Welcome back',
+                      style:
+                          TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.left,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Enter your ZARPLY wallet password below',
+                      style: TextStyle(fontSize: 20, color: Colors.grey),
+                      textAlign: TextAlign.left,
+                    ),
+                    const SizedBox(height: 40),
+                    Material(
+                      elevation: 0,
+                      borderRadius: BorderRadius.circular(16),
+                      child: TextField(
+                        controller: viewModel.passwordController,
+                        focusNode: _passwordFocus,
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _performLogin(),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 20, horizontal: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          hintText: 'Password',
+                          errorText: viewModel.errorMessage.isNotEmpty
+                              ? viewModel.errorMessage
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ClearIconButton(
+                                  controller: viewModel.passwordController),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: isPasswordCorrect
+                                      ? Icon(Icons.check_circle,
+                                          color: Colors.green,
+                                          key: const ValueKey('valid'))
+                                      : const SizedBox(
+                                          width: 0,
+                                          height: 0,
+                                          key: ValueKey('empty')),
                                 ),
                               ),
                             ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
-                            child: Stack(
-                              children: <Widget>[
-                                // Login Form
-                                AnimatedOpacity(
-                                  opacity: viewModel.showSplash ? 0.0 : 1.0,
-                                  duration: const Duration(milliseconds: 500),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        'Welcome Back!',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineLarge,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 40),
-                                      PasswordInput(
-                                        controller:
-                                            viewModel.passwordController,
-                                        labelText: 'Enter your password',
-                                        errorText:
-                                            viewModel.errorMessage.isNotEmpty
-                                                ? viewModel.errorMessage
-                                                : null,
-                                        focusNode: _passwordFocus,
-                                        textInputAction: TextInputAction.done,
-                                        onSubmitted: (_) => _performLogin(),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: <Widget>[
-                                          Checkbox(
-                                            value: viewModel.rememberPassword,
-                                            activeColor:
-                                                const Color(0xFF4169E1),
-                                            onChanged: (bool? value) {
-                                              if (value != null) {
-                                                viewModel.setRememberPassword(
-                                                  value: value,
-                                                );
-                                              }
-                                            },
-                                          ),
-                                          const Text('Remember Password'),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Splash RichText
-                                AnimatedOpacity(
-                                  opacity: viewModel.showSplash ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 500),
-                                  child: IgnorePointer(
-                                    ignoring: viewModel.showSplash,
-                                    child: RichText(
-                                      text: const TextSpan(
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          height: 1.2,
-                                        ),
-                                        children: <InlineSpan>[
-                                          TextSpan(text: 'ZARPLY the '),
-                                          TextSpan(
-                                            text: 'Rand\nstable-coin\nwallet',
-                                            style: TextStyle(
-                                              color: Color(0xFF1F75DC),
-                                            ),
-                                          ),
-                                          TextSpan(text: ' on Solana.'),
-                                        ],
+                        ),
+                        style: const TextStyle(fontSize: 18),
+                        onChanged: (_) async {
+                          setState(() {});
+                          // Validate password on change to update checkmark
+                          final bool correct =
+                              await viewModel.validatePassword();
+                          viewModel.setIsPasswordCorrect(correct);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    GestureDetector(
+                      onTap: () => viewModel.setRememberPassword(
+                          value: !viewModel.rememberPassword),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: const Color(0xFF1F75DC), width: 3),
+                            ),
+                            child: viewModel.rememberPassword
+                                ? Center(
+                                    child: Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF1F75DC),
+                                        shape: BoxShape.circle,
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                                  )
+                                : null,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(width: 12),
+                          const Text('Remember this device',
+                              style:
+                                  TextStyle(fontSize: 20, color: Colors.grey)),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            bottomNavigationBar: Padding(
-              padding: EdgeInsets.fromLTRB(
-                32,
-                0,
-                32,
-                48 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: LoadingButton(
-                  isLoading: viewModel.isLoading,
-                  onPressed: viewModel.showSplash ? null : _performLogin,
-                  style: ElevatedButton.styleFrom(
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: 60,
+                            child: LoadingButton(
+                              isLoading: viewModel.isLoading,
+                              onPressed: _performLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1F75DC),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                                elevation: 8,
+                                textStyle: const TextStyle(
+                                    fontSize: 22, fontWeight: FontWeight.w600),
+                              ),
+                              child: const Text('Login'),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          GestureDetector(
+                            onTap: () {
+                              /* TODO: Implement forgot password logic */
+                            },
+                            child: const Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 4,
+                            width: 120,
+                            margin: const EdgeInsets.only(top: 8),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: const Text('Login'),
+                  ],
                 ),
               ),
             ),

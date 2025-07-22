@@ -13,6 +13,7 @@ class LoginViewModel extends ChangeNotifier {
   bool isKeyboardVisible = false;
   bool _rememberPassword = false;
   bool _isLoading = false;
+  bool isPasswordCorrect = false;
 
   bool get rememberPassword => _rememberPassword;
   bool get isLoading => _isLoading;
@@ -61,6 +62,11 @@ class LoginViewModel extends ChangeNotifier {
 
   void setIsLoading({required bool value}) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  void setIsPasswordCorrect(bool value) {
+    isPasswordCorrect = value;
     notifyListeners();
   }
 
