@@ -34,11 +34,13 @@ GoRouter createRouter(
     initialLocation: '/splash',
     refreshListenable: Listenable.merge(<Listenable>[walletProvider, authProvider]), 
     redirect: (BuildContext context, GoRouterState state) {
+      final String path = state.uri.path;
+      if (path == '/splash') return null;
+      if (!walletProvider.bootDone) return '/splash';
+
       final String location = state.uri.toString();
 
-      if (location == '/splash') return null;
       if (!walletProvider.isReady) return '/splash';
-      
 
       final bool isAuthenticated = authProvider.isAuthenticated;
 

@@ -31,21 +31,24 @@ class SplashViewModel extends ChangeNotifier {
   }
 
   Future<String> initializeAndGetRoute() async {
-    try {
+    String route = '/welcome';
 
+    try {
       final bool haveWalletAndTokenAccount = await _walletProvider.initialize();
       final bool hasPassword = await _walletProvider.hasPassword();
 
-
       if (!haveWalletAndTokenAccount) {
-        return '/welcome';
+        route = '/welcome';
       } else if (!hasPassword) {
-        return '/create_password';
+        route = '/create_password';
       } else {
-        return '/login';
+        route = '/login';
       }
     } catch (e) {
-      return '/welcome';
+      route =  '/welcome';
+    } finally {
+       _walletProvider.markBootDone();
     }
+    return route;
   }
 }

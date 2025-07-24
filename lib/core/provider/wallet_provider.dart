@@ -18,6 +18,21 @@ class WalletProvider extends ChangeNotifier {
   bool _isReady = false; 
   bool get isReady => _isReady;
 
+  bool _bootDone = false;
+  bool get bootDone => _bootDone;
+
+  void markBootDone() {
+    if (_bootDone) return;
+    _bootDone = true;
+    notifyListeners();
+  }
+
+  void resetBootFlag() {
+    if (!_bootDone) return;
+    _bootDone = false;
+    notifyListeners();
+  }
+
   final WalletStorageService _walletStorageService = WalletStorageService();
   WalletSolanaService? _walletSolanaService;
   final WalletRepository _walletRepository = WalletRepositoryImpl();
@@ -251,6 +266,7 @@ class WalletProvider extends ChangeNotifier {
     _zarpBalance = 0.0;
     _solBalance = 0.0;
     _isReady = false;
+    _bootDone = false;
     notifyListeners();
   }
 }
