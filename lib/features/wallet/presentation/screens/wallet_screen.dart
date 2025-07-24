@@ -206,7 +206,7 @@ class _WalletScreenState extends State<WalletScreen>
               title: Row(
                 children: <Widget>[
                   Container(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                    padding: const EdgeInsets.fromLTRB(8, 4, 50, 4),
                     decoration: BoxDecoration(
                       color: Colors.white30,
                       borderRadius: BorderRadius.circular(20),
@@ -227,84 +227,6 @@ class _WalletScreenState extends State<WalletScreen>
                                   ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    richMessage: TextSpan(
-                      children: <InlineSpan>[
-                        WidgetSpan(
-                          child: SizedBox(
-                            width: 250,
-                            child: Center(
-                              child: RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  children: <InlineSpan>[
-                                    const TextSpan(
-                                      text: 'Solana details\n\n',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: '${viewModel.wallet?.address}\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: '${viewModel.solBalance} SOL\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          '${viewModel.tokenAccount?.pubkey}\n',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    preferBelow: true,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white30,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'i',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
-                                  ),
-                        ),
-                      ),
                     ),
                   ),
                 ],
