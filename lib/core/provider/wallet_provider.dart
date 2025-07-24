@@ -14,6 +14,10 @@ class WalletProvider extends ChangeNotifier {
       walletRepository: _walletRepository,
     );
   }
+
+  bool _isReady = false; 
+  bool get isReady => _isReady;
+
   final WalletStorageService _walletStorageService = WalletStorageService();
   WalletSolanaService? _walletSolanaService;
   final WalletRepository _walletRepository = WalletRepositoryImpl();
@@ -59,6 +63,11 @@ class WalletProvider extends ChangeNotifier {
       _wallet = await _walletStorageService.retrieveWallet();
 
       if (_wallet == null) {
+        _userTokenAccount = null;
+        _zarpBalance = 0.0;
+        _solBalance = 0.0;
+        _isReady = true;
+        notifyListeners();
         return false;
       }
 
@@ -73,13 +82,12 @@ class WalletProvider extends ChangeNotifier {
       }
       _solBalance = await service.getSolBalance(_wallet!.address);
 
+      _isReady = true;
       notifyListeners();
       return true;
     } catch (e) {
-      _wallet = null;
-      _userTokenAccount = null;
-      _zarpBalance = 0.0;
-      _solBalance = 0.0;
+      reset();
+      _isReady = true;
       notifyListeners();
       return false;
     }
@@ -207,8 +215,7 @@ class WalletProvider extends ChangeNotifier {
   Future<void> deleteWallet() async {
     try {
       await _walletStorageService.deletePrivateKey();
-      _wallet = null;
-      notifyListeners();
+      reset();
     } catch (e) {
       // Handle error
       rethrow;
@@ -236,5 +243,14 @@ class WalletProvider extends ChangeNotifier {
         throw Exception(e);
       }
     }
+  }
+  void reset() {
+    _wallet = null;
+    _userTokenAccount = null;
+    _recoveryPhrase = null;
+    _zarpBalance = 0.0;
+    _solBalance = 0.0;
+    _isReady = false;
+    notifyListeners();
   }
 }

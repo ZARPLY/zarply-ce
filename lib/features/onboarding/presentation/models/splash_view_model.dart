@@ -17,10 +17,10 @@ class SplashViewModel extends ChangeNotifier {
     animationController.dispose();
   }
 
-  void playAnimation() {
+  Future<void> playAnimation() {
     const Duration stepDelay = Duration(milliseconds: 500);
 
-    animationController
+    return animationController
         .animateTo(0.25)
         .then((_) => Future<void>.delayed(stepDelay))
         .then((_) => animationController.animateTo(0.5))
@@ -32,11 +32,10 @@ class SplashViewModel extends ChangeNotifier {
 
   Future<String> initializeAndGetRoute() async {
     try {
-      playAnimation();
 
       final bool haveWalletAndTokenAccount = await _walletProvider.initialize();
       final bool hasPassword = await _walletProvider.hasPassword();
-      await Future<void>.delayed(const Duration(seconds: 4));
+
 
       if (!haveWalletAndTokenAccount) {
         return '/welcome';
