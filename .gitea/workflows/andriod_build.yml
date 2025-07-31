@@ -10,7 +10,7 @@ jobs:
   build-sign-upload:
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.27.3
+      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.32.6
 
     steps:
       - name: Checkout code
