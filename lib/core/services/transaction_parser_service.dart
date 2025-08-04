@@ -95,18 +95,24 @@ class TransactionTransferInfo {
     required this.amount,
     this.timestamp,
     this.isExternalFunding = false,
+    this.currency = 'ZARP',
   });
   final String sender;
   final String recipient;
   final double amount;
   final DateTime? timestamp;
   final bool isExternalFunding;
+  final String currency;
 
-  String get formattedAmount => formatAmount(amount);
+  String get formattedAmount => formatAmount(amount, currency: currency);
 }
 
-String formatAmount(double amount) {
+String formatAmount(double amount, {String currency = 'ZARP'}) {
   final String sign = amount >= 0 ? '' : '-';
   final double absoluteAmount = amount.abs();
-  return '${sign}R${absoluteAmount.toStringAsFixed(2)}';
+  if (currency == 'SOL') {
+    return '${sign}SOL ${absoluteAmount.toStringAsFixed(2)}';
+  } else {
+    return '${sign}R${absoluteAmount.toStringAsFixed(2)}';
+  }
 }

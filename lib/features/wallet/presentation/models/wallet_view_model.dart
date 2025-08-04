@@ -5,6 +5,7 @@ import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
 import '../../../../core/services/balance_cache_service.dart';
+import '../../../../core/services/exchange_rate_service.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 import '../../domain/repositories/wallet_repository.dart';
@@ -17,6 +18,11 @@ class WalletViewModel extends ChangeNotifier {
   }
   final WalletRepository _walletRepository = WalletRepositoryImpl();
   late final BalanceCacheService _balanceCacheService;
+
+  // Cache for parsed transactions to avoid re-parsing
+  final Map<String, TransactionTransferInfo> _transactionCache =
+      <String, TransactionTransferInfo>{};
+  String? _lastSelectedCurrency;
 
   ProgramAccount? tokenAccount;
   Wallet? wallet;
@@ -98,11 +104,17 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> loadTransactions() async {
-    if (tokenAccount == null) return;
+  Future<void> loadTransactions({String? selectedCurrency}) async {
+    // For SOL transactions, we need to load from the wallet address
+    // For ZARP transactions, we load from the token account
+    final String addressToUse = selectedCurrency == 'SOL' && wallet != null
+        ? wallet!.address
+        : (tokenAccount?.pubkey ?? '');
+
+    if (addressToUse.isEmpty) return;
 
     final Map<String, List<TransactionDetails?>> storedTransactions =
-        await loadStoredTransactions();
+        await loadStoredTransactions(selectedCurrency: selectedCurrency);
 
     if (storedTransactions.isNotEmpty) {
       transactions =
@@ -132,7 +144,7 @@ class WalletViewModel extends ChangeNotifier {
 
       try {
         await _walletRepository.getNewerTransactions(
-          walletAddress: tokenAccount!.pubkey,
+          walletAddress: addressToUse,
           lastKnownSignature: lastSignature,
           onBatchLoaded: (List<TransactionDetails?> batch) {
             if (_walletRepository.isCancelled) {
@@ -158,23 +170,52 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   // Load transactions from the repository
-  Future<Map<String, List<TransactionDetails?>>>
-      loadStoredTransactions() async {
+  Future<Map<String, List<TransactionDetails?>>> loadStoredTransactions(
+      {String? selectedCurrency}) async {
+    // For SOL transactions, we need to get transactions from wallet address
+    // For ZARP transactions, we get from token account
+    final String addressToUse = selectedCurrency == 'SOL' && wallet != null
+        ? wallet!.address
+        : (tokenAccount?.pubkey ?? '');
+
+    if (addressToUse.isEmpty) return <String, List<TransactionDetails?>>{};
+
     final Map<String, List<TransactionDetails?>> storedTransactions =
         await _walletRepository.getStoredTransactions();
 
+    // Filter transactions based on the selected currency
+    final Map<String, List<TransactionDetails?>> filteredTransactions =
+        <String, List<TransactionDetails?>>{};
+
+    for (final MapEntry<String, List<TransactionDetails?>> entry
+        in storedTransactions.entries) {
+      final List<TransactionDetails?> filteredList = <TransactionDetails?>[];
+
+      for (final TransactionDetails? tx in entry.value) {
+        if (tx != null) {
+          // For both SOL and ZARP, we want to show the same transactions
+          // but with different amounts (ZARP amounts vs converted SOL amounts)
+          filteredList.add(tx);
+        }
+      }
+
+      if (filteredList.isNotEmpty) {
+        filteredTransactions[entry.key] = filteredList;
+      }
+    }
+
     transactions =
-        Map<String, List<TransactionDetails?>>.from(storedTransactions);
+        Map<String, List<TransactionDetails?>>.from(filteredTransactions);
     notifyListeners();
 
-    return storedTransactions;
+    return filteredTransactions;
   }
 
   Future<void> refreshTransactionsFromButton() async {
     unawaited(refreshIndicatorKey?.currentState?.show());
   }
 
-  Future<void> refreshTransactions() async {
+  Future<void> refreshTransactions({String? selectedCurrency}) async {
     if (isRefreshing) return;
 
     isRefreshing = true;
@@ -182,7 +223,7 @@ class WalletViewModel extends ChangeNotifier {
 
     try {
       await refreshBalances();
-      await loadTransactions();
+      await loadTransactions(selectedCurrency: selectedCurrency);
     } catch (e) {
       throw Exception('Error in refreshTransactions: $e');
     } finally {
@@ -191,29 +232,82 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  TransactionTransferInfo? parseTransferDetails(
+  Future<TransactionTransferInfo?> parseTransferDetails(
     TransactionDetails? transaction,
-  ) {
-    if (transaction == null || tokenAccount == null) return null;
+    String? selectedCurrency,
+  ) async {
+    if (transaction == null) return null;
 
-    return _walletRepository.parseTransferDetails(
-      transaction,
-      tokenAccount!.pubkey,
-    );
+    // Create a simple cache key based on block time and currency
+    final String cacheKey = '${transaction.blockTime}_$selectedCurrency';
+
+    // Check if we have cached data and currency hasn't changed
+    if (_transactionCache.containsKey(cacheKey) &&
+        _lastSelectedCurrency == selectedCurrency) {
+      return _transactionCache[cacheKey];
+    }
+
+    TransactionTransferInfo? result;
+
+    if (selectedCurrency == 'SOL') {
+      // For SOL, we'll convert ZARP transactions to SOL amounts
+      final TransactionTransferInfo? zarpTransaction =
+          _walletRepository.parseTransferDetails(
+        transaction,
+        tokenAccount?.pubkey ?? '',
+      );
+
+      if (zarpTransaction != null) {
+        // Convert ZARP amount to SOL using real-time exchange rate
+        final double solToZarRate = await ExchangeRateService.getSolToZarRate();
+        final double solAmount = zarpTransaction.amount / solToZarRate;
+
+        print(
+            'Transaction conversion: ${zarpTransaction.amount} ZAR = $solAmount SOL (rate: $solToZarRate)'); // Debug log
+
+        result = TransactionTransferInfo(
+          sender: zarpTransaction.sender,
+          recipient: zarpTransaction.recipient,
+          amount: solAmount,
+          timestamp: zarpTransaction.timestamp,
+          isExternalFunding: zarpTransaction.isExternalFunding,
+          currency: 'SOL',
+        );
+      }
+    } else {
+      // For ZARP, parse ZARP token transactions
+      if (tokenAccount == null) return null;
+      result = _walletRepository.parseTransferDetails(
+        transaction,
+        tokenAccount!.pubkey,
+      );
+    }
+
+    // Cache the result
+    if (result != null) {
+      _transactionCache[cacheKey] = result;
+    }
+
+    _lastSelectedCurrency = selectedCurrency;
+    return result;
   }
 
-  List<dynamic> getSortedTransactionItems() {
+  Future<List<dynamic>> getSortedTransactionItems(
+      {String? selectedCurrency}) async {
     final List<dynamic> transactionItems = <dynamic>[];
 
     final List<String> sortedMonths = transactions.keys.toList()
       ..sort((String a, String b) => b.compareTo(a));
 
     for (final String monthKey in sortedMonths) {
-      final int displayedCount =
-          transactions[monthKey]!.where((TransactionDetails? tx) {
-        final TransactionTransferInfo? transferInfo = parseTransferDetails(tx);
-        return transferInfo != null && transferInfo.amount != 0;
-      }).length;
+      int displayedCount = 0;
+      for (final TransactionDetails? tx in transactions[monthKey]!) {
+        final TransactionTransferInfo? transferInfo =
+            await parseTransferDetails(tx, selectedCurrency);
+        if (transferInfo != null && transferInfo.amount != 0) {
+          displayedCount++;
+        }
+      }
 
       transactionItems.add(<String, dynamic>{
         'type': 'header',

@@ -7,11 +7,13 @@ class BalanceAmount extends StatefulWidget {
   const BalanceAmount({
     required this.walletAmount,
     required this.walletAddress,
+    required this.selectedCurrency,
     super.key,
   });
 
   final double walletAmount;
   final String walletAddress;
+  final String selectedCurrency;
 
   @override
   State<BalanceAmount> createState() => _BalanceAmountState();
@@ -45,7 +47,8 @@ class _BalanceAmountState extends State<BalanceAmount> {
       child: Column(
         children: <Widget>[
           Text(
-            Formatters.formatAmount(widget.walletAmount),
+            Formatters.formatAmount(widget.walletAmount,
+                currency: widget.selectedCurrency),
             style: Theme.of(context)
                 .textTheme
                 .headlineLarge

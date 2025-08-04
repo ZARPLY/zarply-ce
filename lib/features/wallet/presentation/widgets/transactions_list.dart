@@ -9,10 +9,12 @@ import 'transaction_item.dart';
 class TransactionsList extends StatefulWidget {
   const TransactionsList({
     required this.viewModel,
+    required this.selectedCurrency,
     super.key,
   });
 
   final WalletViewModel viewModel;
+  final String selectedCurrency;
 
   @override
   State<TransactionsList> createState() => _TransactionsListState();
@@ -31,34 +33,68 @@ class _TransactionsListState extends State<TransactionsList> {
   Widget _buildTransactionTile(TransactionDetails? transaction) {
     if (transaction == null) return const SizedBox.shrink();
 
-    final TransactionTransferInfo? transferInfo =
-        widget.viewModel.parseTransferDetails(transaction);
+    return FutureBuilder<TransactionTransferInfo?>(
+      future: widget.viewModel
+          .parseTransferDetails(transaction, widget.selectedCurrency),
+      builder: (context, snapshot) {
+        // Show cached data immediately, only show loading for new data
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
 
-    if (transferInfo == null || transferInfo.amount == 0) {
-      return const SizedBox.shrink();
-    }
+        final TransactionTransferInfo? transferInfo = snapshot.data;
+        if (transferInfo == null || transferInfo.amount == 0) {
+          return const SizedBox.shrink();
+        }
 
-    return TransactionItem(
-      transferInfo: transferInfo,
+        return TransactionItem(
+          transferInfo: transferInfo,
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<dynamic> transactionItems =
-        widget.viewModel.getSortedTransactionItems();
-
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,
-      onRefresh: widget.viewModel.refreshTransactions,
-      child: widget.viewModel.isLoadingTransactions
-          ? const Center(
+      onRefresh: () => widget.viewModel
+          .refreshTransactions(selectedCurrency: widget.selectedCurrency),
+      child: FutureBuilder<List<dynamic>>(
+        future: widget.viewModel.getSortedTransactionItems(
+            selectedCurrency: widget.selectedCurrency),
+        builder: (context, snapshot) {
+          // Show cached data immediately if available
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Center(
               child: CircularProgressIndicator(
                 color: Colors.blue,
               ),
-            )
-          : transactionItems.isEmpty
+            );
+          }
+
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text('Error loading transactions'),
+            );
+          }
+
+          final List<dynamic> transactionItems = snapshot.data ?? [];
+
+          // Only show loading indicator for new data, not for cached data
+          if (widget.viewModel.isLoadingTransactions &&
+              transactionItems.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blue,
+              ),
+            );
+          }
+
+          return transactionItems.isEmpty
               ? const Center(
                   child: Text('No transactions found'),
                 )
@@ -81,7 +117,9 @@ class _TransactionsListState extends State<TransactionsList> {
 
                     return const SizedBox.shrink();
                   },
-                ),
+                );
+        },
+      ),
     );
   }
 

@@ -14,13 +14,19 @@ class Formatters {
     return DateFormat('dd').format(dateTime);
   }
 
-  static String formatAmount(double amount) {
-    final NumberFormat currencyFormat = NumberFormat.currency(
-      symbol: 'R',
-      decimalDigits: 2,
-      locale: 'en_US',
-    );
-    return currencyFormat.format(amount);
+  static String formatAmount(double amount, {String currency = 'ZARP'}) {
+    if (currency == 'SOL') {
+      final NumberFormat numberFormat = NumberFormat('#,##0.00', 'en_US');
+      return 'SOL ${numberFormat.format(amount)}';
+    } else {
+      // For ZARP, format with R symbol
+      final NumberFormat currencyFormat = NumberFormat.currency(
+        symbol: 'R',
+        decimalDigits: 2,
+        locale: 'en_US',
+      );
+      return currencyFormat.format(amount);
+    }
   }
 
   static String formatMonthHeader(String monthKey) {
