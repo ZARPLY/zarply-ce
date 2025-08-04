@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';
+import '../../features/onboarding/presentation/screens/custom_rpc_configuration_screen.dart';
 import '../../features/onboarding/presentation/screens/private_keys_screen.dart';
 import '../../features/onboarding/presentation/screens/restore_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/rpc_configuration_screen.dart';
@@ -26,19 +26,22 @@ import '../provider/wallet_provider.dart';
 import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
-
 GoRouter createRouter(
   WalletProvider walletProvider,
   AuthProvider authProvider,
 ) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
+    refreshListenable: Listenable.merge(<Listenable>[walletProvider, authProvider]), 
     redirect: (BuildContext context, GoRouterState state) {
-      final AuthProvider authProvider = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      );
+      final String path = state.uri.path;
+      if (path == '/splash') return null;
+      if (!walletProvider.bootDone) return '/splash';
+
       final String location = state.uri.toString();
+
+      if (!walletProvider.isReady) return '/splash';
+
       final bool isAuthenticated = authProvider.isAuthenticated;
 
       final List<String> protectedRoutes = <String>[
@@ -54,6 +57,7 @@ GoRouter createRouter(
       final List<String> onboardingRoutes = <String>[
         '/welcome',
         '/rpc_configuration',
+        '/custom_rpc_configuration',
         '/create_password',
         '/access_wallet',
         '/new_wallet',
@@ -63,20 +67,18 @@ GoRouter createRouter(
       ];
 
       final bool isLoginRoute = location == '/login';
-      final bool isRootRoute = location == '/';
       final bool isAccessWalletRoute = location == '/access_wallet';
       final bool isProtected = protectedRoutes.contains(location);
-      final bool isFromOnboarding =
-          onboardingRoutes.contains(state.extra?.toString());
+      final bool isOnboarding = onboardingRoutes.contains(location);
 
       // If authenticated and trying to access root or login, go to wallet
       if (isAuthenticated &&
-          (isLoginRoute || isRootRoute || isAccessWalletRoute)) {
+          (isLoginRoute || isAccessWalletRoute)) {
         return '/wallet';
       }
 
       // If not authenticated and trying to access protected routes
-      if (!isAuthenticated && isProtected && !isFromOnboarding) {
+      if (!isAuthenticated && isProtected && !isOnboarding) {
         return '/login';
       }
 
@@ -84,12 +86,31 @@ GoRouter createRouter(
     },
     routes: <RouteBase>[
       GoRoute(
-        path: '/',
+        path: '/splash',
         builder: (BuildContext context, GoRouterState state) =>
             const SplashScreen(),
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
+          final String loc = state.uri.toString();
+
+          const Set<String> unauthorisedRoutes = <String>{
+            '/login',
+            '/welcome',
+            '/create_password',
+            '/access_wallet',
+            '/restore_wallet',
+            '/rpc_configuration',
+            '/custom_rpc_configuration',
+            '/backup_wallet',
+            '/private_keys',
+            '/new_wallet',
+          };
+
+          if (unauthorisedRoutes.contains(loc)) {
+            return child;
+          }
+
           return AppInitializer(child: child);
         },
         routes: <RouteBase>[
@@ -123,8 +144,19 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/rpc_configuration',
-            builder: (BuildContext context, GoRouterState state) =>
-                const RpcConfigurationScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return RpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
+          ),
+          GoRoute(
+            path: '/custom_rpc_configuration',
+            builder: (BuildContext context, GoRouterState state) {
+              final bool isRestoreFlow =
+                  state.uri.queryParameters['restore'] == 'true';
+              return CustomRpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
+            },
           ),
           GoRoute(
             path: '/backup_wallet',

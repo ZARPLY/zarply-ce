@@ -15,6 +15,8 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late SplashViewModel _viewModel;
+  bool _navigated = false;
+
 
   @override
   void initState() {
@@ -23,6 +25,9 @@ class _SplashScreenState extends State<SplashScreen>
         Provider.of<WalletProvider>(context, listen: false);
     _viewModel = SplashViewModel(walletProvider);
     _viewModel.initAnimationController(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _viewModel.playAnimation();
+    });
     _navigateToNextScreen();
   }
 
@@ -34,9 +39,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _navigateToNextScreen() async {
     final String route = await _viewModel.initializeAndGetRoute();
-    if (mounted) {
-      context.go(route);
-    }
+    if (!mounted || _navigated) return;
+    _navigated = true;
+    context.go(route);
   }
 
   @override

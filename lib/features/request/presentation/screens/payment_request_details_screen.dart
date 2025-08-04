@@ -109,6 +109,8 @@ class _PaymentRequestDetailsScreenState
   Future<void> _showSuccessBottomSheet() {
     return showModalBottomSheet(
       context: context,
+      isDismissible: false,
+      enableDrag: false,
       builder: (BuildContext context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -136,7 +138,12 @@ class _PaymentRequestDetailsScreenState
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the bottom sheet
+                  if (mounted) {
+                    context.go('/wallet'); // Navigate to home/wallet screen
+                  }
+                },
                 child: const Text('Done'),
               ),
             ),
