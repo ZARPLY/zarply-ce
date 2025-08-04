@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late LoginViewModel _viewModel;
 
   final FocusNode _passwordFocus = FocusNode();
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -91,17 +92,11 @@ class _LoginScreenState extends State<LoginScreen> {
           // Only show checkmark if the password matches the stored password (correct password)
           final bool isPasswordCorrect = viewModel.isPasswordCorrect;
           return Scaffold(
+            backgroundColor: Colors.white,
             resizeToAvoidBottomInset: true,
             appBar: AppBar(
-              backgroundColor: const Color(0xFF1F75DC),
+              backgroundColor: Colors.white,
               elevation: 0,
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text('Close',
-                      style: TextStyle(color: Color(0xFF1F75DC), fontSize: 18)),
-                ),
-              ],
               automaticallyImplyLeading: false,
             ),
             body: SafeArea(
@@ -110,53 +105,81 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Login',
-                      style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 10),
+                    // Welcome back title
                     const Text(
                       'Welcome back',
-                      style:
-                          TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                       textAlign: TextAlign.left,
                     ),
                     const SizedBox(height: 16),
+                    // Instructional text
                     const Text(
                       'Enter your ZARPLY wallet password below',
-                      style: TextStyle(fontSize: 20, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w400,
+                      ),
                       textAlign: TextAlign.left,
                     ),
                     const SizedBox(height: 40),
-                    Material(
-                      elevation: 0,
-                      borderRadius: BorderRadius.circular(16),
+                    // Password input field
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                      ),
                       child: TextField(
                         controller: viewModel.passwordController,
                         focusNode: _passwordFocus,
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _performLogin(),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
-                              vertical: 20, horizontal: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            vertical: 16,
+                            horizontal: 16,
                           ),
+                          border: InputBorder.none,
                           hintText: 'Password',
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 16,
+                          ),
                           errorText: viewModel.errorMessage.isNotEmpty
                               ? viewModel.errorMessage
                               : null,
-                          filled: true,
-                          fillColor: Colors.white,
+                          filled: false,
                           suffixIcon: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              // View/Hide password button
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Icon(
+                                    _isPasswordVisible
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey.shade600,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
                               ClearIconButton(
                                   controller: viewModel.passwordController),
                               Padding(
@@ -176,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                         ),
-                        style: const TextStyle(fontSize: 18),
+                        style: const TextStyle(fontSize: 16),
                         onChanged: (_) async {
                           setState(() {});
                           // Validate password on change to update checkmark
@@ -187,81 +210,90 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    // Remember this device option
                     GestureDetector(
                       onTap: () => viewModel.setRememberPassword(
                           value: !viewModel.rememberPassword),
                       child: Row(
                         children: [
                           Container(
-                            width: 28,
-                            height: 28,
+                            width: 20,
+                            height: 20,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
+                              color: viewModel.rememberPassword
+                                  ? const Color(0xFF1F75DC)
+                                  : Colors.transparent,
                               border: Border.all(
-                                  color: const Color(0xFF1F75DC), width: 3),
+                                color: const Color(0xFF1F75DC),
+                                width: 2,
+                              ),
                             ),
                             child: viewModel.rememberPassword
-                                ? Center(
-                                    child: Container(
-                                      width: 16,
-                                      height: 16,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF1F75DC),
-                                        shape: BoxShape.circle,
-                                      ),
+                                ? const Center(
+                                    child: Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 12,
                                     ),
                                   )
                                 : null,
                           ),
                           const SizedBox(width: 12),
-                          const Text('Remember this device',
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.grey)),
+                          const Text(
+                            'Remember this device',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const Spacer(),
+                    // Continue button
                     Padding(
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Column(
                         children: [
                           SizedBox(
                             width: double.infinity,
-                            height: 60,
+                            height: 56,
                             child: LoadingButton(
                               isLoading: viewModel.isLoading,
                               onPressed: _performLogin,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F75DC),
+                                backgroundColor:
+                                    const Color.fromARGB(255, 216, 227, 250),
+                                foregroundColor: Colors.grey.shade600,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                elevation: 8,
+                                elevation: 0,
                                 textStyle: const TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.w600),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              child: const Text('Login'),
+                              child: const Text('Continue'),
                             ),
                           ),
                           const SizedBox(height: 24),
+                          // Forgot Password link
                           GestureDetector(
                             onTap: () {
                               /* TODO: Implement forgot password logic */
                             },
                             child: const Text(
-                              'Forgot Password?',
+                              'Forgot Password',
                               style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.black,
+                              ),
                               textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            height: 4,
-                            width: 120,
-                            margin: const EdgeInsets.only(top: 8),
                           ),
                         ],
                       ),
