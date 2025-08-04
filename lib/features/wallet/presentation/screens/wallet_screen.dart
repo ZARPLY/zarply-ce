@@ -339,6 +339,7 @@ class _WalletScreenState extends State<WalletScreen>
                       ],
                     ).then((String? value) async {
                       if (value == 'logout') {
+                        
                         await Provider.of<AuthProvider>(context, listen: false)
                             .logout();
                         context.go('/login');
