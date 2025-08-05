@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 
 class SplashViewModel extends ChangeNotifier {
   SplashViewModel(this._walletProvider);
@@ -42,12 +43,17 @@ class SplashViewModel extends ChangeNotifier {
       } else if (!hasPassword) {
         route = '/create_password';
       } else {
+        final bool hasAccepted = await SecureStorageService().hasAcceptedTerms();
+        if (!hasAccepted) {
+          route = '/access_wallet';
+        } else {
         route = '/login';
+        }
       }
     } catch (e) {
-      route =  '/welcome';
+      route = '/welcome';
     } finally {
-       _walletProvider.markBootDone();
+      _walletProvider.markBootDone();
     }
     return route;
   }
