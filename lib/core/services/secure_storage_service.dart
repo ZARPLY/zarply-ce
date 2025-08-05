@@ -12,6 +12,16 @@ class SecureStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   static const String _recoverPhraseKey = 'recovery_phrase';
+  static const String _termsAcceptedKey = 'terms_and_conditions_accepted';
+
+  Future<void> setTermsAccepted() async {
+    await _secureStorage.write(key: _termsAcceptedKey, value: 'true');
+  }
+
+  Future<bool> hasAcceptedTerms() async {
+    final String? value = await _secureStorage.read(key: _termsAcceptedKey);
+    return value == 'true';
+  }
 
   Future<void> savePin(String pin) async {
     try {

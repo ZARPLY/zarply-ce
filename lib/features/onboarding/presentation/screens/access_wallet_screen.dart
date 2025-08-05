@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../widgets/progress_steps.dart';
 
@@ -36,6 +37,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
     });
 
     try {
+      await SecureStorageService().setTermsAccepted();
+
       final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
       final AuthProvider authProvider =
