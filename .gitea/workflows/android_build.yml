@@ -1,0 +1,52 @@
+name: Android Release
+
+on:
+  workflow_dispatch: 
+  push:
+    tags:
+      - 'v*' 
+
+jobs:
+  build-sign-upload:
+    runs-on: workstation.ubuntu.lts
+    container:
+      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.32.6
+
+    env:
+      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Decode keystore
+        run: |
+          mkdir -p android
+          echo "$BASE64_KEYSTORE" | base64 -d > android/zarply-release.jks
+
+      - name: Create key.properties
+        run: |
+          cat <<EOF > android/key.properties
+          storePassword=${RELEASE_STORE_PASSWORD}
+          keyPassword=${RELEASE_KEY_PASSWORD}
+          keyAlias=${RELEASE_KEY_ALIAS}
+          storeFile=${GITEA_WORK_DIR}/android/zarply-release.jks
+          EOF
+
+      - name: Flutter pub get
+        run: flutter pub get --no-precompile
+
+      - name: Build AAB
+        run: flutter build appbundle --release
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ env.SERVICE_ACCOUNT_JSON }}
+          packageName: com.example.zarply
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
