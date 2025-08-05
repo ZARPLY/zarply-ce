@@ -51,6 +51,7 @@ class _TransactionsListState extends State<TransactionsList> {
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,
+      backgroundColor: Colors.white,
       onRefresh: widget.viewModel.refreshTransactions,
       child: widget.viewModel.isLoadingTransactions
           ? const Center(
