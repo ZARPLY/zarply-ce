@@ -27,6 +27,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   final FocusNode _checkboxFocus = FocusNode();
   final FocusNode _rememberPasswordFocus = FocusNode();
 
+  String? _confirmPasswordError;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +37,18 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         (widget.extra as Map<String, dynamic>).containsKey('from')) {
       _from = (widget.extra as Map<String, dynamic>)['from'] as String?;
     }
+
+    _viewModel.passwordController.addListener(_validatePasswords);
+    _viewModel.confirmPasswordController.addListener(_validatePasswords);
+  }
+
+  void _validatePasswords() {
+    setState(() {
+      final String pwd = _viewModel.passwordController.text;
+      final String confirm = _viewModel.confirmPasswordController.text;
+      _confirmPasswordError =
+          confirm.isNotEmpty && pwd != confirm ? 'Passwords do not match' : null;
+    });
   }
 
   @override
@@ -140,6 +154,18 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                   _checkboxFocus.requestFocus();
                                 },
                               ),
+                              if (_confirmPasswordError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    _confirmPasswordError!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                               const SizedBox(height: 8),
                               Focus(
                                 focusNode: _rememberPasswordFocus,
