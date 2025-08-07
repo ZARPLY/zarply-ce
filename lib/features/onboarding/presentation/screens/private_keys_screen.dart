@@ -64,34 +64,43 @@ class PrivateKeysView extends StatelessWidget {
             ? const SizedBox.shrink()
             : const ProgressSteps(currentStep: 1, totalSteps: 3),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Wallet Private Keys',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-            const SizedBox(height: 24),
-            viewModel.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.blue,
+      body: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Wallet Private Keys',
+                      style: Theme.of(context).textTheme.headlineLarge,
                     ),
-                  )
-                : _buildKeysContent(context, viewModel),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () =>
-                    context.go(hideProgress ? '/more' : '/backup_wallet'),
-                child: const Text('Close'),
+                    const SizedBox(height: 24),
+                    viewModel.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.blue,
+                            ),
+                          )
+                        : _buildKeysContent(context, viewModel),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            context.go(hideProgress ? '/more' : '/backup_wallet'),
+                        child: const Text('Close'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
