@@ -58,10 +58,10 @@ class SecureStorageService {
     }
   }
 
-   Future<void> saveRecoveryPhrase(String phrase) async {
-    try{
+  Future<void> saveRecoveryPhrase(String phrase) async {
+    try {
       await _secureStorage.write(key: _recoverPhraseKey, value: phrase);
-    }catch (e) {
+    } catch (e) {
       throw SecureStorageException('Failed to save recovery phrase: $e');
     }
   }

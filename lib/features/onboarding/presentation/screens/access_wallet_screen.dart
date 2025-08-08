@@ -32,51 +32,9 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
   }
 
   Future<void> _handleContinue() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await SecureStorageService().setTermsAccepted();
-
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
-      final AuthProvider authProvider =
-          Provider.of<AuthProvider>(context, listen: false);
-
-      final bool initialized = await walletProvider.initialize();
-      if (!initialized) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to initialize wallet'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      await walletProvider.fetchLimitedTransactions();
-
-      await walletProvider.fetchAndCacheBalances();
-
-      await authProvider.login();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error initializing wallet: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    // Navigate to splash screen immediately when button is clicked
+    if (mounted) {
+      context.go('/splash');
     }
   }
 

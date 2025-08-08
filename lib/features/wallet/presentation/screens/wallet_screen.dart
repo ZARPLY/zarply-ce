@@ -339,10 +339,13 @@ class _WalletScreenState extends State<WalletScreen>
                       ],
                     ).then((String? value) async {
                       if (value == 'logout') {
-                        
+                        debugPrint('LOGOUT DEBUG: Starting logout process');
                         await Provider.of<AuthProvider>(context, listen: false)
                             .logout();
-                        context.go('/login');
+                        debugPrint(
+                            'LOGOUT DEBUG: Auth logged out, navigating to login');
+                        // Use replace to avoid navigation stack issues
+                        context.replace('/login');
                       }
                     });
                   },

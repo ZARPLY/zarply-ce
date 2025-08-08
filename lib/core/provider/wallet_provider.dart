@@ -15,7 +15,7 @@ class WalletProvider extends ChangeNotifier {
     );
   }
 
-  bool _isReady = false; 
+  bool _isReady = false;
   bool get isReady => _isReady;
 
   bool _bootDone = false;
@@ -259,6 +259,7 @@ class WalletProvider extends ChangeNotifier {
       }
     }
   }
+
   void reset() {
     _wallet = null;
     _userTokenAccount = null;

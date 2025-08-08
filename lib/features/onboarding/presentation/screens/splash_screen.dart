@@ -17,13 +17,12 @@ class _SplashScreenState extends State<SplashScreen>
   late SplashViewModel _viewModel;
   bool _navigated = false;
 
-
   @override
   void initState() {
     super.initState();
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
-    _viewModel = SplashViewModel(walletProvider);
+    _viewModel = SplashViewModel(walletProvider, context);
     _viewModel.initAnimationController(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.playAnimation();
@@ -37,10 +36,32 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  @override
+  void deactivate() {
+    // Cancel any ongoing animations when the widget is deactivated
+    _viewModel.cancelAnimation();
+    super.deactivate();
+  }
+
   Future<void> _navigateToNextScreen() async {
-    final String route = await _viewModel.initializeAndGetRoute();
-    if (!mounted || _navigated) return;
+    // Minimum splash duration of 2 seconds
+    const Duration minSplashDuration = Duration(seconds: 2);
+
+    // Start both the initialization and minimum duration timer
+    final Future<String> routeFuture = _viewModel.initializeAndGetRoute();
+    final Future<void> minDurationFuture =
+        Future<void>.delayed(minSplashDuration);
+
+    // Wait for both to complete
+    await Future.wait([routeFuture, minDurationFuture]);
+
+    if (!mounted || _navigated) {
+      return;
+    }
+
     _navigated = true;
+    final String route = await routeFuture;
+    _viewModel.stopAnimation();
     context.go(route);
   }
 
