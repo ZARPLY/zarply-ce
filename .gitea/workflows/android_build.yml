@@ -25,15 +25,15 @@ jobs:
       - name: Decode keystore
         run: |
           mkdir -p android
-          echo "$BASE64_KEYSTORE" | base64 -d > android/zarply-release.jks
+          echo "$BASE64_KEYSTORE" | base64 -d > android/app/zarply-release.jks
 
       - name: Create key.properties
         run: |
-          cat <<EOF > android/key.properties
+          cat <<EOF > android/app/key.properties
           storePassword=${RELEASE_STORE_PASSWORD}
           keyPassword=${RELEASE_KEY_PASSWORD}
           keyAlias=${RELEASE_KEY_ALIAS}
-          storeFile=android/zarply-release.jks
+          storeFile=android/app/zarply-release.jks
           EOF
 
       - name: Flutter pub get
