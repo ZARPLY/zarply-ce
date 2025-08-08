@@ -33,7 +33,7 @@ jobs:
           storePassword=${RELEASE_STORE_PASSWORD}
           keyPassword=${RELEASE_KEY_PASSWORD}
           keyAlias=${RELEASE_KEY_ALIAS}
-          storeFile=${GITEA_WORK_DIR}/android/zarply-release.jks
+          storeFile=android/zarply-release.jks
           EOF
 
       - name: Flutter pub get
