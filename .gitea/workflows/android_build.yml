@@ -24,12 +24,12 @@ jobs:
 
       - name: Decode keystore
         run: |
-          mkdir -p android
+          mkdir -p android/app
           echo "$BASE64_KEYSTORE" | base64 -d > android/app/zarply-release.jks
 
       - name: Create key.properties
         run: |
-          cat <<EOF > android/app/key.properties
+          cat <<EOF > android/key.properties
           storePassword=${RELEASE_STORE_PASSWORD}
           keyPassword=${RELEASE_KEY_PASSWORD}
           keyAlias=${RELEASE_KEY_ALIAS}
