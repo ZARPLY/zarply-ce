@@ -94,6 +94,14 @@ class WalletProvider extends ChangeNotifier {
         _zarpBalance = 0.0;
       } else {
         _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
+        
+        // Fetch limited transactions during initialization to pre-populate the list
+        try {
+          await fetchLimitedTransactions();
+        } catch (e) {
+          // Don't fail initialization if transaction fetching fails
+          // Transactions will be loaded when the wallet screen is opened
+        }
       }
       _solBalance = await service.getSolBalance(_wallet!.address);
 
@@ -109,7 +117,12 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<void> fetchLimitedTransactions() async {
-    if (_wallet == null || _userTokenAccount == null) return;
+    if (_wallet == null || _userTokenAccount == null) {
+      print('WalletProvider: Cannot fetch transactions - wallet: ${_wallet != null}, tokenAccount: ${_userTokenAccount != null}');
+      return;
+    }
+    
+    print('WalletProvider: Fetching limited transactions for token account: ${_userTokenAccount!.pubkey}');
 
     try {
       final String? lastSignature =
@@ -122,8 +135,12 @@ class WalletProvider extends ChangeNotifier {
         until: lastSignature,
         limit: 10,
         onBatchLoaded: (List<TransactionDetails?> batch) {
-          if (batch.isEmpty) return;
+          if (batch.isEmpty) {
+            print('WalletProvider: No transactions fetched from network');
+            return;
+          }
 
+          print('WalletProvider: Fetched ${batch.length} transactions from network');
           _processAndStoreTransactions(batch);
         },
         isCancelled: () => _walletRepository.isCancelled,
@@ -160,8 +177,11 @@ class WalletProvider extends ChangeNotifier {
     List<TransactionDetails?> batch,
   ) async {
     try {
+      print('WalletProvider: Processing ${batch.length} transactions for storage');
       final Map<String, List<TransactionDetails?>> transactions =
           await _walletRepository.getStoredTransactions();
+      
+      print('WalletProvider: Current stored transactions: ${transactions.length} months');
 
       for (final TransactionDetails? tx in batch) {
         if (tx == null) continue;
@@ -179,11 +199,13 @@ class WalletProvider extends ChangeNotifier {
       }
 
       await _walletRepository.storeTransactions(transactions);
+      print('WalletProvider: Stored transactions successfully');
 
       if (batch.isNotEmpty && batch.first != null) {
         final String signature =
             batch.first!.transaction.toJson()['signatures'][0];
         await _walletRepository.storeLastTransactionSignature(signature);
+        print('WalletProvider: Stored last transaction signature: $signature');
       }
     } catch (e) {
       throw Exception(e);
