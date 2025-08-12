@@ -113,6 +113,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),

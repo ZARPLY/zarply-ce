@@ -83,6 +83,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
@@ -113,105 +114,115 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Access Your Wallet',
-              style: Theme.of(context).textTheme.headlineLarge,
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  kToolbarHeight -
+                  48, // 48 for padding
             ),
-            const SizedBox(height: 16),
-            Text(
-              'This layer of security helps your wallet using your default phones security',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Checkbox(
-                    value: _isAgreementChecked,
-                    activeColor: Colors.blue,
-                    checkColor: Colors.white,
-                    fillColor: WidgetStateProperty.resolveWith<Color>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.selected)) {
-                          return Colors.blue;
-                        }
-                        return Colors.white;
-                      },
-                    ),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isAgreementChecked = value ?? false;
-                      });
-                    },
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isAgreementChecked = !_isAgreementChecked;
-                        });
-                      },
-                      child: RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          children: <TextSpan>[
-                            const TextSpan(text: 'I agree to the '),
-                            TextSpan(
-                              text: 'terms',
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.blue,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchUrl(
-                                      'https://zarply.co.za/terms-conditions',
-                                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Access Your Wallet',
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'This layer of security helps your wallet using your default phones security',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Checkbox(
+                        value: _isAgreementChecked,
+                        activeColor: Colors.blue,
+                        checkColor: Colors.white,
+                        fillColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Colors.blue;
+                            }
+                            return Colors.white;
+                          },
+                        ),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _isAgreementChecked = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isAgreementChecked = !_isAgreementChecked;
+                            });
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              children: <TextSpan>[
+                                const TextSpan(text: 'I agree to the '),
+                                TextSpan(
+                                  text: 'terms',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Colors.blue,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => _launchUrl(
+                                          'https://zarply.co.za/terms-conditions',
+                                        ),
+                                ),
+                                const TextSpan(text: ' and '),
+                                TextSpan(
+                                  text: 'privacy policy',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Colors.blue,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => _launchUrl(
+                                          'https://zarply.co.za/privacy-policy',
+                                        ),
+                                ),
+                              ],
                             ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'privacy policy',
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.blue,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchUrl(
-                                      'https://zarply.co.za/privacy-policy',
-                                    ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: LoadingButton(
-                isLoading: _isLoading,
-                type: LoadingButtonType.elevated,
-                style: ElevatedButton.styleFrom(
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    ],
                   ),
                 ),
-                onPressed: _isAgreementChecked ? _handleContinue : null,
-                child: const Text('Continue'),
-              ),
+                const Spacer(),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: LoadingButton(
+                    isLoading: _isLoading,
+                    type: LoadingButtonType.elevated,
+                    style: ElevatedButton.styleFrom(
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: _isAgreementChecked ? _handleContinue : null,
+                    child: const Text('Continue'),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
