@@ -16,7 +16,7 @@ class SplashViewModel extends ChangeNotifier {
       duration: const Duration(seconds: 3),
       vsync: vsync,
     );
-    return animationController;
+    return animationController; // Return the animation controller
   }
 
   void disposeAnimationController() {
