@@ -33,12 +33,35 @@ class _WalletScreenState extends State<WalletScreen>
     _viewModel.wallet = walletProvider.wallet;
     _viewModel.tokenAccount = walletProvider.userTokenAccount;
 
-    // Load transactions from repository
-    _loadTransactionsFromRepository();
+    // Load fresh data on initialization
+    _initializeData();
+  }
 
-    _viewModel.loadCachedBalances();
+  Future<void> _initializeData() async {
+    try {
+      // Load cached data first for immediate display
+      await _viewModel.loadCachedBalances();
 
-    _viewModel.isLoadingTransactions = false;
+      // Then load fresh data in background
+      await Future.wait([
+        _loadTransactionsFromRepository(),
+        _refreshBalances(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading wallet data: $e'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _viewModel.isLoadingTransactions = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadTransactionsFromRepository() async {
@@ -339,11 +362,9 @@ class _WalletScreenState extends State<WalletScreen>
                       ],
                     ).then((String? value) async {
                       if (value == 'logout') {
-                        debugPrint('LOGOUT DEBUG: Starting logout process');
                         await Provider.of<AuthProvider>(context, listen: false)
                             .logout();
-                        debugPrint(
-                            'LOGOUT DEBUG: Auth logged out, navigating to login');
+
                         // Use replace to avoid navigation stack issues
                         context.replace('/login');
                       }

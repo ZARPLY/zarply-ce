@@ -11,11 +11,12 @@ class SplashViewModel extends ChangeNotifier {
   late AnimationController animationController;
   bool _isDisposed = false;
 
-  void initAnimationController(TickerProvider vsync) {
+  AnimationController initAnimationController(TickerProvider vsync) {
     animationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: vsync,
     );
+    return animationController;
   }
 
   void disposeAnimationController() {
@@ -55,10 +56,6 @@ class SplashViewModel extends ChangeNotifier {
       if (!initialized) {
         return '/welcome';
       }
-
-      // Fetch transactions and balances
-      await _walletProvider.fetchLimitedTransactions();
-      await _walletProvider.fetchAndCacheBalances();
 
       // Login the user
       final AuthProvider authProvider =

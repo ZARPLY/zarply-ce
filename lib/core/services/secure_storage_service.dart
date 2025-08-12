@@ -13,6 +13,7 @@ class SecureStorageService {
 
   static const String _recoverPhraseKey = 'recovery_phrase';
   static const String _termsAcceptedKey = 'terms_and_conditions_accepted';
+  static const String _onboardingCompletedKey = 'onboarding_completed';
 
   Future<void> setTermsAccepted() async {
     await _secureStorage.write(key: _termsAcceptedKey, value: 'true');
@@ -20,6 +21,16 @@ class SecureStorageService {
 
   Future<bool> hasAcceptedTerms() async {
     final String? value = await _secureStorage.read(key: _termsAcceptedKey);
+    return value == 'true';
+  }
+
+  Future<void> setOnboardingCompleted() async {
+    await _secureStorage.write(key: _onboardingCompletedKey, value: 'true');
+  }
+
+  Future<bool> isOnboardingCompleted() async {
+    final String? value =
+        await _secureStorage.read(key: _onboardingCompletedKey);
     return value == 'true';
   }
 

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../models/splash_view_model.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -24,6 +26,69 @@ class _SplashScreenState extends State<SplashScreen>
         Provider.of<WalletProvider>(context, listen: false);
     _viewModel = SplashViewModel(walletProvider, context);
     _viewModel.initAnimationController(this);
+
+    // Check if we should skip splash and go directly to destination
+    _checkAndNavigate();
+  }
+
+  Future<void> _checkAndNavigate() async {
+    final WalletProvider walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
+
+    if (walletProvider.hasWallet) {
+      // Check if onboarding is completed
+      final bool onboardingCompleted =
+          await SecureStorageService().isOnboardingCompleted();
+
+      if (onboardingCompleted) {
+        // User has completed onboarding, check if they're authenticated
+        final AuthProvider authProvider =
+            Provider.of<AuthProvider>(context, listen: false);
+
+        if (authProvider.isAuthenticated) {
+          // User is authenticated, go to wallet immediately
+          if (mounted) {
+            context.go('/wallet');
+          }
+          return;
+        } else {
+          // User has completed onboarding but not authenticated, go to login immediately
+          if (mounted) {
+            context.go('/login');
+          }
+          return;
+        }
+      } else {
+        // User has wallet but onboarding is not completed
+        // Check if they have a password - if yes, they've completed setup and should go to login
+        try {
+          final String? pin = await SecureStorageService().getPin();
+          if (pin != null && pin.isNotEmpty) {
+            // User has password - they've completed the setup
+            // If they're not authenticated, they should go to login, not continue onboarding
+            if (mounted) {
+              context.go('/login');
+            }
+            return;
+          } else {
+            // User has wallet but no password, go to create password
+            if (mounted) {
+              context.go('/create_password');
+            }
+            return;
+          }
+        } catch (e) {
+          // Error checking password, assume user needs to create password
+          if (mounted) {
+            context.go('/create_password');
+          }
+          return;
+        }
+      }
+    }
+
+    // If we get here, user has no wallet - this is first time app launch
+    // Show splash screen and continue with normal flow
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.playAnimation();
     });
@@ -44,10 +109,11 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNextScreen() async {
+    // This method is only called for first-time app launch
     // Minimum splash duration of 2 seconds
     const Duration minSplashDuration = Duration(seconds: 2);
 
-    // Start both the initialization and minimum duration timer
+    // First time setup - start both the initialization and minimum duration timer
     final Future<String> routeFuture = _viewModel.initializeAndGetRoute();
     final Future<void> minDurationFuture =
         Future<void>.delayed(minSplashDuration);

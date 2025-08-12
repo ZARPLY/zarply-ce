@@ -63,13 +63,11 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
       );
 
       final Duration duration = DateTime.now().difference(startTime);
-      debugPrint('Transaction duration: $duration');
 
       final DateTime startTime2 = DateTime.now();
       final TransactionDetails? txDetails =
           await _repository.getTransactionDetails(txSignature);
       final Duration duration2 = DateTime.now().difference(startTime2);
-      debugPrint('Transaction details duration: $duration2');
 
       if (txDetails == null) {
         throw Exception('Transaction not confirmed after multiple attempts');

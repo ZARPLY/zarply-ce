@@ -28,12 +28,19 @@ import '../widgets/scanner/qr_scanner.dart';
 
 String _getInitialLocation(
     AuthProvider authProvider, WalletProvider walletProvider) {
-  // If user is authenticated, go to wallet
-  if (walletProvider.hasWallet) {
+  // If user is authenticated and has wallet, go to wallet
+  if (authProvider.isAuthenticated && walletProvider.hasWallet) {
     return '/wallet';
   }
-  debugPrint('getInitialLocation: ${authProvider.isAuthenticated}');
-  return '/welcome';
+
+  // If user has wallet but not authenticated, they need to complete setup or login
+  // We'll let the splash screen determine the exact step since it's async
+  if (walletProvider.hasWallet && !authProvider.isAuthenticated) {
+    return '/splash';
+  }
+
+  // First time app launch - show splash screen
+  return '/splash';
 }
 
 GoRouter createRouter(
@@ -54,9 +61,6 @@ GoRouter createRouter(
         redirect: (BuildContext context, GoRouterState state) {
           final String location = state.uri.toString();
           final bool isAuthenticated = authProvider.isAuthenticated;
-
-          debugPrint(
-              'LOGOUT DEBUG: location=$location, isAuthenticated=$isAuthenticated, hasWallet=${walletProvider.hasWallet}');
 
           // NEVER redirect /login - this is the logout screen
           if (location == '/login') {
@@ -189,6 +193,11 @@ GoRouter createRouter(
             path: '/access_wallet',
             builder: (BuildContext context, GoRouterState state) =>
                 const AccessWalletScreen(),
+          ),
+          GoRoute(
+            path: '/new_wallet',
+            builder: (BuildContext context, GoRouterState state) =>
+                const WelcomeScreen(),
           ),
           GoRoute(
             path: '/wallet',
