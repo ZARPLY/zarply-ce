@@ -34,7 +34,7 @@ class SplashViewModel extends ChangeNotifier {
   Future<void> playAnimation() async {
     if (!_isDisposed) {
       // Start continuous spinning animation
-      animationController.repeat();
+      await animationController.repeat();
     }
   }
 

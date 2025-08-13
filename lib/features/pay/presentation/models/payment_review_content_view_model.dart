@@ -54,7 +54,6 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         );
       }
 
-      final DateTime startTime = DateTime.now();
       final String txSignature = await _repository.makeTransaction(
         wallet: wallet,
         senderTokenAccount: walletProvider.userTokenAccount,
@@ -62,12 +61,8 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         amount: double.parse(amount) / 100,
       );
 
-      final Duration duration = DateTime.now().difference(startTime);
-
-      final DateTime startTime2 = DateTime.now();
       final TransactionDetails? txDetails =
           await _repository.getTransactionDetails(txSignature);
-      final Duration duration2 = DateTime.now().difference(startTime2);
 
       if (txDetails == null) {
         throw Exception('Transaction not confirmed after multiple attempts');
