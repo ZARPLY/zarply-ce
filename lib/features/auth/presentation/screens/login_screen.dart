@@ -6,10 +6,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
-import '../../../../core/widgets/loading_button.dart';
-import '../../../../core/widgets/password_input.dart';
 import '../../../../core/widgets/clear_icon_button.dart';
-import '../../../onboarding/presentation/screens/welcome_screen.dart';
+import '../../../../core/widgets/loading_button.dart';
 import '../models/login_view_model.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,6 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _viewModel = LoginViewModel();
+    // Ensure programmatic password changes (e.g., autofill) trigger validation
+    _viewModel.passwordController.addListener(_onPasswordControllerChanged);
     final KeyboardVisibilityController keyboardVisibilityController =
         KeyboardVisibilityController();
     keyboardSubscription =
@@ -42,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     keyboardSubscription.cancel();
     _passwordFocus.dispose();
+    _viewModel.passwordController.removeListener(_onPasswordControllerChanged);
     _viewModel.dispose();
     super.dispose();
   }
@@ -81,15 +82,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _onPasswordControllerChanged() {
+    // Validate any time the text changes, from any source
+    _viewModel.validatePassword().then((bool valid) {
+      if (!mounted) return;
+      _viewModel.setIsPasswordCorrect(valid);
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<LoginViewModel>.value(
       value: _viewModel,
       child: Consumer<LoginViewModel>(
         builder: (BuildContext context, LoginViewModel viewModel, _) {
-          final bool isPasswordTyped =
-              viewModel.passwordController.text.isNotEmpty;
-          // Only show checkmark if the password matches the stored password (correct password)
           final bool isPasswordCorrect = viewModel.isPasswordCorrect;
           return Scaffold(
             backgroundColor: Colors.white,
@@ -129,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 40),
                     // Password input field
-                    Container(
+                    DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
@@ -154,13 +161,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.grey.shade400,
                             fontSize: 16,
                           ),
-                          errorText: viewModel.errorMessage.isNotEmpty
-                              ? viewModel.errorMessage
-                              : null,
                           filled: false,
                           suffixIcon: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
+                            children: <Widget>[
                               // View/Hide password button
                               GestureDetector(
                                 onTap: () {
@@ -170,7 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
+                                    horizontal: 8,
+                                  ),
                                   child: Icon(
                                     _isPasswordVisible
                                         ? Icons.visibility_off
@@ -181,19 +186,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               ClearIconButton(
-                                  controller: viewModel.passwordController),
+                                controller: viewModel.passwordController,
+                              ),
                               Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
+                                padding: const EdgeInsets.only(right: 8),
                                 child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 200),
                                   child: isPasswordCorrect
-                                      ? Icon(Icons.check_circle,
+                                      ? const Icon(
+                                          Icons.check_circle,
                                           color: Colors.green,
-                                          key: const ValueKey('valid'))
+                                          key: ValueKey<String>('valid'),
+                                        )
                                       : const SizedBox(
                                           width: 0,
                                           height: 0,
-                                          key: ValueKey('empty')),
+                                          key: ValueKey<String>('empty'),
+                                        ),
                                 ),
                               ),
                             ],
@@ -209,13 +218,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ),
+                    if (viewModel.errorMessage.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          viewModel.errorMessage,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     // Remember this device option
                     GestureDetector(
                       onTap: () => viewModel.setRememberPassword(
-                          value: !viewModel.rememberPassword),
+                        value: !viewModel.rememberPassword,
+                      ),
                       child: Row(
-                        children: [
+                        children: <Widget>[
                           Container(
                             width: 20,
                             height: 20,
@@ -252,49 +273,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const Spacer(),
-                    // Continue button
                     Padding(
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Column(
-                        children: [
+                        children: <Widget>[
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: LoadingButton(
                               isLoading: viewModel.isLoading,
-                              onPressed: _performLogin,
+                              onPressed:
+                                  isPasswordCorrect ? _performLogin : null,
+                              loadingColor: Colors.white,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromARGB(255, 216, 227, 250),
-                                foregroundColor: Colors.grey.shade600,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
                                 textStyle: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
                               ),
                               child: const Text('Continue'),
                             ),
                           ),
                           const SizedBox(height: 24),
-                          // Forgot Password link
-                          GestureDetector(
-                            onTap: () {
-                              /* TODO: Implement forgot password logic */
-                            },
-                            child: const Text(
-                              'Forgot Password',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
                         ],
                       ),
                     ),
