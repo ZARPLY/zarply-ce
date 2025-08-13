@@ -1,53 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 
 class SplashViewModel extends ChangeNotifier {
-  SplashViewModel(this._walletProvider);
+  SplashViewModel(this._walletProvider, this._context);
   final WalletProvider _walletProvider;
+  final BuildContext _context;
   late AnimationController animationController;
+  bool _isDisposed = false;
 
-  void initAnimationController(TickerProvider vsync) {
+  AnimationController initAnimationController(TickerProvider vsync) {
     animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       vsync: vsync,
     );
+    return animationController; // Return the animation controller
   }
 
   void disposeAnimationController() {
+    _isDisposed = true;
     animationController.dispose();
   }
 
-  Future<void> playAnimation() {
-    const Duration stepDelay = Duration(milliseconds: 500);
+  void cancelAnimation() {
+    _isDisposed = true;
+    if (animationController.isAnimating) {
+      animationController.stop();
+    }
+  }
 
-    return animationController
-        .animateTo(0.25)
-        .then((_) => Future<void>.delayed(stepDelay))
-        .then((_) => animationController.animateTo(0.5))
-        .then((_) => Future<void>.delayed(stepDelay))
-        .then((_) => animationController.animateTo(0.75))
-        .then((_) => Future<void>.delayed(stepDelay))
-        .then((_) => animationController.animateTo(1));
+  Future<void> playAnimation() async {
+    if (!_isDisposed) {
+      // Start continuous spinning animation
+      animationController.repeat();
+    }
+  }
+
+  void stopAnimation() {
+    if (animationController.isAnimating) {
+      animationController.stop();
+    }
   }
 
   Future<String> initializeAndGetRoute() async {
-    String route = '/welcome';
+    String route = '/wallet';
 
     try {
-      final bool haveWalletAndTokenAccount = await _walletProvider.initialize();
-      final bool hasPassword = await _walletProvider.hasPassword();
+      // Accept terms and conditions
+      await SecureStorageService().setTermsAccepted();
 
-      if (!haveWalletAndTokenAccount) {
-        route = '/welcome';
-      } else if (!hasPassword) {
-        route = '/create_password';
-      } else {
-        route = '/login';
+      // Initialize wallet
+      final bool initialized = await _walletProvider.initialize();
+      if (!initialized) {
+        return '/welcome';
       }
+
+      // Login the user
+      final AuthProvider authProvider =
+          Provider.of<AuthProvider>(_context, listen: false);
+      await authProvider.login();
+
+      route = '/wallet';
     } catch (e) {
-      route =  '/welcome';
+      route = '/welcome';
     } finally {
-       _walletProvider.markBootDone();
+      _walletProvider.markBootDone();
     }
     return route;
   }

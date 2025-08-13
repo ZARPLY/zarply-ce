@@ -61,9 +61,21 @@ class _LoginScreenState extends State<LoginScreen> {
           await walletProvider.initialize();
         }
 
-        await walletProvider.refreshTransactions();
-
-        await walletProvider.fetchAndCacheBalances();
+        // Add timeout to prevent infinite loading
+        await Future.wait([
+          walletProvider.refreshTransactions().timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Transaction refresh timed out');
+            },
+          ),
+          walletProvider.fetchAndCacheBalances().timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Balance fetch timed out');
+            },
+          ),
+        ]);
 
         // routing happens in app_router.dart based on isAuthenticated
         await Provider.of<AuthProvider>(
@@ -72,13 +84,17 @@ class _LoginScreenState extends State<LoginScreen> {
         ).login();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error logging in: $e'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging in: $e'),
+          ),
+        );
+      }
     } finally {
-      _viewModel.setIsLoading(value: false);
+      if (mounted) {
+        _viewModel.setIsLoading(value: false);
+      }
     }
   }
 

@@ -34,8 +34,8 @@ class _TransactionsListState extends State<TransactionsList> {
     final TransactionTransferInfo? transferInfo =
         widget.viewModel.parseTransferDetails(transaction);
 
-    if (transferInfo == null || transferInfo.amount == 0) {
-      return const SizedBox.shrink();
+    if (transferInfo == null) {
+      return const SizedBox.shrink();  // Only filter out null transfer info
     }
 
     return TransactionItem(
@@ -51,6 +51,7 @@ class _TransactionsListState extends State<TransactionsList> {
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       color: Colors.blue,
+      backgroundColor: Colors.white,
       onRefresh: widget.viewModel.refreshTransactions,
       child: widget.viewModel.isLoadingTransactions
           ? const Center(
