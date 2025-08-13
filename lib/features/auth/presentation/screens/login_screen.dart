@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         // Add timeout to prevent infinite loading
-        await Future.wait([
+        await Future.wait(<Future<void>>[
           walletProvider.refreshTransactions().timeout(
             const Duration(seconds: 30),
             onTimeout: () {
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               isLoading: viewModel.isLoading,
                               onPressed:
                                   isPasswordCorrect ? _performLogin : null,
-                              loadingColor: Colors.white,
+                              loadingColor: Colors.blue,
                               style: ElevatedButton.styleFrom(
                                 textStyle: const TextStyle(
                                   fontSize: 18,
