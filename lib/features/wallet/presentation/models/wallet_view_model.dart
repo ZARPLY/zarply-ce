@@ -100,12 +100,8 @@ class WalletViewModel extends ChangeNotifier {
 
   Future<void> loadTransactions() async {
     if (tokenAccount == null) {
-      print('WalletViewModel: tokenAccount is null, cannot load transactions');
-      return;
+      throw Exception('TokenAccount is null, cannot load transactions');
     }
-
-    print(
-        'WalletViewModel: Loading transactions for token account: ${tokenAccount!.pubkey}');
 
     final Map<String, List<TransactionDetails?>> storedTransactions =
         await loadStoredTransactions();
@@ -168,13 +164,6 @@ class WalletViewModel extends ChangeNotifier {
       loadStoredTransactions() async {
     final Map<String, List<TransactionDetails?>> storedTransactions =
         await _walletRepository.getStoredTransactions();
-
-    print(
-        'WalletViewModel: Loaded ${storedTransactions.length} stored transaction months');
-    for (final String month in storedTransactions.keys) {
-      print(
-          'WalletViewModel: Month $month has ${storedTransactions[month]?.length ?? 0} transactions');
-    }
 
     transactions =
         Map<String, List<TransactionDetails?>>.from(storedTransactions);

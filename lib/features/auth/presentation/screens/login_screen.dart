@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Validate any time the text changes, from any source
     _viewModel.validatePassword().then((bool valid) {
       if (!mounted) return;
-      _viewModel.setIsPasswordCorrect(valid);
+      _viewModel.setIsPasswordCorrect(value: valid);
       setState(() {});
     });
   }
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Validate password on change to update checkmark
                           final bool correct =
                               await viewModel.validatePassword();
-                          viewModel.setIsPasswordCorrect(correct);
+                          viewModel.setIsPasswordCorrect(value: correct);
                         },
                       ),
                     ),

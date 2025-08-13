@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:solana/dto.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
@@ -45,20 +44,20 @@ class _WalletScreenState extends State<WalletScreen>
             Provider.of<WalletProvider>(context, listen: false);
         _viewModel.wallet = walletProvider.wallet;
         _viewModel.tokenAccount = walletProvider.userTokenAccount;
-        
+
         // If still null, wait a bit for initialization to complete
         if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
-          await Future.delayed(const Duration(milliseconds: 500));
+          await Future<void>.delayed(const Duration(milliseconds: 500));
           _viewModel.wallet = walletProvider.wallet;
           _viewModel.tokenAccount = walletProvider.userTokenAccount;
         }
       }
-      
+
       // Load cached data first for immediate display
       await _viewModel.loadCachedBalances();
 
       // Then load fresh data in background
-      await Future.wait([
+      await Future.wait(<Future<void>>[
         _loadTransactionsFromRepository(),
         _refreshBalances(),
       ]);
@@ -83,7 +82,7 @@ class _WalletScreenState extends State<WalletScreen>
     try {
       // Load transactions from network and store them locally
       await _viewModel.loadTransactions();
-      
+
       // Update transaction count and oldest signature
       await _viewModel.updateTransactionCount();
     } catch (e) {

@@ -27,7 +27,9 @@ import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
 String _getInitialLocation(
-    AuthProvider authProvider, WalletProvider walletProvider) {
+  AuthProvider authProvider,
+  WalletProvider walletProvider,
+) {
   // If user is authenticated and has wallet, go to wallet
   if (authProvider.isAuthenticated && walletProvider.hasWallet) {
     return '/wallet';

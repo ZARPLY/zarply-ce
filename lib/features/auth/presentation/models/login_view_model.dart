@@ -36,7 +36,7 @@ class LoginViewModel extends ChangeNotifier {
         passwordController.text = storedPin;
         // Auto-validate password if remember password is enabled
         final bool valid = await validatePassword();
-        setIsPasswordCorrect(valid);
+        setIsPasswordCorrect(value: valid);
       } catch (e) {
         // Handle error silently
         _rememberPassword = false;
@@ -52,7 +52,7 @@ class LoginViewModel extends ChangeNotifier {
     if (!value) {
       // Clear the password field if remember password is disabled
       passwordController.clear();
-      setIsPasswordCorrect(false);
+      setIsPasswordCorrect(value: false);
     }
     notifyListeners();
   }
@@ -67,7 +67,7 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setIsPasswordCorrect(bool value) {
+  void setIsPasswordCorrect({required bool value}) {
     isPasswordCorrect = value;
     notifyListeners();
   }
