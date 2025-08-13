@@ -21,6 +21,27 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
   bool _isAgreementChecked = false;
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkCurrentState();
+  }
+
+  Future<void> _checkCurrentState() async {
+    try {
+      // Check if terms were already accepted
+      final bool termsAccepted =
+          await SecureStorageService().hasAcceptedTerms();
+      if (termsAccepted) {
+        setState(() {
+          _isAgreementChecked = true;
+        });
+      }
+    } catch (e) {
+      // Ignore errors, user will need to check manually
+    }
+  }
+
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri)) {
@@ -32,43 +53,54 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
   }
 
   Future<void> _handleContinue() async {
+    if (!_isAgreementChecked) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await SecureStorageService().setTermsAccepted();
-
+      // Get providers for wallet and auth setup
       final WalletProvider walletProvider =
           Provider.of<WalletProvider>(context, listen: false);
       final AuthProvider authProvider =
           Provider.of<AuthProvider>(context, listen: false);
 
+      // Initialize wallet directly here instead of going to splash
       final bool initialized = await walletProvider.initialize();
       if (!initialized) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to initialize wallet'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          context.go('/welcome');
         }
         return;
       }
 
-      await walletProvider.fetchLimitedTransactions();
+      // Accept terms and conditions (only if not already accepted)
+      if (!_isAgreementChecked) {
+        await SecureStorageService().setTermsAccepted();
+      }
 
+      // Login the user
+      await authProvider.login();
+
+      // Wait for wallet data to load before proceeding
+      await walletProvider.refreshTransactions();
       await walletProvider.fetchAndCacheBalances();
 
-      await authProvider.login();
+      // Mark onboarding as completed
+      await SecureStorageService().setOnboardingCompleted();
+
+      // Mark boot as done
+      walletProvider.markBootDone();
+
+      // Navigate to wallet
+      if (mounted) {
+        context.go('/wallet');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error initializing wallet: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     } finally {
@@ -87,7 +119,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
           child: InkWell(
-            onTap: () => context.go('/create_password'),
+            onTap: () => context.push('/create_password'),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFFEBECEF),

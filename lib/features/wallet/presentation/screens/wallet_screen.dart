@@ -33,29 +33,67 @@ class _WalletScreenState extends State<WalletScreen>
     _viewModel.wallet = walletProvider.wallet;
     _viewModel.tokenAccount = walletProvider.userTokenAccount;
 
-    // Load transactions from repository
-    _loadTransactionsFromRepository();
+    // Load fresh data on initialization
+    _initializeData();
+  }
 
-    _viewModel.loadCachedBalances();
+  Future<void> _initializeData() async {
+    try {
+      // Ensure wallet and token account are set
+      if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
+        final WalletProvider walletProvider =
+            Provider.of<WalletProvider>(context, listen: false);
+        _viewModel.wallet = walletProvider.wallet;
+        _viewModel.tokenAccount = walletProvider.userTokenAccount;
+        
+        // If still null, wait a bit for initialization to complete
+        if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          _viewModel.wallet = walletProvider.wallet;
+          _viewModel.tokenAccount = walletProvider.userTokenAccount;
+        }
+      }
+      
+      // Load cached data first for immediate display
+      await _viewModel.loadCachedBalances();
 
-    _viewModel.isLoadingTransactions = false;
+      // Then load fresh data in background
+      await Future.wait([
+        _loadTransactionsFromRepository(),
+        _refreshBalances(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading wallet data: $e'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _viewModel.isLoadingTransactions = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadTransactionsFromRepository() async {
     try {
-      final Map<String, List<TransactionDetails?>> storedTransactions =
-          await _viewModel.loadStoredTransactions();
-
-      if (storedTransactions.isNotEmpty) {
-        _viewModel.updateOldestSignature();
-        await _viewModel.updateTransactionCount();
-      }
+      // Load transactions from network and store them locally
+      await _viewModel.loadTransactions();
+      
+      // Update transaction count and oldest signature
+      await _viewModel.updateTransactionCount();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading transactions from repository: $e'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading transactions: $e'),
+          ),
+        );
+      }
     }
   }
 
@@ -339,10 +377,11 @@ class _WalletScreenState extends State<WalletScreen>
                       ],
                     ).then((String? value) async {
                       if (value == 'logout') {
-                        
                         await Provider.of<AuthProvider>(context, listen: false)
                             .logout();
-                        context.go('/login');
+
+                        // Use replace to avoid navigation stack issues
+                        context.replace('/login');
                       }
                     });
                   },
