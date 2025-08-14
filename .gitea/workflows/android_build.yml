@@ -10,7 +10,7 @@ jobs:
   build-sign-upload:
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/pumppay/pp-flutter:3.32.8
+      image: gitea.cyber-mint.com/pumppay/pp-flutter:3.29.3
 
     env:
       BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
