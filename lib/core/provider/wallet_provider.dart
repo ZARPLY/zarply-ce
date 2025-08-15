@@ -14,6 +14,25 @@ class WalletProvider extends ChangeNotifier {
       walletRepository: _walletRepository,
     );
   }
+
+  bool _isReady = false;
+  bool get isReady => _isReady;
+
+  bool _bootDone = false;
+  bool get bootDone => _bootDone;
+
+  void markBootDone() {
+    if (_bootDone) return;
+    _bootDone = true;
+    notifyListeners();
+  }
+
+  void resetBootFlag() {
+    if (!_bootDone) return;
+    _bootDone = false;
+    notifyListeners();
+  }
+
   final WalletStorageService _walletStorageService = WalletStorageService();
   WalletSolanaService? _walletSolanaService;
   final WalletRepository _walletRepository = WalletRepositoryImpl();
@@ -59,6 +78,11 @@ class WalletProvider extends ChangeNotifier {
       _wallet = await _walletStorageService.retrieveWallet();
 
       if (_wallet == null) {
+        _userTokenAccount = null;
+        _zarpBalance = 0.0;
+        _solBalance = 0.0;
+        _isReady = true;
+        notifyListeners();
         return false;
       }
 
@@ -70,23 +94,34 @@ class WalletProvider extends ChangeNotifier {
         _zarpBalance = 0.0;
       } else {
         _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
+
+        // Fetch limited transactions during initialization to pre-populate the list
+        try {
+          await fetchLimitedTransactions();
+        } catch (e) {
+          // Don't fail initialization if transaction fetching fails
+          // Transactions will be loaded when the wallet screen is opened
+        }
       }
       _solBalance = await service.getSolBalance(_wallet!.address);
 
+      _isReady = true;
       notifyListeners();
       return true;
     } catch (e) {
-      _wallet = null;
-      _userTokenAccount = null;
-      _zarpBalance = 0.0;
-      _solBalance = 0.0;
+      reset();
+      _isReady = true;
       notifyListeners();
       return false;
     }
   }
 
   Future<void> fetchLimitedTransactions() async {
-    if (_wallet == null || _userTokenAccount == null) return;
+    if (_wallet == null || _userTokenAccount == null) {
+      throw Exception(
+        'WalletProvider: Cannot fetch transactions - wallet: ${_wallet != null}, tokenAccount: ${_userTokenAccount != null}',
+      );
+    }
 
     try {
       final String? lastSignature =
@@ -99,7 +134,9 @@ class WalletProvider extends ChangeNotifier {
         until: lastSignature,
         limit: 10,
         onBatchLoaded: (List<TransactionDetails?> batch) {
-          if (batch.isEmpty) return;
+          if (batch.isEmpty) {
+            return;
+          }
 
           _processAndStoreTransactions(batch);
         },
@@ -207,8 +244,7 @@ class WalletProvider extends ChangeNotifier {
   Future<void> deleteWallet() async {
     try {
       await _walletStorageService.deletePrivateKey();
-      _wallet = null;
-      notifyListeners();
+      reset();
     } catch (e) {
       // Handle error
       rethrow;
@@ -236,5 +272,16 @@ class WalletProvider extends ChangeNotifier {
         throw Exception(e);
       }
     }
+  }
+
+  void reset() {
+    _wallet = null;
+    _userTokenAccount = null;
+    _recoveryPhrase = null;
+    _zarpBalance = 0.0;
+    _solBalance = 0.0;
+    _isReady = false;
+    _bootDone = false;
+    notifyListeners();
   }
 }

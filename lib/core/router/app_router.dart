@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
@@ -27,70 +26,92 @@ import '../provider/wallet_provider.dart';
 import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
+String _getInitialLocation(
+  AuthProvider authProvider,
+  WalletProvider walletProvider,
+) {
+  // If user is authenticated and has wallet, go to wallet
+  if (authProvider.isAuthenticated && walletProvider.hasWallet) {
+    return '/wallet';
+  }
+
+  // If user has wallet but not authenticated, they need to complete setup or login
+  // We'll let the splash screen determine the exact step since it's async
+  if (walletProvider.hasWallet && !authProvider.isAuthenticated) {
+    return '/splash';
+  }
+
+  // First time app launch - show splash screen
+  return '/splash';
+}
+
 GoRouter createRouter(
   WalletProvider walletProvider,
   AuthProvider authProvider,
 ) {
   return GoRouter(
-    initialLocation: '/',
-    redirect: (BuildContext context, GoRouterState state) {
-      final AuthProvider authProvider = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      );
-      final String location = state.uri.toString();
-      final bool isAuthenticated = authProvider.isAuthenticated;
-
-      final List<String> protectedRoutes = <String>[
-        '/wallet',
-        '/pay_request',
-        '/payment_amount',
-        '/payment_details',
-        '/transaction_details',
-        '/request_amount',
-        '/scan',
-      ];
-
-      final List<String> onboardingRoutes = <String>[
-        '/welcome',
-        '/rpc_configuration',
-        '/custom_rpc_configuration',
-        '/create_password',
-        '/access_wallet',
-        '/new_wallet',
-        '/backup_wallet',
-        '/private_keys',
-        '/restore_wallet',
-      ];
-
-      final bool isLoginRoute = location == '/login';
-      final bool isRootRoute = location == '/';
-      final bool isAccessWalletRoute = location == '/access_wallet';
-      final bool isProtected = protectedRoutes.contains(location);
-      final bool isFromOnboarding =
-          onboardingRoutes.contains(state.extra?.toString());
-
-      // If authenticated and trying to access root or login, go to wallet
-      if (isAuthenticated &&
-          (isLoginRoute || isRootRoute || isAccessWalletRoute)) {
-        return '/wallet';
-      }
-
-      // If not authenticated and trying to access protected routes
-      if (!isAuthenticated && isProtected && !isFromOnboarding) {
-        return '/login';
-      }
-
-      return null;
-    },
+    initialLocation: _getInitialLocation(authProvider, walletProvider),
+    refreshListenable:
+        Listenable.merge(<Listenable>[walletProvider, authProvider]),
     routes: <RouteBase>[
       GoRoute(
-        path: '/',
+        path: '/splash',
         builder: (BuildContext context, GoRouterState state) =>
             const SplashScreen(),
       ),
       ShellRoute(
+        redirect: (BuildContext context, GoRouterState state) {
+          final String location = state.uri.toString();
+          final bool isAuthenticated = authProvider.isAuthenticated;
+
+          // NEVER redirect /login - this is the logout screen
+          if (location == '/login') {
+            return null;
+          }
+
+          // SIMPLE LOGIC: Only redirect to login if trying to access protected routes while not authenticated
+          if (!isAuthenticated) {
+            final List<String> protectedRoutes = <String>[
+              '/wallet',
+              '/pay_request',
+              '/payment_amount',
+              '/payment_details',
+              '/transaction_details',
+              '/request_amount',
+              '/scan',
+              '/more',
+              '/recovery_phrase',
+              '/unlock',
+            ];
+
+            if (protectedRoutes.contains(location)) {
+              return '/login';
+            }
+          }
+
+          // For all other cases, stay where you are
+          return null;
+        },
         builder: (BuildContext context, GoRouterState state, Widget child) {
+          final String loc = state.uri.toString();
+
+          const Set<String> unauthorisedRoutes = <String>{
+            '/login',
+            '/welcome',
+            '/create_password',
+            '/access_wallet',
+            '/restore_wallet',
+            '/rpc_configuration',
+            '/custom_rpc_configuration',
+            '/backup_wallet',
+            '/private_keys',
+            '/new_wallet',
+          };
+
+          if (unauthorisedRoutes.contains(loc)) {
+            return child;
+          }
+
           return AppInitializer(child: child);
         },
         routes: <RouteBase>[
@@ -174,6 +195,11 @@ GoRouter createRouter(
             path: '/access_wallet',
             builder: (BuildContext context, GoRouterState state) =>
                 const AccessWalletScreen(),
+          ),
+          GoRoute(
+            path: '/new_wallet',
+            builder: (BuildContext context, GoRouterState state) =>
+                const WelcomeScreen(),
           ),
           GoRoute(
             path: '/wallet',
