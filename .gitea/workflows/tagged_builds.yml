@@ -6,131 +6,131 @@ on:
       - 'v*'
 
 jobs:
-android_build:
-    name: Android APK/Appbundle Build & Upload
-    runs-on: workstation.ubuntu.lts
-    container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.29.3
-    env:
-      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
-      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
-      GITEA_USERNAME: ${{ secrets.USERNAME }}
-      GITEA_PASSWORD: ${{ secrets.PASSWORD }}
-      GITEA_SERVER: ${{ secrets.SERVER }}
+  android_build:
+      name: Android APK/Appbundle Build & Upload
+      runs-on: workstation.ubuntu.lts
+      container:
+        image: gitea.cyber-mint.com/zarply/za-flutter:3.29.3
+      env:
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+        RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+        BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+        GITEA_USERNAME: ${{ secrets.USERNAME }}
+        GITEA_PASSWORD: ${{ secrets.PASSWORD }}
+        GITEA_SERVER: ${{ secrets.SERVER }}
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2 
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2 
 
-      - name: Decode Android key store
-        run: |
-          echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null          
+        - name: Decode Android key store
+          run: |
+            echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null          
 
-      - name: Create key.properties
-        run: |
-          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
-            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
-      - name: Get Project Dependencies
-        run: flutter pub get --no-precompile --enforce-lockfile
-      - name: Update Gradle Properties
-        run: cp android/gradle.docker.properties android/gradle.properties
-      - name: Build Android
-        run: |
-          flutter build apk --release \
-            --obfuscate \
-            --split-per-abi \
-            --target-platform android-arm64 \
-            --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.prod
-      - name: Save Artifacts
-        run: |
-          mkdir artifacts
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-prod-release.apk artifacts/zarply-arm64-v8a.apk         
-      - name: Build Android App Bundle
-        run: |
-          flutter build appbundle --release \
-            --obfuscate \
-            --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.prod
-      - name: Save Artifacts
-        run: |
-          mv build/app/outputs/bundle/release/app-prod-release.aab artifacts/zarply.aab
-          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
-          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
-          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
-          cd ../../../../../../../../
-      - name: Upload APK to Gitea
-        run: |
-          REPO_VERSION=steps.meta.outputs.REPO_VERSION
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
-          echo $REPO_VERSION
-          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
-               --upload-file artifacts/zarply-arm64-v8a.apk \
-               $GITEA_SERVER/api/packages/zarply/generic/zarply_apk/$REPO_VERSION/zarply-arm64-v8a.apk
-      - name: Upload Appbundle to Gitea
-        run: |
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
-          echo $REPO_VERSION
-          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
-               --upload-file artifacts/zarply.aab \
-               $GITEA_SERVER/api/packages/zarply/generic/zarply_bundle/$REPO_VERSION/zarply.aab
-      - name: Create zip file with correct timestamps
-        run: zip -r artifacts.zip artifacts
-      - name: Store Test Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: prod-zarply
-          path: artifacts.zip
-      - name: Upload Android Release to Play Store
-        uses: r0adkll/upload-google-play@v1.1.3
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: za.co.zarply
-          releaseFiles: artifacts/zarply.aab
-          track: internal
-          debugSymbols: artifacts/appbundle_symbols.zip
-          mappingFile: artifacts/appbundle_mapping.txt
-  
-ios_build:
-    name: iOS IPA Build & Upload
-    runs-on: workstation.mac
-    env:
-      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
-      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
-      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
-      - name: Get Project Dependencies
-        run: flutter pub get --no-precompile
-      - name: Get iOS Dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-          cd ..
-      # - name: Generate Dart Files
-      #   run: |
-      #     flutter pub run build_runner build --release \
-      #       --delete-conflicting-outputs \
-      #       --config prod
-      # - name: Generate Launcher Icons
-      #   run: dart run flutter_launcher_icons
-      - name: Build iOS IPA
-        run: |
-          flutter build ipa --release \
-            --no-pub \
-            --obfuscate \
-            --codesign \
-            --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.prod
-      - name: Upload to TestFlight
-        run: |
-          cd ios
-          fastlane beta
+        - name: Create key.properties
+          run: |
+            printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+              $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+        - name: Verify Flutter Installation
+          run: flutter doctor -v
+        - name: Get Project Dependencies
+          run: flutter pub get --no-precompile --enforce-lockfile
+        - name: Update Gradle Properties
+          run: cp android/gradle.docker.properties android/gradle.properties
+        - name: Build Android
+          run: |
+            flutter build apk --release \
+              --obfuscate \
+              --split-per-abi \
+              --target-platform android-arm64 \
+              --split-debug-info=split_debug_info/ \
+              --dart-define-from-file=.env.prod
+        - name: Save Artifacts
+          run: |
+            mkdir artifacts
+            mv build/app/outputs/flutter-apk/app-arm64-v8a-prod-release.apk artifacts/zarply-arm64-v8a.apk         
+        - name: Build Android App Bundle
+          run: |
+            flutter build appbundle --release \
+              --obfuscate \
+              --split-debug-info=split_debug_info/ \
+              --dart-define-from-file=.env.prod
+        - name: Save Artifacts
+          run: |
+            mv build/app/outputs/bundle/release/app-prod-release.aab artifacts/zarply.aab
+            mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
+            cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
+            zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
+            cd ../../../../../../../../
+        - name: Upload APK to Gitea
+          run: |
+            REPO_VERSION=steps.meta.outputs.REPO_VERSION
+            REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
+            echo $REPO_VERSION
+            curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
+                --upload-file artifacts/zarply-arm64-v8a.apk \
+                $GITEA_SERVER/api/packages/zarply/generic/zarply_apk/$REPO_VERSION/zarply-arm64-v8a.apk
+        - name: Upload Appbundle to Gitea
+          run: |
+            REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+            echo $REPO_VERSION
+            curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
+                --upload-file artifacts/zarply.aab \
+                $GITEA_SERVER/api/packages/zarply/generic/zarply_bundle/$REPO_VERSION/zarply.aab
+        - name: Create zip file with correct timestamps
+          run: zip -r artifacts.zip artifacts
+        - name: Store Test Results
+          uses: actions/upload-artifact@v3
+          with:
+            name: prod-zarply
+            path: artifacts.zip
+        - name: Upload Android Release to Play Store
+          uses: r0adkll/upload-google-play@v1.1.3
+          with:
+            serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+            packageName: za.co.zarply
+            releaseFiles: artifacts/zarply.aab
+            track: internal
+            debugSymbols: artifacts/appbundle_symbols.zip
+            mappingFile: artifacts/appbundle_mapping.txt
+    
+  ios_build:
+      name: iOS IPA Build & Upload
+      runs-on: workstation.mac
+      env:
+        FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+        FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+        FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v2
+        - name: Verify Flutter Installation
+          run: flutter doctor -v
+        - name: Get Project Dependencies
+          run: flutter pub get --no-precompile
+        - name: Get iOS Dependencies
+          run: |
+            cd ios
+            pod install --repo-update
+            cd ..
+        # - name: Generate Dart Files
+        #   run: |
+        #     flutter pub run build_runner build --release \
+        #       --delete-conflicting-outputs \
+        #       --config prod
+        # - name: Generate Launcher Icons
+        #   run: dart run flutter_launcher_icons
+        - name: Build iOS IPA
+          run: |
+            flutter build ipa --release \
+              --no-pub \
+              --obfuscate \
+              --codesign \
+              --split-debug-info=split_debug_info/ \
+              --dart-define-from-file=.env.prod
+        - name: Upload to TestFlight
+          run: |
+            cd ios
+            fastlane beta
