@@ -17,7 +17,7 @@ jobs:
     name: Android APK Build
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/pumppay/pp-flutter:3.27.3
+      image: ghcr.io/cirruslabs/flutter:3.29.3
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
