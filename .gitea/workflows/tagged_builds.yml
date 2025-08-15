@@ -5,6 +5,7 @@ on:
     tags:
       - 'v*'
 
+jobs:
 android_build:
     name: Android APK/Appbundle Build & Upload
     runs-on: workstation.ubuntu.lts
@@ -94,9 +95,7 @@ android_build:
           track: internal
           debugSymbols: artifacts/appbundle_symbols.zip
           mappingFile: artifacts/appbundle_mapping.txt
-
-
-    
+  
 ios_build:
     name: iOS IPA Build & Upload
     runs-on: workstation.mac
