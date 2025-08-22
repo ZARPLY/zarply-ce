@@ -27,13 +27,15 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
 
   @override
   bool isValidMnemonic(String mnemonic) {
-    // Clean the mnemonic string - remove extra whitespace and normalize
-    final String cleanedMnemonic = mnemonic.trim().replaceAll(RegExp(r'\s+'), ' ');
-    final bool isValid = bip39.validateMnemonic(cleanedMnemonic);
-    print('RestoreWalletRepositoryImpl: isValidMnemonic called with: "$mnemonic"');
-    print('RestoreWalletRepositoryImpl: Cleaned mnemonic: "$cleanedMnemonic"');
-    print('RestoreWalletRepositoryImpl: BIP39 validation result: $isValid');
-    return isValid;
+    // Clean the mnemonic string - remove extra whitespace, normalize, and convert to lowercase
+    final String cleanedMnemonic = mnemonic
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'[^\w\s]'), ''); // Remove special characters
+
+    // Validate with cleaned mnemonic
+    return bip39.validateMnemonic(cleanedMnemonic);
   }
 
   @override
