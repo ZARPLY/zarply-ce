@@ -13,6 +13,7 @@ class SecureStorageService {
 
   static const String _recoverPhraseKey = 'recovery_phrase';
   static const String _termsAcceptedKey = 'terms_and_conditions_accepted';
+  static const String _onboardingCompletedKey = 'onboarding_completed';
 
   Future<void> setTermsAccepted() async {
     await _secureStorage.write(key: _termsAcceptedKey, value: 'true');
@@ -20,6 +21,16 @@ class SecureStorageService {
 
   Future<bool> hasAcceptedTerms() async {
     final String? value = await _secureStorage.read(key: _termsAcceptedKey);
+    return value == 'true';
+  }
+
+  Future<void> setOnboardingCompleted() async {
+    await _secureStorage.write(key: _onboardingCompletedKey, value: 'true');
+  }
+
+  Future<bool> isOnboardingCompleted() async {
+    final String? value =
+        await _secureStorage.read(key: _onboardingCompletedKey);
     return value == 'true';
   }
 
@@ -58,10 +69,10 @@ class SecureStorageService {
     }
   }
 
-   Future<void> saveRecoveryPhrase(String phrase) async {
-    try{
+  Future<void> saveRecoveryPhrase(String phrase) async {
+    try {
       await _secureStorage.write(key: _recoverPhraseKey, value: phrase);
-    }catch (e) {
+    } catch (e) {
       throw SecureStorageException('Failed to save recovery phrase: $e');
     }
   }

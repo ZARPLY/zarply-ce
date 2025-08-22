@@ -99,7 +99,9 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   Future<void> loadTransactions() async {
-    if (tokenAccount == null) return;
+    if (tokenAccount == null) {
+      throw Exception('TokenAccount is null, cannot load transactions');
+    }
 
     final Map<String, List<TransactionDetails?>> storedTransactions =
         await loadStoredTransactions();
