@@ -224,6 +224,44 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                     ),
                   ),
                 const SizedBox(height: 32),
+                
+                // Debug information - remove this after fixing the issue
+                if (_viewModel.selectedRestoreMethod == 'Seed Phrase')
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Debug Info:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Text length: ${_viewModel.phraseController.text.length}'),
+                        Text('Text: "${_viewModel.phraseController.text}"'),
+                        Text('Word count: ${_viewModel.phraseController.text.trim().split(' ').where((String word) => word.isNotEmpty).length}'),
+                        Text('isFormValid: ${_viewModel.isFormValid}'),
+                        Text('Error message: ${_viewModel.errorMessage ?? 'None'}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            print('Manual validation triggered');
+                            _viewModel.updateFormValidity();
+                            setState(() {});
+                          },
+                          child: const Text('Test Validation'),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           );
