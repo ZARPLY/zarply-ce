@@ -239,30 +239,56 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                       ),
                     ),
                   ),
+                
+                const Spacer(),
+                
+                // Import Wallet button moved inside AnimatedBuilder
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 0,
+                    right: 0,
+                    bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                        ? MediaQuery.of(context).viewInsets.bottom
+                        : 24,
+                    top: 24,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      // Debug info for button state
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Text(
+                          'Button Debug: isFormValid=${_viewModel.isFormValid}, _isLoading=$_isLoading',
+                          style: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: LoadingButton(
+                          isLoading: _isLoading,
+                          onPressed: _viewModel.isFormValid && !_isLoading
+                              ? _handleRestoreWallet
+                              : null,
+                          child: const Text('Import Wallet'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           );
         },
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom > 0
-              ? MediaQuery.of(context).viewInsets.bottom
-              : 24,
-          top: 8,
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: LoadingButton(
-            isLoading: _isLoading,
-            onPressed: _viewModel.isFormValid && !_isLoading
-                ? _handleRestoreWallet
-                : null,
-            child: const Text('Import Wallet'),
-          ),
-        ),
       ),
     );
   }
