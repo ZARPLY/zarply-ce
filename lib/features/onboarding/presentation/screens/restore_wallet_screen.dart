@@ -221,6 +221,24 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                     ),
                   ),
                 const SizedBox(height: 32),
+                
+                // Temporary debug display - remove after fixing
+                if (_viewModel.selectedRestoreMethod == 'Seed Phrase')
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Text(
+                      'Debug: isFormValid = ${_viewModel.isFormValid}',
+                      style: TextStyle(
+                        color: Colors.blue.shade800,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
