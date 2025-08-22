@@ -27,8 +27,13 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
 
   @override
   bool isValidMnemonic(String mnemonic) {
-    // Use BIP39 validation directly - this doesn't require RPC connection
-    return bip39.validateMnemonic(mnemonic);
+    // Clean the mnemonic string - remove extra whitespace and normalize
+    final String cleanedMnemonic = mnemonic.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final bool isValid = bip39.validateMnemonic(cleanedMnemonic);
+    print('RestoreWalletRepositoryImpl: isValidMnemonic called with: "$mnemonic"');
+    print('RestoreWalletRepositoryImpl: Cleaned mnemonic: "$cleanedMnemonic"');
+    print('RestoreWalletRepositoryImpl: BIP39 validation result: $isValid');
+    return isValid;
   }
 
   @override

@@ -175,6 +175,10 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                     controller: _viewModel.phraseController,
                     maxLines: 3,
                     textInputAction: TextInputAction.done,
+                    onChanged: (_) {
+                      // Force validation update when text changes
+                      _viewModel.updateFormValidity();
+                    },
                     onSubmitted: (_) => _handleRestoreWallet(),
                     style: const TextStyle(
                       fontSize: 14,

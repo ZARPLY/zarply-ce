@@ -8,8 +8,14 @@ import '../../domain/repositories/restore_wallet_repository.dart';
 class RestoreWalletViewModel extends ChangeNotifier {
   RestoreWalletViewModel({RestoreWalletRepository? repository})
       : _repository = repository ?? RestoreWalletRepositoryImpl() {
-    phraseController.addListener(_updateFormValidity);
-    privateKeyController.addListener(_updateFormValidity);
+    phraseController.addListener(() {
+      print('RestoreWalletViewModel: Phrase controller listener triggered');
+      updateFormValidity();
+    });
+    privateKeyController.addListener(() {
+      print('RestoreWalletViewModel: Private key controller listener triggered');
+      updateFormValidity();
+    });
   }
   final TextEditingController phraseController = TextEditingController();
   final TextEditingController privateKeyController = TextEditingController();
@@ -30,17 +36,43 @@ class RestoreWalletViewModel extends ChangeNotifier {
 
   void setRestoreMethod(String method) {
     selectedRestoreMethod = method;
-    _updateFormValidity();
+    updateFormValidity();
     notifyListeners();
   }
 
-  void _updateFormValidity() {
+  void updateFormValidity() {
     if (selectedRestoreMethod == 'Seed Phrase') {
-      isFormValid = phraseController.text.trim().isNotEmpty &&
-          _repository.isValidMnemonic(phraseController.text.trim());
+      final String phrase = phraseController.text.trim();
+      final List<String> words = phrase.split(' ').where((String word) => word.isNotEmpty).toList();
+      final bool isValidMnemonic = _repository.isValidMnemonic(phrase);
+      final bool hasValidWordCount = words.length == 12 || words.length == 24;
+      isFormValid = phrase.isNotEmpty && isValidMnemonic && hasValidWordCount;
+      
+      // Debug logging
+      print('RestoreWalletViewModel: Phrase length: ${phrase.length}');
+      print('RestoreWalletViewModel: Phrase: "$phrase"');
+      print('RestoreWalletViewModel: Word count: ${words.length}');
+      print('RestoreWalletViewModel: Words: $words');
+      print('RestoreWalletViewModel: isValidMnemonic: $isValidMnemonic');
+      print('RestoreWalletViewModel: hasValidWordCount: $hasValidWordCount');
+      print('RestoreWalletViewModel: isFormValid: $isFormValid');
+      
+      // Additional debugging for common issues
+      if (phrase.isNotEmpty && !isValidMnemonic) {
+        print('RestoreWalletViewModel: Validation failed. Possible issues:');
+        print('RestoreWalletViewModel: - Extra spaces or formatting');
+        print('RestoreWalletViewModel: - Invalid words');
+        print('RestoreWalletViewModel: - Mixed case issues');
+      }
     } else {
-      isFormValid = privateKeyController.text.trim().isNotEmpty &&
-          _repository.isValidPrivateKey(privateKeyController.text.trim());
+      final String privateKey = privateKeyController.text.trim();
+      final bool isValidPrivateKey = _repository.isValidPrivateKey(privateKey);
+      isFormValid = privateKey.isNotEmpty && isValidPrivateKey;
+      
+      // Debug logging
+      print('RestoreWalletViewModel: Private key length: ${privateKey.length}');
+      print('RestoreWalletViewModel: isValidPrivateKey: $isValidPrivateKey');
+      print('RestoreWalletViewModel: isFormValid: $isFormValid');
     }
     notifyListeners();
   }
