@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
               automaticallyImplyLeading: false,
             ),
             body: SafeArea(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -308,61 +308,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: Column(
-                        children: <Widget>[
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: LoadingButton(
-                              isLoading: viewModel.isLoading,
-                              onPressed:
-                                  isPasswordCorrect ? _performLogin : null,
-                              loadingColor: Colors.blue,
-                              style: ElevatedButton.styleFrom(
-                                textStyle: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text('Continue'),
-                            ),
+                    const SizedBox(height: 40),
+                    // Continue button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: LoadingButton(
+                        isLoading: viewModel.isLoading,
+                        onPressed: isPasswordCorrect ? _performLogin : null,
+                        loadingColor: Colors.blue,
+                        style: ElevatedButton.styleFrom(
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 24),
-                        ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text('Continue'),
                       ),
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
-            bottomNavigationBar: (!viewModel.isKeyboardVisible ||
-                    MediaQuery.of(context).viewInsets.bottom > 0)
-                ? Padding(
-                    padding: EdgeInsets.only(
-                      left: 32,
-                      right: 32,
-                      bottom: MediaQuery.of(context).viewInsets.bottom > 0
-                          ? MediaQuery.of(context).viewInsets.bottom
-                          : 32,
-                      top: 8,
-                    ),
-                    child: LoadingButton(
-                      isLoading: viewModel.isLoading,
-                      onPressed:
-                          viewModel.errorMessage.isEmpty && !viewModel.isLoading
-                              ? _performLogin
-                              : null,
-                      child: const Text('Login'),
-                    ),
-                  )
-                : null,
           );
         },
       ),
