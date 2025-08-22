@@ -222,23 +222,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   ),
                 const SizedBox(height: 32),
                 
-                // Temporary debug display - remove after fixing
-                if (_viewModel.selectedRestoreMethod == 'Seed Phrase')
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Text(
-                      'Debug: isFormValid = ${_viewModel.isFormValid}',
-                      style: TextStyle(
-                        color: Colors.blue.shade800,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+
                 
                 const Spacer(),
                 
@@ -255,23 +239,6 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      // Debug info for button state
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.orange.shade200),
-                        ),
-                        child: Text(
-                          'Button Debug: isFormValid=${_viewModel.isFormValid}, _isLoading=$_isLoading',
-                          style: TextStyle(
-                            color: Colors.orange.shade800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
                       SizedBox(
                         width: double.infinity,
                         child: LoadingButton(

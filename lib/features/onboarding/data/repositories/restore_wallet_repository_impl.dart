@@ -25,7 +25,7 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
     return _walletService ?? await WalletSolanaService.create();
   }
 
-  @override
+    @override
   bool isValidMnemonic(String mnemonic) {
     // Clean the mnemonic string - remove extra whitespace, normalize, and convert to lowercase
     final String cleanedMnemonic = mnemonic
@@ -34,32 +34,8 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
         .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAll(RegExp(r'[^\w\s]'), ''); // Remove special characters
 
-    // Temporary debugging
-    print('=== BIP39 VALIDATION DEBUG ===');
-    print('Original: "$mnemonic"');
-    print('Cleaned: "$cleanedMnemonic"');
-
-        // Test with a known valid mnemonic
-    final String testMnemonic =
-        'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-    final bool testValid = bip39.validateMnemonic(testMnemonic);
-    print('Test mnemonic valid: $testValid');
-    
-    // Try to generate a mnemonic to test if the package is working
-    try {
-      final String generatedMnemonic = bip39.generateMnemonic();
-      print('Generated mnemonic: $generatedMnemonic');
-      final bool generatedValid = bip39.validateMnemonic(generatedMnemonic);
-      print('Generated mnemonic valid: $generatedValid');
-    } catch (e) {
-      print('Error generating mnemonic: $e');
-    }
-    
-    final bool isValid = bip39.validateMnemonic(cleanedMnemonic);
-    print('Input mnemonic valid: $isValid');
-    print('================================');
-    
-    return isValid;
+    // Validate with cleaned mnemonic
+    return bip39.validateMnemonic(cleanedMnemonic);
   }
 
   @override

@@ -8,14 +8,8 @@ import '../../domain/repositories/restore_wallet_repository.dart';
 class RestoreWalletViewModel extends ChangeNotifier {
   RestoreWalletViewModel({RestoreWalletRepository? repository})
       : _repository = repository ?? RestoreWalletRepositoryImpl() {
-    phraseController.addListener(() {
-      print('=== LISTENER TRIGGERED ===');
-      updateFormValidity();
-    });
-    privateKeyController.addListener(() {
-      print('=== PRIVATE KEY LISTENER TRIGGERED ===');
-      updateFormValidity();
-    });
+    phraseController.addListener(updateFormValidity);
+    privateKeyController.addListener(updateFormValidity);
   }
   final TextEditingController phraseController = TextEditingController();
   final TextEditingController privateKeyController = TextEditingController();
@@ -41,24 +35,14 @@ class RestoreWalletViewModel extends ChangeNotifier {
   }
 
   void updateFormValidity() {
-    if (selectedRestoreMethod == 'Seed Phrase') {
-      final String phrase = phraseController.text.trim();
-      final List<String> words =
-          phrase.split(' ').where((String word) => word.isNotEmpty).toList();
-      final bool isValidMnemonic = _repository.isValidMnemonic(phrase);
-      final bool hasValidWordCount = words.length == 12 || words.length == 24;
-      isFormValid = phrase.isNotEmpty && isValidMnemonic && hasValidWordCount;
-
-      // Temporary debugging to identify the issue
-      print('=== VALIDATION DEBUG ===');
-      print('Phrase: "$phrase"');
-      print('Word count: ${words.length}');
-      print('Words: $words');
-      print('isValidMnemonic: $isValidMnemonic');
-      print('hasValidWordCount: $hasValidWordCount');
-      print('isFormValid: $isFormValid');
-      print('=======================');
-    } else {
+          if (selectedRestoreMethod == 'Seed Phrase') {
+        final String phrase = phraseController.text.trim();
+        final List<String> words =
+            phrase.split(' ').where((String word) => word.isNotEmpty).toList();
+        final bool isValidMnemonic = _repository.isValidMnemonic(phrase);
+        final bool hasValidWordCount = words.length == 12 || words.length == 24;
+        isFormValid = phrase.isNotEmpty && isValidMnemonic && hasValidWordCount;
+      } else {
       final String privateKey = privateKeyController.text.trim();
       final bool isValidPrivateKey = _repository.isValidPrivateKey(privateKey);
       isFormValid = privateKey.isNotEmpty && isValidPrivateKey;
