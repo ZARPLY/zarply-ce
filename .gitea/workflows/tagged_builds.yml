@@ -50,7 +50,7 @@ jobs:
         - name: Save Artifacts
           run: |
             mkdir artifacts
-            mv build/app/outputs/flutter-apk/app-arm64-v8a-prod-release.apk artifacts/zarply-arm64-v8a.apk         
+            mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk artifacts/zarply-arm64-v8a.apk         
         - name: Build Android App Bundle
           run: |
             flutter build appbundle --release \
