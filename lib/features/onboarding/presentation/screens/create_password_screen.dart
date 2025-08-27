@@ -210,22 +210,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                       ),
                       const SizedBox(height: 32),
                       _ImportedWalletInfoBox(),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: LoadingButton(
-                          isLoading: viewModel.isLoading,
-                          onPressed:
-                              viewModel.isFormValid ? _handleContinue : null,
-                          style: ElevatedButton.styleFrom(
-                            textStyle: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          child: const Text('Continue'),
-                        ),
-                      ),
                       const SizedBox(height: 32),
                     ],
                   ),
