@@ -19,17 +19,21 @@ class WalletStorageService {
   final String _associatedTokenAccountKey = 'associated_token_account_key';
 
   Future<void> saveWalletPrivateKey(Wallet wallet) async {
+    print('DEBUG: WalletStorageService.saveWalletPrivateKey() called for address: ${wallet.address}');
     try {
       if (wallet.address.isEmpty) {
         throw WalletStorageException('Wallet address cannot be empty.');
       }
       final Ed25519HDKeyPairData keyPairData = await wallet.extract();
       final String privateKeyBase64 = base64Encode(keyPairData.bytes);
+      print('DEBUG: Saving wallet private key to secure storage');
       await _secureStorage.write(
         key: _walletPrivateKey,
         value: privateKeyBase64,
       );
+      print('DEBUG: Wallet private key saved successfully');
     } catch (e) {
+      print('DEBUG: Error saving wallet private key: $e');
       throw WalletStorageException('Failed to save wallet key: $e');
     }
   }
@@ -51,17 +55,23 @@ class WalletStorageService {
   }
 
   Future<Wallet?> retrieveWallet() async {
+    print('DEBUG: WalletStorageService.retrieveWallet() called');
     try {
       final String? walletKey =
           await _secureStorage.read(key: _walletPrivateKey);
+      print('DEBUG: Retrieved wallet key from storage: ${walletKey != null ? 'exists' : 'null'}');
+      
       if (walletKey == null) {
+        print('DEBUG: No wallet key found in storage');
         return null;
       }
 
       final Ed25519HDKeyPair restoredWallet =
           await Wallet.fromPrivateKeyBytes(privateKey: base64Decode(walletKey));
+      print('DEBUG: Successfully restored wallet with address: ${restoredWallet.address}');
       return restoredWallet;
     } catch (e) {
+      print('DEBUG: Error retrieving wallet: $e');
       throw WalletStorageException('Failed to retrieve wallet key: $e');
     }
   }

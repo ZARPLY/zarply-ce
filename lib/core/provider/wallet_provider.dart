@@ -74,10 +74,14 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<bool> initialize() async {
+    print('DEBUG: WalletProvider.initialize() called');
+    print('DEBUG: Current wallet in provider: ${_wallet?.address}');
     try {
       _wallet = await _walletStorageService.retrieveWallet();
+      print('DEBUG: Retrieved wallet: ${_wallet?.address}');
 
       if (_wallet == null) {
+        print('DEBUG: No wallet found, returning false');
         _userTokenAccount = null;
         _zarpBalance = 0.0;
         _solBalance = 0.0;
@@ -87,31 +91,50 @@ class WalletProvider extends ChangeNotifier {
       }
 
       final WalletSolanaService service = await _service;
+      print('DEBUG: Got Solana service');
+      
       _userTokenAccount =
           await service.getAssociatedTokenAccount(_wallet!.address);
+      print('DEBUG: Associated token account: ${_userTokenAccount?.pubkey}');
 
       if (_userTokenAccount == null) {
         _zarpBalance = 0.0;
+        print('DEBUG: No token account, setting balance to 0');
       } else {
         _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
+        print('DEBUG: ZARP balance: $_zarpBalance');
 
         // Fetch limited transactions during initialization to pre-populate the list
         try {
           await fetchLimitedTransactions();
+          print('DEBUG: Transactions fetched successfully');
         } catch (e) {
+          print('DEBUG: Error fetching transactions: $e');
           // Don't fail initialization if transaction fetching fails
           // Transactions will be loaded when the wallet screen is opened
         }
       }
       _solBalance = await service.getSolBalance(_wallet!.address);
+      print('DEBUG: SOL balance: $_solBalance');
 
       _isReady = true;
+      print('DEBUG: Wallet initialization completed successfully');
       notifyListeners();
       return true;
     } catch (e) {
-      reset();
-      _isReady = true;
-      notifyListeners();
+      print('DEBUG: Wallet initialization failed with error: $e');
+      // Only reset if we don't have a wallet stored
+      // This prevents clearing existing wallet data on network errors
+      if (_wallet == null) {
+        print('DEBUG: Resetting wallet provider');
+        reset();
+      } else {
+        // If we have a wallet but initialization failed, just mark as ready
+        // and keep existing data - the wallet screen can handle retrying
+        print('DEBUG: Keeping existing wallet data, marking as ready');
+        _isReady = true;
+        notifyListeners();
+      }
       return false;
     }
   }
@@ -223,12 +246,15 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<void> storeWallet(Wallet wallet) async {
+    print('DEBUG: storeWallet called with address: ${wallet.address}');
     try {
       await _walletStorageService.saveWalletPrivateKey(wallet);
       await _walletStorageService.saveWalletPublicKey(wallet);
       _wallet = wallet;
+      print('DEBUG: Wallet stored in provider: ${_wallet?.address}');
       notifyListeners();
     } catch (e) {
+      print('DEBUG: Error storing wallet: $e');
       // Handle error
       rethrow;
     }

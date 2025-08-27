@@ -62,8 +62,8 @@ class _SplashScreenState extends State<SplashScreen>
         // User has wallet but onboarding is not completed
         // Check if they have a password - if yes, they've completed setup and should go to login
         try {
-          final String pin = await SecureStorageService().getPin();
-          if (pin.isNotEmpty) {
+          final bool hasPassword = await walletProvider.hasPassword();
+          if (hasPassword) {
             // User has password - they've completed the setup
             // If they're not authenticated, they should go to login, not continue onboarding
             if (mounted) {

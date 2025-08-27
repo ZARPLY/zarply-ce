@@ -23,11 +23,18 @@ class _AppInitializerState extends State<AppInitializer> {
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
 
-    // Only initialize if not already ready
-    if (!walletProvider.isReady) {
+    print(
+        'DEBUG: AppInitializer initState - isReady: ${walletProvider.isReady}, hasWallet: ${walletProvider.hasWallet}');
+
+    // Only initialize if not already ready and doesn't have wallet data
+    if (!walletProvider.isReady || walletProvider.wallet == null) {
+      print('DEBUG: AppInitializer calling initialize()');
       _initFuture = walletProvider.initialize();
     } else {
-      _initFuture = Future<bool>.value(walletProvider.hasWallet);
+      // If already ready and has wallet, just return true
+      print(
+          'DEBUG: AppInitializer skipping initialize() - already ready with wallet: ${walletProvider.wallet?.address}');
+      _initFuture = Future<bool>.value(true);
     }
   }
 
@@ -45,12 +52,23 @@ class _AppInitializerState extends State<AppInitializer> {
         if (snapshot.data == true) {
           final WalletProvider walletProvider =
               Provider.of<WalletProvider>(context, listen: false);
-          return _AppData(
-            wallet: walletProvider.wallet!,
-            walletBalance: walletProvider.walletBalance,
-            solBalance: walletProvider.solBalance,
-            child: widget.child,
-          );
+
+          print(
+              'DEBUG: AppInitializer build - wallet exists: ${walletProvider.wallet != null}');
+
+          // Check if wallet exists before creating AppData
+          if (walletProvider.wallet != null) {
+            return _AppData(
+              wallet: walletProvider.wallet!,
+              walletBalance: walletProvider.walletBalance,
+              solBalance: walletProvider.solBalance,
+              child: widget.child,
+            );
+          } else {
+            // If no wallet after initialization, just return the child
+            print('DEBUG: AppInitializer no wallet found, returning child');
+            return widget.child;
+          }
         }
         return widget.child;
       },

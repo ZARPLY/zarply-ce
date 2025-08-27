@@ -30,18 +30,25 @@ String _getInitialLocation(
   AuthProvider authProvider,
   WalletProvider walletProvider,
 ) {
+  print('DEBUG: _getInitialLocation called');
+  print('DEBUG: isAuthenticated: ${authProvider.isAuthenticated}');
+  print('DEBUG: hasWallet: ${walletProvider.hasWallet}');
+  
   // If user is authenticated and has wallet, go to wallet
   if (authProvider.isAuthenticated && walletProvider.hasWallet) {
+    print('DEBUG: Going to /wallet');
     return '/wallet';
   }
 
   // If user has wallet but not authenticated, they need to complete setup or login
   // We'll let the splash screen determine the exact step since it's async
   if (walletProvider.hasWallet && !authProvider.isAuthenticated) {
+    print('DEBUG: Going to /splash (has wallet but not authenticated)');
     return '/splash';
   }
 
   // First time app launch - show splash screen
+  print('DEBUG: Going to /splash (first time)');
   return '/splash';
 }
 
@@ -63,6 +70,8 @@ GoRouter createRouter(
         redirect: (BuildContext context, GoRouterState state) {
           final String location = state.uri.toString();
           final bool isAuthenticated = authProvider.isAuthenticated;
+          
+          print('DEBUG: Router redirect check - Location: $location, isAuthenticated: $isAuthenticated');
 
           // NEVER redirect /login - this is the logout screen
           if (location == '/login') {
@@ -85,11 +94,13 @@ GoRouter createRouter(
             ];
 
             if (protectedRoutes.contains(location)) {
+              print('DEBUG: Redirecting to /login from $location');
               return '/login';
             }
           }
 
           // For all other cases, stay where you are
+          print('DEBUG: No redirect needed for $location');
           return null;
         },
         builder: (BuildContext context, GoRouterState state, Widget child) {
