@@ -11,13 +11,24 @@ class PasswordStrengthProvider extends ChangeNotifier {
   List<String> get suggestions => _result.suggestions;
   PasswordStrengthCriteria get criteria => _result.criteria;
 
+  String? _passwordHint;
+  String? get passwordHint => _passwordHint;
+
   void evaluatePassword(String password) {
     _result = PasswordStrengthService.evaluatePassword(password);
+
+    if (_result.score < 4) {
+      _passwordHint = PasswordStrengthService.getPasswordHintText(_result);
+    } else {
+      _passwordHint = null;
+    }
+
     notifyListeners();
   }
 
   void reset() {
     _result = PasswordStrengthService.evaluatePassword('');
+    _passwordHint = null;
     notifyListeners();
   }
 

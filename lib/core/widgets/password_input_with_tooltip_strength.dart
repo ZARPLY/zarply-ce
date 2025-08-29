@@ -88,33 +88,7 @@ class _PasswordInputWithTooltipStrengthState
               focusedErrorBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.red, width: 2),
               ),
-              errorText: widget.errorText,
-              errorMaxLines: 2,
-              suffixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (widget.enableStrengthFeedback &&
-                      widget.controller.text.isNotEmpty)
-                    Consumer<PasswordStrengthProvider>(
-                      builder: (
-                        BuildContext context,
-                        PasswordStrengthProvider provider,
-                        Widget? child,
-                      ) {
-                        return Tooltip(
-                          message: _buildTooltipMessage(provider),
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            child: Icon(
-                              Icons.help_outline,
-                              color: Colors.grey.shade600,
-                              size: 20,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  IconButton(
+              suffixIcon: IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility : Icons.visibility_off,
                     ),
@@ -123,9 +97,7 @@ class _PasswordInputWithTooltipStrengthState
                         _obscureText = !_obscureText;
                       });
                     },
-                  ),
-                ],
-              ),
+                ),
             ),
           ),
           if (widget.enableStrengthFeedback)
@@ -145,6 +117,18 @@ class _PasswordInputWithTooltipStrengthState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      if (provider.passwordHint != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            provider.passwordHint!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: provider.strengthColor,
+                            ),
+                          ),
+                        ),
                       _buildProgressBar(context, provider),
                       const SizedBox(height: 8),
                       _buildStrengthMessage(context, provider),
@@ -156,18 +140,6 @@ class _PasswordInputWithTooltipStrengthState
         ],
       ),
     );
-  }
-
-  String _buildTooltipMessage(PasswordStrengthProvider provider) {
-    if (provider.suggestions.isEmpty) {
-      return 'Password strength: ${provider.message}';
-    }
-
-    final String strengthInfo =
-        'Strength: ${provider.message}\n\nSuggestions:\n';
-    final String suggestions =
-        provider.suggestions.take(3).map((String s) => '• $s').join('\n');
-    return strengthInfo + suggestions;
   }
 
   Widget _buildProgressBar(
