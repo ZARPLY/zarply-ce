@@ -62,14 +62,14 @@ android {
             applicationIdSuffix ".dev"
             resValue "string", "app_name", "Zarply Dev"
         }
-        create("qa") {
+       /* create("qa") {
             dimension = "default"
             applicationIdSuffix ".qa"
             resValue "string", "app_name", "Zarply QA"
-        }
+        }*/
         create("prod") {
             dimension = "default"
-            resValue "string", "app_name", "Zarply"
+            resValue "string", "app_name", "Zarply Prod"
         }
     }
 }
