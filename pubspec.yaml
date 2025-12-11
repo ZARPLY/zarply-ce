@@ -1,4 +1,4 @@
-name: zarply
+name: Zarply
 description: "ZARPLY Wallet"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   bip39: ^1.0.6
   flutter:
-    sdk: flutter
+    sdk: flutter  
   flutter_dotenv: ^5.1.0
   flutter_keyboard_visibility: ^6.0.0
   flutter_secure_storage: ^9.2.2
@@ -37,6 +37,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  #current version: 3.38.4 
   # TODO: create assets/ folder in root dir
   # TODO: do not list all images here, use directories (assets/images/)
   assets:
@@ -51,7 +52,6 @@ flutter:
     - images/received.png
     - .env
     - .env.prod
-    - .env.dev
 
   # TODO: ask a designer to provide fonts for our project and specify them here
   # To add custom fonts to your application, add a fonts section here,

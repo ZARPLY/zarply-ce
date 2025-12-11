@@ -41,18 +41,15 @@ android {
         }
     }
 
-    buildTypes {
-        debug {}
-        release {
-            minifyEnabled = true
-            shrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("release")
-        }
+buildTypes {
+    debug {}
+    release {
+        minifyEnabled = false
+        shrinkResources = false
+        signingConfig = signingConfigs.getByName("release")
     }
+}
+
 
     flavorDimensions += "default"
 
