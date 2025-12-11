@@ -82,7 +82,7 @@ jobs:
           sudo kill $pid || true
 
   build-android-flavors:
-    runs-on: ubuntu-latest
+    runs-on: workstation.ubuntu.lts
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
