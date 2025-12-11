@@ -51,7 +51,6 @@ flutter:
     - images/payed.png
     - images/received.png
     - .env
-    - .env.prod
 
   # TODO: ask a designer to provide fonts for our project and specify them here
   # To add custom fonts to your application, add a fonts section here,
