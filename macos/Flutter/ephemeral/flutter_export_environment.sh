@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=/home/geandre/snap/flutter/common/flutter"
-export "FLUTTER_APPLICATION_PATH=/home/geandre/ZARPLY"
+export "FLUTTER_ROOT=/home/dev-zm/Documents/SDKS/flutter"
+export "FLUTTER_APPLICATION_PATH=/home/dev-zm/Documents/Projects/zarply"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"

@@ -1,6 +1,6 @@
 // This is a generated file; do not edit or check into version control.
-FLUTTER_ROOT=/home/geandre/snap/flutter/common/flutter
-FLUTTER_APPLICATION_PATH=/home/geandre/ZARPLY
+FLUTTER_ROOT=/home/dev-zm/Documents/SDKS/flutter
+FLUTTER_APPLICATION_PATH=/home/dev-zm/Documents/Projects/zarply
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_BUILD_DIR=build
 FLUTTER_BUILD_NAME=1.0.0
