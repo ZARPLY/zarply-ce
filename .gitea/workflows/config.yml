@@ -90,7 +90,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.0"
+          flutter-version: "3.38.4"
 
       - name: Flutter Pub Get
         run: flutter pub get
@@ -119,6 +119,14 @@ jobs:
       - name: Prod Build Success
         run: echo "✅ Successfully built PROD flavor"
 
+  # build-and-test-mac:
+  #   runs-on: workstation.mac
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: print test
+  #       run: echo "This is a test message"
 
 # example of testing pipline 
   # flutter_test:
@@ -134,3 +142,6 @@ jobs:
 
   #     - name: Run Flutter Tests
   #       run: flutter test
+
+
+      
