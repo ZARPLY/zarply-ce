@@ -53,22 +53,19 @@ buildTypes {
 
     flavorDimensions += "default"
 
-    productFlavors {
-        create("dev") {
-            dimension = "default"
-            applicationIdSuffix ".dev"
-            resValue "string", "app_name", "Zarply Dev"
-        }
-       /* create("qa") {
-            dimension = "default"
-            applicationIdSuffix ".qa"
-            resValue "string", "app_name", "Zarply QA"
-        }*/
-        create("prod") {
-            dimension = "default"
-            resValue "string", "app_name", "Zarply Prod"
-        }
+   productFlavors {
+    create("dev") {
+        dimension = "default"
+        applicationIdSuffix ".dev"
+        manifestPlaceholders = [ appName: "Zarply Dev" ]
     }
+
+    create("prod") {
+        dimension = "default"
+        manifestPlaceholders = [ appName: "Zarply" ]
+    }
+}
+
 }
 
 flutter {

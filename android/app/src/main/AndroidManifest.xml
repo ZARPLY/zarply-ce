@@ -2,9 +2,13 @@
    
      <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.CAMERA" />
+  
+  <uses-feature
+    android:name="android.hardware.camera"
+    android:required="true" />
 
-
-    <application
+ <application
        android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
