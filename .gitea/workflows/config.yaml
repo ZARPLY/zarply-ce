@@ -1,0 +1,67 @@
+name: mobile pipeline
+run-name: ${{ github.actor }} is testing out Gitea Actions 🚀
+on: [ push ]
+
+jobs:
+  dart_analyze:
+    name: Static Code Analysis
+    runs-on: workstation.ubuntu.lts
+    container:
+      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Analyze Project Source
+        run: dart analyze --fatal-infos
+  flutter_test:
+    name: Unit Tests
+    runs-on: workstation.ubuntu.lts
+    needs: dart_analyze
+    container:
+      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Run Flutter Tests
+        run: flutter test
+  notify_success:
+    name: Discord Notification
+    runs-on: workstation.ubuntu.lts
+    needs:
+      - dart_analyze
+      - flutter_test
+    if: ${{ success() }}
+    steps:
+      - name: Notify Discord
+        run: |
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [
+              {
+                "title": "Pipeline Report",
+                "fields": [
+                  {
+                    "name": "Repository",
+                    "value": "'${{ gitea.repository }}'",
+                    "inline": false
+                  },
+                  {
+                    "name": "Workflow",
+                    "value": "success",
+                    "inline": false
+                  }
+                ]
+              }
+            ],
+            "username": "Gitea Actions"
+          }' \
+          "${{ secrets.DISCORD_WEBHOOK }}"

@@ -1,0 +1,149 @@
+name: Build And Upload
+
+on:
+  push:
+    tags:
+      - '*-debug'
+
+jobs:
+  cleanup:
+    name: Clean Docker Images
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Clean Docker Images
+        run: bash tools/clean_gitea.sh
+  android_build:
+    name: Android APK/Appbundle Build & Upload
+    runs-on: workstation.ubuntu.lts
+    needs: cleanup
+    container:
+      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+    env:
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+      GITEA_USERNAME: ${{ secrets.USERNAME }}
+      GITEA_PASSWORD: ${{ secrets.PASSWORD }}
+      GITEA_SERVER: ${{ secrets.SERVER }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
+      - name: Update Gradle Properties
+        run: cp android/gradle.docker.properties android/gradle.properties
+      - name: Optimize Gradle Wrapper For CI
+        run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
+      - name: Build Android APK
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          flutter build apk --release \
+            --obfuscate \
+            --split-per-abi \
+            --target-platform android-arm64 \
+            --split-debug-info=split_debug_info/ \
+            --build-name=$VERSION \
+            --build-number=$BUILD
+      - name: Save Artifacts
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          mkdir artifacts
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-$ENV-release.apk artifacts/zarply-arm64-v8a.apk
+      - name: Build Android App Bundle
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=split_debug_info/ \
+            --build-name=$VERSION \
+            --build-number=$BUILD
+      - name: Save Artifacts
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
+          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
+          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
+          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
+          cd ../../../../../../../../
+      - name: Upload APK to Gitea
+        run: |
+          REPO_VERSION=steps.meta.outputs.REPO_VERSION
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
+          echo $REPO_VERSION
+          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
+               --upload-file artifacts/zarply-arm64-v8a.apk \
+               $GITEA_SERVER/api/packages/zarply/generic/zarply_apk/$REPO_VERSION/zarply-arm64-v8a.apk
+      - name: Upload Appbundle to Gitea
+        run: |
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+          echo $REPO_VERSION
+          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
+               --upload-file artifacts/zarply.aab \
+               $GITEA_SERVER/api/packages/zarply/generic/zarply_bundle/$REPO_VERSION/zarply.aab
+      - name: Create zip file with correct timestamps
+        run: zip -r artifacts.zip artifacts
+      - name: Store Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: prod-zarply
+          path: artifacts.zip
+  notify_success:
+    name: Discord Notification
+    runs-on: workstation.ubuntu.lts
+    needs:
+      - android_build
+    if: ${{ always() }}
+    steps:
+      - name: Notify Discord
+        run: |
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [
+              {
+                "title": "new version build",
+                "fields": [
+                  {
+                    "name": "Repository",
+                    "value": "'${{ gitea.repository }}'",
+                    "inline": false
+                  },
+                  {
+                    "name": "Workflow",
+                    "value": "${{ job.status }}",
+                    "inline": false
+                  }
+                ]
+              }
+            ],
+            "username": "Gitea Actions"
+          }' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
