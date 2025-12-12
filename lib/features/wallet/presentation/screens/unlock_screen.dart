@@ -34,6 +34,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
     try {
       final String storedPin = await SecureStorageService().getPin();
       if (_pinController.text == storedPin) {
+        if (!mounted) return;
         context.go(
           widget.nextRoute,
           extra: widget.extra,

@@ -21,7 +21,7 @@ class PaymentDetailsViewModel extends ChangeNotifier {
   bool? accountExists;
   bool isCheckingAccount = false;
   bool get canContinue =>
-      isFormValid && accountExists == true && !isCheckingAccount;
+      isFormValid && (accountExists ?? false) && !isCheckingAccount;
 
   @override
   void dispose() {

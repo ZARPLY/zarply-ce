@@ -122,16 +122,15 @@ class _QRScannerState extends State<QRScanner> {
               await paymentProvider
                   .setRecipientAddress(paymentRequest.walletAddress);
 
-              if (context.mounted) {
-                context.go(
-                  '/payment_amount',
-                  extra: <String, String>{
-                    'amount': paymentRequest.amount,
-                    'recipientAddress': paymentRequest.walletAddress,
-                    'source': '/scan',
-                  },
-                );
-              }
+              if (!mounted) return;
+              context.go(
+                '/payment_amount',
+                extra: <String, String>{
+                  'amount': paymentRequest.amount,
+                  'recipientAddress': paymentRequest.walletAddress,
+                  'source': '/scan',
+                },
+              );
             }
           }
         }

@@ -77,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ]);
 
+        if (!mounted) return;
         // routing happens in app_router.dart based on isAuthenticated
         await Provider.of<AuthProvider>(
           context,
@@ -214,9 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: Colors.green,
                                           key: ValueKey<String>('valid'),
                                         )
-                                      : const SizedBox(
-                                          width: 0,
-                                          height: 0,
+                                      : const SizedBox.shrink(
                                           key: ValueKey<String>('empty'),
                                         ),
                                 ),

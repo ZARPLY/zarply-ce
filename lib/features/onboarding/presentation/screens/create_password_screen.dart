@@ -218,9 +218,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: <Widget>[
-                                          Radio<bool>(
-                                            value: true,
-                                            groupValue: viewModel.isChecked,
+                                          Checkbox(
+                                            value: viewModel.isChecked,
                                             materialTapTargetSize:
                                                 MaterialTapTargetSize
                                                     .shrinkWrap,

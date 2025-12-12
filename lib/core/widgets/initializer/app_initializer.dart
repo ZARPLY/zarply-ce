@@ -8,7 +8,7 @@ class AppInitializer extends StatefulWidget {
   const AppInitializer({required this.child, super.key});
   final Widget child;
 
-  static _AppData of(BuildContext context) => _AppData.of(context);
+  static AppData of(BuildContext context) => AppData.of(context);
 
   @override
   State<AppInitializer> createState() => _AppInitializerState();
@@ -42,10 +42,10 @@ class _AppInitializerState extends State<AppInitializer> {
           );
         }
 
-        if (snapshot.data == true) {
+        if (snapshot.data ?? false) {
           final WalletProvider walletProvider =
               Provider.of<WalletProvider>(context, listen: false);
-          return _AppData(
+          return AppData(
             wallet: walletProvider.wallet!,
             walletBalance: walletProvider.walletBalance,
             solBalance: walletProvider.solBalance,
@@ -58,27 +58,28 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 }
 
-class _AppData extends InheritedWidget {
-  const _AppData({
+class AppData extends InheritedWidget {
+  const AppData({
     required this.wallet,
     required this.walletBalance,
     required this.solBalance,
     required super.child,
+    super.key,
   });
 
   final Wallet wallet;
   final double walletBalance;
   final double solBalance;
 
-  static _AppData of(BuildContext context) {
-    final _AppData? data =
-        context.dependOnInheritedWidgetOfExactType<_AppData>();
+  static AppData of(BuildContext context) {
+    final AppData? data =
+        context.dependOnInheritedWidgetOfExactType<AppData>();
     assert(data != null, 'AppInitializer.of() called with no ancestor!');
     return data!;
   }
 
   @override
-  bool updateShouldNotify(_AppData oldWidget) =>
+  bool updateShouldNotify(AppData oldWidget) =>
       wallet != oldWidget.wallet ||
       walletBalance != oldWidget.walletBalance ||
       solBalance != oldWidget.solBalance;

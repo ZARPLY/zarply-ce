@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -24,11 +26,13 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     final WalletProvider walletProvider =
         Provider.of<WalletProvider>(context, listen: false);
-    _viewModel = SplashViewModel(walletProvider, context);
+    _viewModel = SplashViewModel(walletProvider);
     _viewModel.initAnimationController(this);
 
     // Check if we should skip splash and go directly to destination
-    _checkAndNavigate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndNavigate();
+    });
   }
 
   Future<void> _checkAndNavigate() async {
@@ -42,6 +46,7 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (onboardingCompleted) {
         // User has completed onboarding, check if they're authenticated
+        if (!mounted) return;
         final AuthProvider authProvider =
             Provider.of<AuthProvider>(context, listen: false);
 
@@ -89,10 +94,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     // If we get here, user has no wallet - this is first time app launch
     // Show splash screen and continue with normal flow
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _viewModel.playAnimation();
-    });
-    _navigateToNextScreen();
+    if (mounted) {
+      await _viewModel.playAnimation();
+      await _navigateToNextScreen();
+    }
   }
 
   @override
@@ -113,8 +118,12 @@ class _SplashScreenState extends State<SplashScreen>
     // Minimum splash duration of 2 seconds
     const Duration minSplashDuration = Duration(seconds: 2);
 
+    if (!mounted) return;
+    final AuthProvider authProvider =
+        Provider.of<AuthProvider>(context, listen: false);
+
     // First time setup - start both the initialization and minimum duration timer
-    final Future<String> routeFuture = _viewModel.initializeAndGetRoute();
+    final Future<String> routeFuture = _viewModel.initializeAndGetRoute(authProvider);
     final Future<void> minDurationFuture =
         Future<void>.delayed(minSplashDuration);
 
@@ -128,6 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
     _navigated = true;
     final String route = await routeFuture;
     _viewModel.stopAnimation();
+    if (!mounted) return;
     context.go(route);
   }
 

@@ -13,7 +13,7 @@ class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  _WalletScreenState createState() => _WalletScreenState();
+  State<WalletScreen> createState() => _WalletScreenState();
 }
 
 class _WalletScreenState extends State<WalletScreen>
@@ -353,8 +353,11 @@ class _WalletScreenState extends State<WalletScreen>
                   child: Image(image: AssetImage('images/saflag.png')),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    showMenu(
+                  onTap: () async {
+                    final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final GoRouter router = GoRouter.of(context);
+
+                    final String? value = await showMenu(
                       context: context,
                       position: RelativeRect.fromLTRB(
                         MediaQuery.of(context).size.width - 100,
@@ -374,15 +377,15 @@ class _WalletScreenState extends State<WalletScreen>
                           ),
                         ),
                       ],
-                    ).then((String? value) async {
-                      if (value == 'logout') {
-                        await Provider.of<AuthProvider>(context, listen: false)
-                            .logout();
+                    );
 
-                        // Use replace to avoid navigation stack issues
-                        context.replace('/login');
-                      }
-                    });
+                    if (value != 'logout' || !mounted) return;
+
+                    await authProvider.logout();
+
+                    if (!mounted) return;
+                    // Use replace to avoid navigation stack issues
+                    await router.replace('/login');
                   },
                   child: Container(
                     width: 40,

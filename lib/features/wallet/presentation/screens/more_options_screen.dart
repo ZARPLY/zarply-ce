@@ -8,10 +8,13 @@ class MoreOptionsScreen extends StatelessWidget {
   const MoreOptionsScreen({super.key});
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
+    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Public key copied')),
-    );
+    if (context.mounted) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Public key copied')),
+      );
+    }
   }
 
   @override

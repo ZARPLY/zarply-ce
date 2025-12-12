@@ -158,9 +158,10 @@ class _PaymentRequestDetailsScreenState
     String text,
     bool isFrom,
   ) async {
+    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Address copied to clipboard')),
     );
     setState(() {
