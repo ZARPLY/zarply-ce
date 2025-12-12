@@ -6,10 +6,10 @@ class PaymentRequest {
   }) : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
   factory PaymentRequest.fromJson(Map<String, dynamic> json) => PaymentRequest(
-        amount: json['amount'],
-        walletAddress: json['walletAddress'],
-        timestamp: json['timestamp'],
-      );
+    amount: json['amount'],
+    walletAddress: json['walletAddress'],
+    timestamp: json['timestamp'],
+  );
   final String amount;
   final String walletAddress;
   final int timestamp;
@@ -17,8 +17,8 @@ class PaymentRequest {
   String get qrCodeData => 'zarply:payment:$amount:$walletAddress:$timestamp';
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'amount': amount,
-        'walletAddress': walletAddress,
-        'timestamp': timestamp,
-      };
+    'amount': amount,
+    'walletAddress': walletAddress,
+    'timestamp': timestamp,
+  };
 }

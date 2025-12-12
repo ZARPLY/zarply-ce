@@ -2,8 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'secure_storage_service.dart';
 
 class RpcService {
-  RpcService({SecureStorageService? storageService})
-      : _storageService = storageService ?? SecureStorageService();
+  RpcService({SecureStorageService? storageService}) : _storageService = storageService ?? SecureStorageService();
 
   final SecureStorageService _storageService;
 
@@ -11,8 +10,7 @@ class RpcService {
   Future<({String rpcUrl, String websocketUrl})> getRpcConfiguration() async {
     try {
       // Try to get user-configured RPC settings first
-      final ({String? rpcUrl, String? websocketUrl}) config =
-          await _storageService.getRpcConfiguration();
+      final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
 
       if (config.rpcUrl != null && config.websocketUrl != null) {
         return (
@@ -23,10 +21,8 @@ class RpcService {
 
       // Fallback to environment variables
       return (
-        rpcUrl: dotenv.env['solana_wallet_rpc_url'] ??
-            'https://api.devnet.solana.com',
-        websocketUrl: dotenv.env['solana_wallet_websocket_url'] ??
-            'wss://api.devnet.solana.com',
+        rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? 'https://api.devnet.solana.com',
+        websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? 'wss://api.devnet.solana.com',
       );
     } catch (e) {
       // Final fallback to default Solana endpoints

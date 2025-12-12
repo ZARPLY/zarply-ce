@@ -7,8 +7,7 @@ import '../../data/repositories/welcome_repository_impl.dart';
 import '../../domain/repositories/welcome_repository.dart';
 
 class WelcomeViewModel extends ChangeNotifier {
-  WelcomeViewModel({WelcomeRepository? repository})
-      : _repository = repository ?? WelcomeRepositoryImpl();
+  WelcomeViewModel({WelcomeRepository? repository}) : _repository = repository ?? WelcomeRepositoryImpl();
 
   final WelcomeRepository _repository;
   bool _isLoading = false;
@@ -28,12 +27,8 @@ class WelcomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final ({
-        String? recoveryPhrase,
-        ProgramAccount? tokenAccount,
-        Wallet? wallet,
-        String? errorMessage
-      }) result = await _repository.createWallet();
+      final ({String? recoveryPhrase, ProgramAccount? tokenAccount, Wallet? wallet, String? errorMessage}) result =
+          await _repository.createWallet();
 
       if (result.errorMessage != null) {
         _errorMessage = result.errorMessage;

@@ -4,10 +4,10 @@ import 'package:solana/solana.dart';
 
 class PaymentDetailsViewModel extends ChangeNotifier {
   PaymentDetailsViewModel({required this.ownPublicKey})
-      : _solanaClient = SolanaClient(
-          rpcUrl: Uri.parse(dotenv.env['solana_wallet_rpc_url']!),
-          websocketUrl: Uri.parse(dotenv.env['solana_wallet_websocket_url']!),
-        ) {
+    : _solanaClient = SolanaClient(
+        rpcUrl: Uri.parse(dotenv.env['solana_wallet_rpc_url']!),
+        websocketUrl: Uri.parse(dotenv.env['solana_wallet_websocket_url']!),
+      ) {
     publicKeyController.addListener(_updateFormValidity);
     descriptionController.addListener(_updateFormValidity);
   }
@@ -20,8 +20,7 @@ class PaymentDetailsViewModel extends ChangeNotifier {
   String? publicKeyError;
   bool? accountExists;
   bool isCheckingAccount = false;
-  bool get canContinue =>
-      isFormValid && (accountExists ?? false) && !isCheckingAccount;
+  bool get canContinue => isFormValid && (accountExists ?? false) && !isCheckingAccount;
 
   @override
   void dispose() {

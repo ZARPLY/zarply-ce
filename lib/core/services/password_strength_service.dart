@@ -145,8 +145,7 @@ class PasswordStrengthService {
   static bool _hasSequentialChars(String password) {
     final String lowerPassword = password.toLowerCase();
     for (final String pattern in _sequentialPatterns) {
-      if (lowerPassword.contains(pattern) ||
-          lowerPassword.contains(pattern.split('').reversed.join())) {
+      if (lowerPassword.contains(pattern) || lowerPassword.contains(pattern.split('').reversed.join())) {
         return true;
       }
     }
@@ -155,8 +154,7 @@ class PasswordStrengthService {
 
   static bool _hasRepeatingChars(String password) {
     for (int i = 0; i < password.length - 2; i++) {
-      if (password[i] == password[i + 1] &&
-          password[i + 1] == password[i + 2]) {
+      if (password[i] == password[i + 1] && password[i + 1] == password[i + 2]) {
         return true;
       }
     }

@@ -60,9 +60,7 @@ class PrivateKeysView extends StatelessWidget {
             ),
           ),
         ),
-        title: hideProgress
-            ? const SizedBox.shrink()
-            : const ProgressSteps(currentStep: 1, totalSteps: 3),
+        title: hideProgress ? const SizedBox.shrink() : const ProgressSteps(currentStep: 1, totalSteps: 3),
       ),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
@@ -90,8 +88,7 @@ class PrivateKeysView extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => context
-                            .go(hideProgress ? '/more' : '/backup_wallet'),
+                        onPressed: () => context.go(hideProgress ? '/more' : '/backup_wallet'),
                         child: const Text('Close'),
                       ),
                     ),

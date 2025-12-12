@@ -13,9 +13,9 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
     WalletSolanaService? walletService,
     WalletStorageService? storageService,
     SecureStorageService? secureStorage,
-  })  : _walletService = walletService,
-        _storageService = storageService ?? WalletStorageService(),
-        _secureStorage = secureStorage ?? SecureStorageService();
+  }) : _walletService = walletService,
+       _storageService = storageService ?? WalletStorageService(),
+       _secureStorage = secureStorage ?? SecureStorageService();
 
   final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
@@ -65,8 +65,7 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   ) async {
     try {
       final WalletSolanaService service = await _service;
-      final ProgramAccount? tokenAccount =
-          await service.getAssociatedTokenAccount(wallet.address);
+      final ProgramAccount? tokenAccount = await service.getAssociatedTokenAccount(wallet.address);
       if (tokenAccount == null) return;
       await walletProvider.storeAssociatedTokenAccount(tokenAccount);
     } catch (e) {

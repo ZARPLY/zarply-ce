@@ -23,12 +23,10 @@ class PasswordInputWithTooltipStrength extends StatefulWidget {
   final bool enableStrengthFeedback;
 
   @override
-  State<PasswordInputWithTooltipStrength> createState() =>
-      _PasswordInputWithTooltipStrengthState();
+  State<PasswordInputWithTooltipStrength> createState() => _PasswordInputWithTooltipStrengthState();
 }
 
-class _PasswordInputWithTooltipStrengthState
-    extends State<PasswordInputWithTooltipStrength> {
+class _PasswordInputWithTooltipStrengthState extends State<PasswordInputWithTooltipStrength> {
   bool _obscureText = true;
   late PasswordStrengthProvider _strengthProvider;
 
@@ -102,40 +100,41 @@ class _PasswordInputWithTooltipStrengthState
           ),
           if (widget.enableStrengthFeedback)
             Consumer<PasswordStrengthProvider>(
-              builder: (
-                BuildContext context,
-                PasswordStrengthProvider provider,
-                Widget? child,
-              ) {
-                if (provider.result.message == 'Enter a password') {
-                  return const SizedBox.shrink();
-                }
+              builder:
+                  (
+                    BuildContext context,
+                    PasswordStrengthProvider provider,
+                    Widget? child,
+                  ) {
+                    if (provider.result.message == 'Enter a password') {
+                      return const SizedBox.shrink();
+                    }
 
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      if (provider.passwordHint != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            provider.passwordHint!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: provider.strengthColor,
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          if (provider.passwordHint != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                provider.passwordHint!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: provider.strengthColor,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      _buildProgressBar(context, provider),
-                      const SizedBox(height: 8),
-                      _buildStrengthMessage(context, provider),
-                    ],
-                  ),
-                );
-              },
+                          _buildProgressBar(context, provider),
+                          const SizedBox(height: 8),
+                          _buildStrengthMessage(context, provider),
+                        ],
+                      ),
+                    );
+                  },
             ),
         ],
       ),
@@ -159,8 +158,8 @@ class _PasswordInputWithTooltipStrengthState
               decoration: BoxDecoration(
                 color: i < provider.progressLevel
                     ? provider.progressColors[i < provider.progressColors.length
-                        ? i
-                        : provider.progressColors.length - 1]
+                          ? i
+                          : provider.progressColors.length - 1]
                     : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),

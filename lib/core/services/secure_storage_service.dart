@@ -29,8 +29,7 @@ class SecureStorageService {
   }
 
   Future<bool> isOnboardingCompleted() async {
-    final String? value =
-        await _secureStorage.read(key: _onboardingCompletedKey);
+    final String? value = await _secureStorage.read(key: _onboardingCompletedKey);
     return value == 'true';
   }
 
@@ -124,8 +123,7 @@ class SecureStorageService {
 
   Future<double?> getCachedZarpBalance() async {
     try {
-      final String? balanceStr =
-          await _secureStorage.read(key: 'cached_zarp_balance');
+      final String? balanceStr = await _secureStorage.read(key: 'cached_zarp_balance');
       if (balanceStr == null) return null;
 
       return double.tryParse(balanceStr);
@@ -151,8 +149,7 @@ class SecureStorageService {
 
   Future<double?> getCachedSolBalance() async {
     try {
-      final String? balanceStr =
-          await _secureStorage.read(key: 'cached_sol_balance');
+      final String? balanceStr = await _secureStorage.read(key: 'cached_sol_balance');
       if (balanceStr == null) return null;
 
       return double.tryParse(balanceStr);
@@ -163,8 +160,7 @@ class SecureStorageService {
 
   Future<DateTime?> getZarpBalanceTimestamp() async {
     try {
-      final String? timestampStr =
-          await _secureStorage.read(key: 'zarp_balance_timestamp');
+      final String? timestampStr = await _secureStorage.read(key: 'zarp_balance_timestamp');
       if (timestampStr == null) return null;
 
       final int? timestamp = int.tryParse(timestampStr);
@@ -178,8 +174,7 @@ class SecureStorageService {
 
   Future<DateTime?> getSolBalanceTimestamp() async {
     try {
-      final String? timestampStr =
-          await _secureStorage.read(key: 'sol_balance_timestamp');
+      final String? timestampStr = await _secureStorage.read(key: 'sol_balance_timestamp');
       if (timestampStr == null) return null;
 
       final int? timestamp = int.tryParse(timestampStr);

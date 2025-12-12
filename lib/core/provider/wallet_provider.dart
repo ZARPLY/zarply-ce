@@ -87,8 +87,7 @@ class WalletProvider extends ChangeNotifier {
       }
 
       final WalletSolanaService service = await _service;
-      _userTokenAccount =
-          await service.getAssociatedTokenAccount(_wallet!.address);
+      _userTokenAccount = await service.getAssociatedTokenAccount(_wallet!.address);
 
       if (_userTokenAccount == null) {
         _zarpBalance = 0.0;
@@ -124,8 +123,7 @@ class WalletProvider extends ChangeNotifier {
     }
 
     try {
-      final String? lastSignature =
-          await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
 
       (_walletRepository as WalletRepositoryImpl).resetCancellation();
       final WalletSolanaService service = await _service;
@@ -153,8 +151,7 @@ class WalletProvider extends ChangeNotifier {
     (_walletRepository as WalletRepositoryImpl).resetCancellation();
 
     try {
-      final String? lastSignature =
-          await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
 
       await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
@@ -174,8 +171,7 @@ class WalletProvider extends ChangeNotifier {
     List<TransactionDetails?> batch,
   ) async {
     try {
-      final Map<String, List<TransactionDetails?>> transactions =
-          await _walletRepository.getStoredTransactions();
+      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
 
       for (final TransactionDetails? tx in batch) {
         if (tx == null) continue;
@@ -183,8 +179,7 @@ class WalletProvider extends ChangeNotifier {
         final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
           tx.blockTime! * 1000,
         );
-        final String monthKey =
-            '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+        final String monthKey = '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
 
         if (!transactions.containsKey(monthKey)) {
           transactions[monthKey] = <TransactionDetails?>[];
@@ -195,8 +190,7 @@ class WalletProvider extends ChangeNotifier {
       await _walletRepository.storeTransactions(transactions);
 
       if (batch.isNotEmpty && batch.first != null) {
-        final String signature =
-            batch.first!.transaction.toJson()['signatures'][0];
+        final String signature = batch.first!.transaction.toJson()['signatures'][0];
         await _walletRepository.storeLastTransactionSignature(signature);
       }
     } catch (e) {
@@ -208,8 +202,7 @@ class WalletProvider extends ChangeNotifier {
     if (_wallet == null || _userTokenAccount == null) return;
 
     try {
-      final ({double solBalance, double zarpBalance}) balances =
-          await _balanceCacheService.getBothBalances(
+      final ({double solBalance, double zarpBalance}) balances = await _balanceCacheService.getBothBalances(
         zarpAddress: _userTokenAccount!.pubkey,
         solAddress: _wallet!.address,
         forceRefresh: true,
@@ -235,8 +228,7 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<void> storeAssociatedTokenAccount(ProgramAccount tokenAccount) async {
-    await _walletStorageService
-        .saveAssociatedTokenAccountPublicKey(tokenAccount);
+    await _walletStorageService.saveAssociatedTokenAccountPublicKey(tokenAccount);
     _userTokenAccount = tokenAccount;
     notifyListeners();
   }
@@ -259,8 +251,7 @@ class WalletProvider extends ChangeNotifier {
   Future<void> onPaymentCompleted() async {
     if (_wallet != null && _userTokenAccount != null) {
       try {
-        final ({double solBalance, double zarpBalance}) balances =
-            await _balanceCacheService.getBothBalances(
+        final ({double solBalance, double zarpBalance}) balances = await _balanceCacheService.getBothBalances(
           zarpAddress: _userTokenAccount!.pubkey,
           solAddress: _wallet!.address,
           forceRefresh: true,

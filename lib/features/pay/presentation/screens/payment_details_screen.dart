@@ -57,8 +57,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
-                padding:
-                    const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
+                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
                   onTap: () => context.go('/pay_request'),
                   child: DecoratedBox(
@@ -149,9 +148,7 @@ class _PaymentDetailsState extends State<PaymentDetails> {
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: viewModel.canContinue
-                        ? () => _onContinue(viewModel, context)
-                        : null,
+                    onPressed: viewModel.canContinue ? () => _onContinue(viewModel, context) : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(
                         fontSize: 18,
@@ -174,10 +171,8 @@ class _PaymentDetailsState extends State<PaymentDetails> {
     PaymentDetailsViewModel viewModel,
     BuildContext context,
   ) async {
-    final PaymentProvider paymentProvider =
-        Provider.of<PaymentProvider>(context, listen: false);
-    await paymentProvider
-        .setRecipientAddress(viewModel.publicKeyController.text);
+    final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+    await paymentProvider.setRecipientAddress(viewModel.publicKeyController.text);
 
     if (!context.mounted) return;
     context.go(

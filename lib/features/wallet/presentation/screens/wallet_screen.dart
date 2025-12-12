@@ -16,8 +16,7 @@ class WalletScreen extends StatefulWidget {
   State<WalletScreen> createState() => _WalletScreenState();
 }
 
-class _WalletScreenState extends State<WalletScreen>
-    with WidgetsBindingObserver {
+class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver {
   late WalletViewModel _viewModel;
 
   @override
@@ -27,8 +26,7 @@ class _WalletScreenState extends State<WalletScreen>
 
     _viewModel = WalletViewModel();
 
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     _viewModel.wallet = walletProvider.wallet;
     _viewModel.tokenAccount = walletProvider.userTokenAccount;
 
@@ -40,8 +38,7 @@ class _WalletScreenState extends State<WalletScreen>
     try {
       // Ensure wallet and token account are set
       if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
-        final WalletProvider walletProvider =
-            Provider.of<WalletProvider>(context, listen: false);
+        final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
         _viewModel.wallet = walletProvider.wallet;
         _viewModel.tokenAccount = walletProvider.userTokenAccount;
 
@@ -130,9 +127,7 @@ class _WalletScreenState extends State<WalletScreen>
                 children: <Widget>[
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    height: viewModel.isExpanded
-                        ? 0
-                        : MediaQuery.of(context).size.height * 0.35,
+                    height: viewModel.isExpanded ? 0 : MediaQuery.of(context).size.height * 0.35,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
                       opacity: viewModel.isExpanded ? 0.0 : 1.0,
@@ -175,8 +170,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 SizedBox(
                                   width: 90,
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       GestureDetector(
                                         onTap: () => viewModel.toggleExpanded(),
@@ -188,17 +182,14 @@ class _WalletScreenState extends State<WalletScreen>
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
-                                            viewModel.isExpanded
-                                                ? Icons.keyboard_arrow_down
-                                                : Icons.keyboard_arrow_up,
+                                            viewModel.isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
                                             color: Colors.black,
                                             size: 20,
                                           ),
                                         ),
                                       ),
                                       GestureDetector(
-                                        onTap: () => viewModel
-                                            .refreshTransactionsFromButton(),
+                                        onTap: () => viewModel.refreshTransactionsFromButton(),
                                         child: Container(
                                           width: 40,
                                           height: 40,
@@ -218,12 +209,9 @@ class _WalletScreenState extends State<WalletScreen>
                                 ),
                                 Text(
                                   'History',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
-                                        color: Colors.blue,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Colors.blue,
+                                  ),
                                 ),
                               ],
                             ),
@@ -258,10 +246,9 @@ class _WalletScreenState extends State<WalletScreen>
                         const SizedBox(width: 8),
                         Text(
                           'ZARP',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -301,8 +288,7 @@ class _WalletScreenState extends State<WalletScreen>
                                       ),
                                     ),
                                     TextSpan(
-                                      text:
-                                          '${viewModel.tokenAccount?.pubkey}\n',
+                                      text: '${viewModel.tokenAccount?.pubkey}\n',
                                       style: const TextStyle(fontSize: 14),
                                     ),
                                   ],
@@ -336,10 +322,9 @@ class _WalletScreenState extends State<WalletScreen>
                       child: Center(
                         child: Text(
                           'i',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -354,8 +339,7 @@ class _WalletScreenState extends State<WalletScreen>
                 ),
                 GestureDetector(
                   onTap: () async {
-                    final AuthProvider authProvider =
-                        Provider.of<AuthProvider>(context, listen: false);
+                    final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
                     final GoRouter router = GoRouter.of(context);
 
                     final String? value = await showMenu(
@@ -399,8 +383,8 @@ class _WalletScreenState extends State<WalletScreen>
                       child: Text(
                         'JT',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white,
-                            ),
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -431,8 +415,7 @@ class _WalletScreenState extends State<WalletScreen>
                 ),
               ),
             ),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
+            floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           );
         },
       ),

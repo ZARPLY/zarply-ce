@@ -30,8 +30,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
   Future<void> _checkCurrentState() async {
     try {
       // Check if terms were already accepted
-      final bool termsAccepted =
-          await SecureStorageService().hasAcceptedTerms();
+      final bool termsAccepted = await SecureStorageService().hasAcceptedTerms();
       if (termsAccepted) {
         setState(() {
           _isAgreementChecked = true;
@@ -61,10 +60,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
 
     try {
       // Get providers for wallet and auth setup
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
-      final AuthProvider authProvider =
-          Provider.of<AuthProvider>(context, listen: false);
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       // Initialize wallet directly here instead of going to splash
       final bool initialized = await walletProvider.initialize();
@@ -205,8 +202,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => _launchUrl(
-                                    'https://zarply.co.za/terms-conditions',
-                                  ),
+                                'https://zarply.co.za/terms-conditions',
+                              ),
                           ),
                           const TextSpan(text: ' and '),
                           TextSpan(
@@ -218,8 +215,8 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => _launchUrl(
-                                    'https://zarply.co.za/privacy-policy',
-                                  ),
+                                'https://zarply.co.za/privacy-policy',
+                              ),
                           ),
                         ],
                       ),

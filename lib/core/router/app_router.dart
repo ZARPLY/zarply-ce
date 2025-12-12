@@ -51,13 +51,11 @@ GoRouter createRouter(
 ) {
   return GoRouter(
     initialLocation: _getInitialLocation(authProvider, walletProvider),
-    refreshListenable:
-        Listenable.merge(<Listenable>[walletProvider, authProvider]),
+    refreshListenable: Listenable.merge(<Listenable>[walletProvider, authProvider]),
     routes: <RouteBase>[
       GoRoute(
         path: '/splash',
-        builder: (BuildContext context, GoRouterState state) =>
-            const SplashScreen(),
+        builder: (BuildContext context, GoRouterState state) => const SplashScreen(),
       ),
       ShellRoute(
         redirect: (BuildContext context, GoRouterState state) {
@@ -117,20 +115,17 @@ GoRouter createRouter(
         routes: <RouteBase>[
           GoRoute(
             path: '/welcome',
-            builder: (BuildContext context, GoRouterState state) =>
-                const WelcomeScreen(),
+            builder: (BuildContext context, GoRouterState state) => const WelcomeScreen(),
           ),
           GoRoute(
             path: '/more',
             name: 'more',
-            builder: (BuildContext context, GoRouterState state) =>
-                const MoreOptionsScreen(),
+            builder: (BuildContext context, GoRouterState state) => const MoreOptionsScreen(),
           ),
           GoRoute(
             path: '/unlock',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, dynamic> extraMap =
-                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final Map<String, dynamic> extraMap = (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
               return UnlockScreen(
                 nextRoute: extraMap['nextRoute'] as String? ?? '/wallet',
                 title: extraMap['title'] as String? ?? 'Unlock',
@@ -140,35 +135,30 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/recovery_phrase',
-            builder: (BuildContext context, GoRouterState state) =>
-                const RecoveryPhraseScreen(),
+            builder: (BuildContext context, GoRouterState state) => const RecoveryPhraseScreen(),
           ),
           GoRoute(
             path: '/rpc_configuration',
             builder: (BuildContext context, GoRouterState state) {
-              final bool isRestoreFlow =
-                  state.uri.queryParameters['restore'] == 'true';
+              final bool isRestoreFlow = state.uri.queryParameters['restore'] == 'true';
               return RpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
             },
           ),
           GoRoute(
             path: '/custom_rpc_configuration',
             builder: (BuildContext context, GoRouterState state) {
-              final bool isRestoreFlow =
-                  state.uri.queryParameters['restore'] == 'true';
+              final bool isRestoreFlow = state.uri.queryParameters['restore'] == 'true';
               return CustomRpcConfigurationScreen(isRestoreFlow: isRestoreFlow);
             },
           ),
           GoRoute(
             path: '/backup_wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const BackupWalletScreen(),
+            builder: (BuildContext context, GoRouterState state) => const BackupWalletScreen(),
           ),
           GoRoute(
             path: '/private_keys',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, dynamic> extra =
-                  (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+              final Map<String, dynamic> extra = (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
               final bool hideProgress = extra['hideProgress'] as bool? ?? false;
               return PrivateKeysScreen(
                 hideProgress: hideProgress,
@@ -177,8 +167,7 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/restore_wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const RestoreWalletScreen(),
+            builder: (BuildContext context, GoRouterState state) => const RestoreWalletScreen(),
           ),
           GoRoute(
             path: '/create_password',
@@ -188,29 +177,24 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/login',
-            builder: (BuildContext context, GoRouterState state) =>
-                const LoginScreen(),
+            builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
           ),
           GoRoute(
             path: '/access_wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const AccessWalletScreen(),
+            builder: (BuildContext context, GoRouterState state) => const AccessWalletScreen(),
           ),
           GoRoute(
             path: '/new_wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const WelcomeScreen(),
+            builder: (BuildContext context, GoRouterState state) => const WelcomeScreen(),
           ),
           GoRoute(
             path: '/wallet',
-            builder: (BuildContext context, GoRouterState state) =>
-                const WalletScreen(),
+            builder: (BuildContext context, GoRouterState state) => const WalletScreen(),
           ),
           GoRoute(
             path: '/transaction_details',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, String?> extra =
-                  state.extra as Map<String, String?>;
+              final Map<String, String?> extra = state.extra as Map<String, String?>;
               final String sender = extra['sender'] ?? '';
               final String receiver = extra['receiver'] ?? '';
               final String timestamp = extra['timestamp'] ?? '';
@@ -225,19 +209,16 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/pay_request',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PayRequest(),
+            builder: (BuildContext context, GoRouterState state) => const PayRequest(),
           ),
           GoRoute(
             path: '/payment_details',
-            builder: (BuildContext context, GoRouterState state) =>
-                const PaymentDetails(),
+            builder: (BuildContext context, GoRouterState state) => const PaymentDetails(),
           ),
           GoRoute(
             path: '/payment_amount',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, String> extra =
-                  state.extra as Map<String, String>;
+              final Map<String, String> extra = state.extra as Map<String, String>;
               final String publicKey = extra['recipientAddress'] ?? '';
               final String? amount = extra['amount'];
               final String source = extra['source'] ?? '/pay_request';
@@ -250,19 +231,16 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: '/request_amount',
-            builder: (BuildContext context, GoRouterState state) =>
-                const RequestAmountScreen(),
+            builder: (BuildContext context, GoRouterState state) => const RequestAmountScreen(),
           ),
           GoRoute(
             path: '/scan',
-            builder: (BuildContext context, GoRouterState state) =>
-                const QRScanner(),
+            builder: (BuildContext context, GoRouterState state) => const QRScanner(),
           ),
           GoRoute(
             path: '/payment_request_details',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, dynamic> extra =
-                  state.extra as Map<String, dynamic>;
+              final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
               return PaymentRequestDetailsScreen(
                 amount: extra['amount'] as String,
                 recipientAddress: extra['recipientAddress'] as String,

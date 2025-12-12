@@ -29,8 +29,7 @@ class WalletViewModel extends ChangeNotifier {
   int totalSignatures = 0;
   int loadedTransactions = 0;
 
-  Map<String, List<TransactionDetails?>> transactions =
-      <String, List<TransactionDetails?>>{};
+  Map<String, List<TransactionDetails?>> transactions = <String, List<TransactionDetails?>>{};
 
   bool hasMoreTransactionsToLoad = false;
   String? oldestLoadedSignature;
@@ -45,8 +44,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<void> loadCachedBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
-        final ({double solBalance, double zarpBalance}) balances =
-            await _balanceCacheService.getBothBalances(
+        final ({double solBalance, double zarpBalance}) balances = await _balanceCacheService.getBothBalances(
           zarpAddress: tokenAccount!.pubkey,
           solAddress: wallet!.address,
           forceRefresh: false,
@@ -64,8 +62,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<void> refreshBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
-        final ({double solBalance, double zarpBalance}) balances =
-            await _balanceCacheService.refreshBalances(
+        final ({double solBalance, double zarpBalance}) balances = await _balanceCacheService.refreshBalances(
           zarpAddress: tokenAccount!.pubkey,
           solAddress: wallet!.address,
         );
@@ -82,8 +79,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<void> forceRefreshBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
-        final ({double solBalance, double zarpBalance}) balances =
-            await _balanceCacheService.getBothBalances(
+        final ({double solBalance, double zarpBalance}) balances = await _balanceCacheService.getBothBalances(
           zarpAddress: tokenAccount!.pubkey,
           solAddress: wallet!.address,
           forceRefresh: true, // Force network fetch
@@ -103,12 +99,10 @@ class WalletViewModel extends ChangeNotifier {
       throw Exception('TokenAccount is null, cannot load transactions');
     }
 
-    final Map<String, List<TransactionDetails?>> storedTransactions =
-        await loadStoredTransactions();
+    final Map<String, List<TransactionDetails?>> storedTransactions = await loadStoredTransactions();
 
     if (storedTransactions.isNotEmpty) {
-      transactions =
-          Map<String, List<TransactionDetails?>>.from(storedTransactions);
+      transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
 
       _updateOldestSignature(storedTransactions);
 
@@ -126,8 +120,7 @@ class WalletViewModel extends ChangeNotifier {
     (_walletRepository as WalletRepositoryImpl).resetCancellation();
 
     if (storedTransactions.isEmpty || isRefreshing) {
-      final String? lastSignature =
-          await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
 
       loadedTransactions = 0;
       notifyListeners();
@@ -142,11 +135,9 @@ class WalletViewModel extends ChangeNotifier {
             }
 
             _processNewTransactionBatch(batch, storedTransactions);
-            loadedTransactions +=
-                batch.where((TransactionDetails? tx) => tx != null).length;
+            loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
 
-            transactions =
-                Map<String, List<TransactionDetails?>>.from(storedTransactions);
+            transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
 
             _updateOldestSignature(storedTransactions);
             isLoadingTransactions = false;
@@ -160,13 +151,10 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   // Load transactions from the repository
-  Future<Map<String, List<TransactionDetails?>>>
-      loadStoredTransactions() async {
-    final Map<String, List<TransactionDetails?>> storedTransactions =
-        await _walletRepository.getStoredTransactions();
+  Future<Map<String, List<TransactionDetails?>>> loadStoredTransactions() async {
+    final Map<String, List<TransactionDetails?>> storedTransactions = await _walletRepository.getStoredTransactions();
 
-    transactions =
-        Map<String, List<TransactionDetails?>>.from(storedTransactions);
+    transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
     notifyListeners();
 
     return storedTransactions;
@@ -207,12 +195,10 @@ class WalletViewModel extends ChangeNotifier {
   List<dynamic> getSortedTransactionItems() {
     final List<dynamic> transactionItems = <dynamic>[];
 
-    final List<String> sortedMonths = transactions.keys.toList()
-      ..sort((String a, String b) => b.compareTo(a));
+    final List<String> sortedMonths = transactions.keys.toList()..sort((String a, String b) => b.compareTo(a));
 
     for (final String monthKey in sortedMonths) {
-      final int displayedCount =
-          transactions[monthKey]!.where((TransactionDetails? tx) {
+      final int displayedCount = transactions[monthKey]!.where((TransactionDetails? tx) {
         final TransactionTransferInfo? transferInfo = parseTransferDetails(tx);
         return transferInfo != null && transferInfo.amount != 0;
       }).length;
@@ -224,12 +210,11 @@ class WalletViewModel extends ChangeNotifier {
         'count': displayedCount,
       });
 
-      final List<TransactionDetails?> sortedTransactions =
-          List<TransactionDetails?>.from(transactions[monthKey]!)
-            ..sort((TransactionDetails? a, TransactionDetails? b) {
-              if (a == null || b == null) return 0;
-              return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
-            });
+      final List<TransactionDetails?> sortedTransactions = List<TransactionDetails?>.from(transactions[monthKey]!)
+        ..sort((TransactionDetails? a, TransactionDetails? b) {
+          if (a == null || b == null) return 0;
+          return (b.blockTime ?? 0).compareTo(a.blockTime ?? 0);
+        });
 
       transactionItems.addAll(sortedTransactions);
     }
@@ -248,8 +233,9 @@ class WalletViewModel extends ChangeNotifier {
     loadedTransactions = 0;
     notifyListeners();
 
-    final Map<String, List<TransactionDetails?>> storedTransactions =
-        Map<String, List<TransactionDetails?>>.from(transactions);
+    final Map<String, List<TransactionDetails?>> storedTransactions = Map<String, List<TransactionDetails?>>.from(
+      transactions,
+    );
 
     try {
       await _walletRepository.getOlderTransactions(
@@ -265,11 +251,9 @@ class WalletViewModel extends ChangeNotifier {
             storedTransactions,
             isOlderTransactions: true,
           );
-          loadedTransactions +=
-              batch.where((TransactionDetails? tx) => tx != null).length;
+          loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
 
-          transactions =
-              Map<String, List<TransactionDetails?>>.from(storedTransactions);
+          transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
           _updateOldestSignature(storedTransactions);
           notifyListeners();
         },
@@ -293,8 +277,7 @@ class WalletViewModel extends ChangeNotifier {
   void updateHasMoreTransactions() {
     int loadedCount = 0;
     for (final List<TransactionDetails?> txList in transactions.values) {
-      loadedCount +=
-          txList.where((TransactionDetails? tx) => tx != null).length;
+      loadedCount += txList.where((TransactionDetails? tx) => tx != null).length;
     }
 
     loadedTransactions = loadedCount;
@@ -306,15 +289,13 @@ class WalletViewModel extends ChangeNotifier {
     if (tokenAccount == null) return;
 
     try {
-      final int networkCount =
-          await _walletRepository.getTransactionCount(tokenAccount!.pubkey);
+      final int networkCount = await _walletRepository.getTransactionCount(tokenAccount!.pubkey);
       totalSignatures = networkCount;
 
       await _walletRepository.storeTransactionCount(networkCount);
       updateHasMoreTransactions();
     } catch (e) {
-      final int? storedCount =
-          await _walletRepository.getStoredTransactionCount();
+      final int? storedCount = await _walletRepository.getStoredTransactionCount();
       if (storedCount != null) {
         totalSignatures = storedCount;
         updateHasMoreTransactions();
@@ -333,8 +314,7 @@ class WalletViewModel extends ChangeNotifier {
       final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
         tx.blockTime! * 1000,
       );
-      final String monthKey =
-          '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+      final String monthKey = '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
 
       if (!storedTransactions.containsKey(monthKey)) {
         storedTransactions[monthKey] = <TransactionDetails?>[];

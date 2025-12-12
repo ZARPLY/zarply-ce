@@ -58,9 +58,7 @@ class RequestCompleted extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            DateTime.fromMillisecondsSinceEpoch(paymentRequest.timestamp)
-                .toString()
-                .substring(0, 16),
+            DateTime.fromMillisecondsSinceEpoch(paymentRequest.timestamp).toString().substring(0, 16),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const Spacer(),

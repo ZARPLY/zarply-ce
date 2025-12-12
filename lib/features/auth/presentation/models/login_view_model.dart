@@ -18,8 +18,7 @@ class LoginViewModel extends ChangeNotifier {
   bool get rememberPassword => _rememberPassword;
   bool get isLoading => _isLoading;
 
-  static final RegExp complexity =
-      RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+  static final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
 
   void _startSplashTimer() {
     Future<void>.delayed(const Duration(seconds: 2), () {
@@ -83,8 +82,7 @@ class LoginViewModel extends ChangeNotifier {
         return false;
       }
       if (!complexity.hasMatch(passwordController.text)) {
-        errorMessage =
-            'Password must include a letter, number, and special character';
+        errorMessage = 'Password must include a letter, number, and special character';
         return false;
       }
 

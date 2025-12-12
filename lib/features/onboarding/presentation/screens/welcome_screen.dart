@@ -43,8 +43,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           clipper: SteeperCurvedBottomClipper(),
                           child: Container(
                             height: MediaQuery.of(context).size.height * 0.43,
-                            color:
-                                const Color(0xFF4169E1).withValues(alpha: 0.3),
+                            color: const Color(0xFF4169E1).withValues(alpha: 0.3),
                           ),
                         ),
                         ClipPath(
@@ -102,8 +101,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4169E1),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),

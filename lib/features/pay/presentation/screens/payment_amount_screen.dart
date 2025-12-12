@@ -61,12 +61,8 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
-    final String currentWalletAddress =
-        walletProvider.userTokenAccount?.pubkey ??
-            walletProvider.wallet?.address ??
-            '';
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    final String currentWalletAddress = walletProvider.userTokenAccount?.pubkey ?? walletProvider.wallet?.address ?? '';
 
     return ChangeNotifierProvider<PaymentAmountViewModel>(
       create: (_) => PaymentAmountViewModel(
@@ -80,8 +76,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
-                padding:
-                    const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
+                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
                   onTap: () => context.go(widget.source),
                   child: DecoratedBox(
@@ -118,8 +113,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                       const Text('Minimum amount is R5'),
                       const SizedBox(height: 24),
                       Container(
-                        constraints:
-                            const BoxConstraints(minWidth: 250, maxWidth: 350),
+                        constraints: const BoxConstraints(minWidth: 250, maxWidth: 350),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEBECEF),
@@ -147,9 +141,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   ElevatedButton(
                     onPressed: viewModel.isFormValid
                         ? () => _showPaymentReviewModal(
-                              context,
-                              viewModel.paymentAmountController.text,
-                            )
+                            context,
+                            viewModel.paymentAmountController.text,
+                          )
                         : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(

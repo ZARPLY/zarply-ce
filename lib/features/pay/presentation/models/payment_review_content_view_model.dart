@@ -16,8 +16,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
     PaymentReviewContentRepository? repository,
   }) : _repository = repository ?? PaymentReviewContentRepositoryImpl();
   final PaymentReviewContentRepository _repository;
-  final TransactionStorageService _transactionStorageService =
-      TransactionStorageService();
+  final TransactionStorageService _transactionStorageService = TransactionStorageService();
 
   bool _hasPaymentBeenMade = false;
   bool get hasPaymentBeenMade => _hasPaymentBeenMade;
@@ -39,14 +38,11 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         throw Exception('Recipient address not found');
       }
 
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
-      final PaymentProvider paymentProvider =
-          Provider.of<PaymentProvider>(context, listen: false);
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
 
       // Get recipient token account from provider
-      final ProgramAccount? recipientTokenAccount =
-          paymentProvider.recipientTokenAccount;
+      final ProgramAccount? recipientTokenAccount = paymentProvider.recipientTokenAccount;
 
       if (recipientTokenAccount == null) {
         throw Exception(
@@ -61,8 +57,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         amount: double.parse(amount) / 100,
       );
 
-      final TransactionDetails? txDetails =
-          await _repository.getTransactionDetails(txSignature);
+      final TransactionDetails? txDetails = await _repository.getTransactionDetails(txSignature);
 
       if (txDetails == null) {
         throw Exception('Transaction not confirmed after multiple attempts');

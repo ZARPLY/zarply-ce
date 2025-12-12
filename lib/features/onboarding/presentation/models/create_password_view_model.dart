@@ -5,14 +5,13 @@ import '../../domain/repositories/create_password_repository.dart';
 
 class CreatePasswordViewModel extends ChangeNotifier {
   CreatePasswordViewModel({CreatePasswordRepository? repository})
-      : _repository = repository ?? CreatePasswordRepositoryImpl() {
+    : _repository = repository ?? CreatePasswordRepositoryImpl() {
     passwordController.addListener(_validateForm);
     confirmPasswordController.addListener(_validateForm);
   }
 
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final CreatePasswordRepository _repository;
   final SecureStorageService _secureStorage = SecureStorageService();
 
@@ -30,8 +29,7 @@ class CreatePasswordViewModel extends ChangeNotifier {
   String? get passwordErrorText => _passwordErrorText;
   String? get confirmErrorText => _confirmErrorText;
 
-  static final RegExp complexity =
-      RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
+  static final RegExp complexity = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$');
 
   @override
   void dispose() {
@@ -69,8 +67,7 @@ class CreatePasswordViewModel extends ChangeNotifier {
       _confirmErrorText = null;
       _isFormValid = false;
     } else if (!complexity.hasMatch(passwordController.text)) {
-      _passwordErrorText =
-          'Password must include a letter, number, and special character';
+      _passwordErrorText = 'Password must include a letter, number, and special character';
       _confirmErrorText = null;
       _isFormValid = false;
     } else if (confirmPasswordController.text.isEmpty) {
@@ -96,8 +93,7 @@ class CreatePasswordViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bool success =
-          await _repository.savePassword(passwordController.text);
+      final bool success = await _repository.savePassword(passwordController.text);
       if (success && _rememberPassword) {
         await _secureStorage.setRememberPassword(value: true);
       }

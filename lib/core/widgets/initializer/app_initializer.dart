@@ -20,8 +20,7 @@ class _AppInitializerState extends State<AppInitializer> {
   @override
   void initState() {
     super.initState();
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
     // Only initialize if not already ready
     if (!walletProvider.isReady) {
@@ -43,8 +42,7 @@ class _AppInitializerState extends State<AppInitializer> {
         }
 
         if (snapshot.data ?? false) {
-          final WalletProvider walletProvider =
-              Provider.of<WalletProvider>(context, listen: false);
+          final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
           return AppData(
             wallet: walletProvider.wallet!,
             walletBalance: walletProvider.walletBalance,
@@ -79,7 +77,5 @@ class AppData extends InheritedWidget {
 
   @override
   bool updateShouldNotify(AppData oldWidget) =>
-      wallet != oldWidget.wallet ||
-      walletBalance != oldWidget.walletBalance ||
-      solBalance != oldWidget.solBalance;
+      wallet != oldWidget.wallet || walletBalance != oldWidget.walletBalance || solBalance != oldWidget.solBalance;
 }

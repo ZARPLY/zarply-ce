@@ -16,16 +16,14 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late SplashViewModel _viewModel;
   bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     _viewModel = SplashViewModel(walletProvider);
     _viewModel.initAnimationController(this);
 
@@ -36,19 +34,16 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAndNavigate() async {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
     if (walletProvider.hasWallet) {
       // Check if onboarding is completed
-      final bool onboardingCompleted =
-          await SecureStorageService().isOnboardingCompleted();
+      final bool onboardingCompleted = await SecureStorageService().isOnboardingCompleted();
 
       if (onboardingCompleted) {
         // User has completed onboarding, check if they're authenticated
         if (!mounted) return;
-        final AuthProvider authProvider =
-            Provider.of<AuthProvider>(context, listen: false);
+        final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         if (authProvider.isAuthenticated) {
           // User is authenticated, go to wallet immediately
@@ -119,14 +114,11 @@ class _SplashScreenState extends State<SplashScreen>
     const Duration minSplashDuration = Duration(seconds: 2);
 
     if (!mounted) return;
-    final AuthProvider authProvider =
-        Provider.of<AuthProvider>(context, listen: false);
+    final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     // First time setup - start both the initialization and minimum duration timer
-    final Future<String> routeFuture =
-        _viewModel.initializeAndGetRoute(authProvider);
-    final Future<void> minDurationFuture =
-        Future<void>.delayed(minSplashDuration);
+    final Future<String> routeFuture = _viewModel.initializeAndGetRoute(authProvider);
+    final Future<void> minDurationFuture = Future<void>.delayed(minSplashDuration);
 
     // Wait for both to complete
     await Future.wait(<Future<void>>[routeFuture, minDurationFuture]);
