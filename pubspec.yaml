@@ -41,6 +41,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+  husky: ^0.1.7
 
 flutter:
   uses-material-design: true
