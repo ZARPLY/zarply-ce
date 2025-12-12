@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+dart analyze --fatal-infos
+find lib test \
+  -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart" ! -name "*.config.dart" \
+  -print0 | xargs -0 \
+  dart format --output none --set-exit-if-changed
