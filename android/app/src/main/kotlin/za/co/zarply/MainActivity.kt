@@ -1,4 +1,4 @@
-package com.example.zarply
+package za.co.zarply
 
 import io.flutter.embedding.android.FlutterActivity
 

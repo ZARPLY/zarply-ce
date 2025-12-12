@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-  namespace = "com.example.zarply"
+  namespace = "za.co.zarply"
   compileSdk = flutter.compileSdkVersion
   ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
   }
 
   defaultConfig {
-    applicationId = "com.example.zarply"
+    applicationId = "za.co.zarply"
     minSdk = flutter.minSdkVersion
     targetSdk = flutter.targetSdkVersion
     versionCode = flutter.versionCode
