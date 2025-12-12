@@ -1,11 +1,19 @@
 name: zarply
 description: "ZARPLY Wallet"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+homepage: https://zarply.co.za
+repository: https://gitea.cyber-mint.com/ZARPLY/zarply
+issue_tracker: https://gitea.cyber-mint.com/ZARPLY/zarply/issues
+documentation:
+platforms:
+  android:
+  ios:
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.1
+  sdk: ^3.9.2
+  flutter: ^3.38.4
 
 dependencies:
   bip39: ^1.0.6
@@ -39,8 +47,8 @@ flutter:
 
   # TODO: create assets/ folder in root dir
   # TODO: do not list all images here, use directories (assets/images/)
+  # assets/images/
   assets:
-    # assets/images/
     - images/saflag.png
     - images/zarp.png
     - images/solana.png
