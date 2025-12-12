@@ -7,7 +7,7 @@ jobs:
     name: Static Code Analysis
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
     runs-on: workstation.ubuntu.lts
     needs: dart_analyze
     container:
-      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

@@ -19,7 +19,7 @@ jobs:
     runs-on: workstation.ubuntu.lts
     needs: cleanup
     container:
-      image: gitea.cyber-mint.com/zarply/zarply-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
