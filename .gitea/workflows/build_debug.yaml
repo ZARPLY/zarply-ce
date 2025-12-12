@@ -50,7 +50,7 @@ jobs:
           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
-          flutter build apk --release \
+          flutter build apk --debug \
             --obfuscate \
             --split-per-abi \
             --target-platform android-arm64 \
@@ -75,7 +75,7 @@ jobs:
           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
-          flutter build appbundle --release \
+          flutter build appbundle --debug \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
             --build-name=$VERSION \
