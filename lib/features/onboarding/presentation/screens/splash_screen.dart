@@ -90,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // If we get here, user has no wallet - this is first time app launch
     // Show splash screen and continue with normal flow
     if (mounted) {
-      await _viewModel.playAnimation();
+      _viewModel.playAnimation();
       await _navigateToNextScreen();
     }
   }
