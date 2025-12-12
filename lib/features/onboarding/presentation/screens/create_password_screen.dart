@@ -46,8 +46,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     setState(() {
       final String pwd = _viewModel.passwordController.text;
       final String confirm = _viewModel.confirmPasswordController.text;
-      _confirmPasswordError =
-          confirm.isNotEmpty && pwd != confirm ? 'Passwords do not match' : null;
+      _confirmPasswordError = confirm.isNotEmpty && pwd != confirm
+          ? 'Passwords do not match'
+          : null;
     });
   }
 

@@ -123,7 +123,8 @@ class _SplashScreenState extends State<SplashScreen>
         Provider.of<AuthProvider>(context, listen: false);
 
     // First time setup - start both the initialization and minimum duration timer
-    final Future<String> routeFuture = _viewModel.initializeAndGetRoute(authProvider);
+    final Future<String> routeFuture =
+        _viewModel.initializeAndGetRoute(authProvider);
     final Future<void> minDurationFuture =
         Future<void>.delayed(minSplashDuration);
 

@@ -72,8 +72,7 @@ class AppData extends InheritedWidget {
   final double solBalance;
 
   static AppData of(BuildContext context) {
-    final AppData? data =
-        context.dependOnInheritedWidgetOfExactType<AppData>();
+    final AppData? data = context.dependOnInheritedWidgetOfExactType<AppData>();
     assert(data != null, 'AppInitializer.of() called with no ancestor!');
     return data!;
   }

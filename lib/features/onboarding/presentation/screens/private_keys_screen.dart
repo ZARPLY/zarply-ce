@@ -90,8 +90,8 @@ class PrivateKeysView extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () =>
-                            context.go(hideProgress ? '/more' : '/backup_wallet'),
+                        onPressed: () => context
+                            .go(hideProgress ? '/more' : '/backup_wallet'),
                         child: const Text('Close'),
                       ),
                     ),

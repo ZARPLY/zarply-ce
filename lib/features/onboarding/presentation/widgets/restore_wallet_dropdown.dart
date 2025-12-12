@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 
 class RestoreMethodDropdown extends StatelessWidget {
-  
-    const RestoreMethodDropdown({
+  const RestoreMethodDropdown({
     required this.selectedMethod,
     required this.onChanged,
     super.key,
-  }); 
+  });
 
   final String selectedMethod;
 
   final ValueChanged<String?> onChanged;
 
   static const List<String> _methods = <String>['Seed Phrase', 'Private Key'];
-
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +24,7 @@ class RestoreMethodDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: borderColor),
         borderRadius: borderRadius,
-      ), 
+      ),
       child: DropdownButton<String>(
         value: selectedMethod,
         isExpanded: true,
@@ -42,8 +40,8 @@ class RestoreMethodDropdown extends StatelessWidget {
               method,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-          ); 
-        }).toList(), 
+          );
+        }).toList(),
         onChanged: onChanged,
       ),
     );

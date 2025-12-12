@@ -158,7 +158,8 @@ class _PaymentRequestDetailsScreenState
     String text,
     bool isFrom,
   ) async {
-    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
+    final ScaffoldMessengerState scaffoldMessenger =
+        ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     scaffoldMessenger.showSnackBar(

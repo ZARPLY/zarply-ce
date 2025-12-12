@@ -35,7 +35,7 @@ class _TransactionsListState extends State<TransactionsList> {
         widget.viewModel.parseTransferDetails(transaction);
 
     if (transferInfo == null) {
-      return const SizedBox.shrink();  // Only filter out null transfer info
+      return const SizedBox.shrink(); // Only filter out null transfer info
     }
 
     return TransactionItem(

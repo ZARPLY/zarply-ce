@@ -89,15 +89,15 @@ class _PasswordInputWithTooltipStrengthState
                 borderSide: BorderSide(color: Colors.red, width: 2),
               ),
               suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureText ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureText = !_obscureText;
-                      });
-                    },
+                icon: Icon(
+                  _obscureText ? Icons.visibility : Icons.visibility_off,
                 ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
             ),
           ),
           if (widget.enableStrengthFeedback)

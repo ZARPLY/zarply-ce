@@ -354,7 +354,8 @@ class _WalletScreenState extends State<WalletScreen>
                 ),
                 GestureDetector(
                   onTap: () async {
-                    final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final AuthProvider authProvider =
+                        Provider.of<AuthProvider>(context, listen: false);
                     final GoRouter router = GoRouter.of(context);
 
                     final String? value = await showMenu(

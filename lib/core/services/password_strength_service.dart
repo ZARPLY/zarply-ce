@@ -247,25 +247,25 @@ class PasswordStrengthService {
   }
 
   static String? getPasswordHintText(PasswordStrengthResult result) {
-  if (result.criteria.score >= 8) return null;
+    if (result.criteria.score >= 8) return null;
 
-  final List<String> hints = <String>[];
+    final List<String> hints = <String>[];
 
-  if (!result.criteria.hasMinLength) hints.add('at least 8 characters');
-  if (!result.criteria.hasUppercase) hints.add('an uppercase letter');
-  if (!result.criteria.hasLowercase) hints.add('a lowercase letter');
-  if (!result.criteria.hasNumbers) hints.add('a number');
-  if (!result.criteria.hasSpecialChars) hints.add('a special character');
+    if (!result.criteria.hasMinLength) hints.add('at least 8 characters');
+    if (!result.criteria.hasUppercase) hints.add('an uppercase letter');
+    if (!result.criteria.hasLowercase) hints.add('a lowercase letter');
+    if (!result.criteria.hasNumbers) hints.add('a number');
+    if (!result.criteria.hasSpecialChars) hints.add('a special character');
 
-  if (hints.isEmpty) return null;
+    if (hints.isEmpty) return null;
 
-  final String formattedHints = _formatNaturalLanguageList(hints);
-  return 'Hint: Try adding $formattedHints.';
-}
+    final String formattedHints = _formatNaturalLanguageList(hints);
+    return 'Hint: Try adding $formattedHints.';
+  }
 
-static String _formatNaturalLanguageList(List<String> items) {
-  if (items.length == 1) return items.first;
-  if (items.length == 2) return '${items[0]} and ${items[1]}';
-  return '${items.sublist(0, items.length - 1).join(', ')}, and ${items.last}';
+  static String _formatNaturalLanguageList(List<String> items) {
+    if (items.length == 1) return items.first;
+    if (items.length == 2) return '${items[0]} and ${items[1]}';
+    return '${items.sublist(0, items.length - 1).join(', ')}, and ${items.last}';
   }
 }

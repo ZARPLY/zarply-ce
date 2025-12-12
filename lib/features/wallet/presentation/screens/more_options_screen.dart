@@ -8,7 +8,8 @@ class MoreOptionsScreen extends StatelessWidget {
   const MoreOptionsScreen({super.key});
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
-    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
+    final ScaffoldMessengerState scaffoldMessenger =
+        ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
       scaffoldMessenger.showSnackBar(
