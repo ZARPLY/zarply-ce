@@ -89,21 +89,6 @@ jobs:
           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
           mv build/app/outputs/bundle/debug/app-debug.aab artifacts/zarply.aab
-      - name: Upload APK to Gitea
-        run: |
-          REPO_VERSION=steps.meta.outputs.REPO_VERSION
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
-          echo $REPO_VERSION
-          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
-               --upload-file artifacts/zarply-arm64-v8a.apk \
-               $GITEA_SERVER/api/packages/zarply/generic/zarply_apk/$REPO_VERSION/zarply-arm64-v8a.apk
-      - name: Upload Appbundle to Gitea
-        run: |
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
-          echo $REPO_VERSION
-          curl --user $GITEA_USERNAME:$GITEA_PASSWORD \
-               --upload-file artifacts/zarply.aab \
-               $GITEA_SERVER/api/packages/zarply/generic/zarply_bundle/$REPO_VERSION/zarply.aab
       - name: Create zip file with correct timestamps
         run: zip -r artifacts.zip artifacts
       - name: Store Test Results
