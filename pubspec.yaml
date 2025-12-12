@@ -1,12 +1,13 @@
-name: Zarply
+name: zarply
 description: "ZARPLY Wallet"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.1
-
+  sdk: ^3.10.0
+  flutter: ^3.38.4
+  
 dependencies:
   bip39: ^1.0.6
   flutter:
@@ -37,7 +38,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  #current version: 3.38.4 
+  
   # TODO: create assets/ folder in root dir
   # TODO: do not list all images here, use directories (assets/images/)
   assets:
