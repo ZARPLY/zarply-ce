@@ -89,10 +89,6 @@ jobs:
           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
           mv build/app/outputs/bundle/debug/app-debug.aab artifacts/zarply.aab
-          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
-          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
-          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
-          cd ../../../../../../../../
       - name: Upload APK to Gitea
         run: |
           REPO_VERSION=steps.meta.outputs.REPO_VERSION
