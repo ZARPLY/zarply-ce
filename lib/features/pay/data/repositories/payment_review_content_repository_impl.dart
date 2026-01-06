@@ -6,14 +6,12 @@ import '../../../../core/services/transaction_storage_service.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
 
-class PaymentReviewContentRepositoryImpl
-    implements PaymentReviewContentRepository {
+class PaymentReviewContentRepositoryImpl implements PaymentReviewContentRepository {
   PaymentReviewContentRepositoryImpl({
     WalletSolanaService? walletSolanaService,
     TransactionStorageService? transactionStorageService,
-  })  : _walletSolanaService = walletSolanaService,
-        _transactionStorageService =
-            transactionStorageService ?? TransactionStorageService();
+  }) : _walletSolanaService = walletSolanaService,
+       _transactionStorageService = transactionStorageService ?? TransactionStorageService();
   final WalletSolanaService? _walletSolanaService;
   final TransactionStorageService _transactionStorageService;
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
@@ -46,14 +44,12 @@ class PaymentReviewContentRepositoryImpl
 
   @override
   Future<void> storeTransactionDetails(TransactionDetails txDetails) async {
-    final Map<String, List<TransactionDetails?>> stored =
-        await _transactionStorageService.getStoredTransactions();
+    final Map<String, List<TransactionDetails?>> stored = await _transactionStorageService.getStoredTransactions();
 
     final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
       txDetails.blockTime! * 1000,
     );
-    final String monthKey =
-        '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
+    final String monthKey = '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
 
     if (!stored.containsKey(monthKey)) {
       stored[monthKey] = <TransactionDetails?>[];

@@ -14,8 +14,7 @@ class TransactionStorageService {
     try {
       final String encodedData = jsonEncode(
         transactions.map(
-          (String key, List<TransactionDetails?> value) =>
-              MapEntry<String, List<Map<String, dynamic>?>>(
+          (String key, List<TransactionDetails?> value) => MapEntry<String, List<Map<String, dynamic>?>>(
             key,
             value.map((TransactionDetails? tx) => tx?.toJson()).toList(),
           ),
@@ -33,14 +32,12 @@ class TransactionStorageService {
 
   Future<Map<String, List<TransactionDetails?>>> getStoredTransactions() async {
     try {
-      final String? encodedData =
-          await _secureStorage.read(key: _transactionsKey);
+      final String? encodedData = await _secureStorage.read(key: _transactionsKey);
       if (encodedData == null) return <String, List<TransactionDetails?>>{};
 
       final Map<String, dynamic> decodedData = jsonDecode(encodedData);
       return decodedData.map(
-        (String key, dynamic value) =>
-            MapEntry<String, List<TransactionDetails?>>(
+        (String key, dynamic value) => MapEntry<String, List<TransactionDetails?>>(
           key,
           (value as List<dynamic>)
               .map(
@@ -90,8 +87,7 @@ class TransactionStorageService {
 
   Future<int?> getStoredTransactionCount() async {
     try {
-      final String? count =
-          await _secureStorage.read(key: _transactionCountKey);
+      final String? count = await _secureStorage.read(key: _transactionCountKey);
       return count != null ? int.parse(count) : null;
     } catch (e) {
       throw Exception('Failed to retrieve transaction count: $e');

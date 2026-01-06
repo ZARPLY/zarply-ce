@@ -34,12 +34,10 @@ class PaymentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _recipientTokenAccount =
-          await _walletRepository.getAssociatedTokenAccount(address);
+      _recipientTokenAccount = await _walletRepository.getAssociatedTokenAccount(address);
 
       if (_recipientTokenAccount == null) {
-        _tokenAccountError =
-            'Recipient does not have a token account for this token';
+        _tokenAccountError = 'Recipient does not have a token account for this token';
       } else {
         _tokenAccountError = null;
       }

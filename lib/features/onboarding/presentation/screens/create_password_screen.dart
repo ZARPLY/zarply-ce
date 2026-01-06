@@ -33,8 +33,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   void initState() {
     super.initState();
     _viewModel = CreatePasswordViewModel();
-    if (widget.extra is Map<String, dynamic> &&
-        (widget.extra as Map<String, dynamic>).containsKey('from')) {
+    if (widget.extra is Map<String, dynamic> && (widget.extra as Map<String, dynamic>).containsKey('from')) {
       _from = (widget.extra as Map<String, dynamic>)['from'] as String?;
     }
 
@@ -46,8 +45,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     setState(() {
       final String pwd = _viewModel.passwordController.text;
       final String confirm = _viewModel.confirmPasswordController.text;
-      _confirmPasswordError =
-          confirm.isNotEmpty && pwd != confirm ? 'Passwords do not match' : null;
+      _confirmPasswordError = confirm.isNotEmpty && pwd != confirm ? 'Passwords do not match' : null;
     });
   }
 
@@ -81,8 +79,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
-                padding:
-                    const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
+                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
                   onTap: () => context.go(
                     _from == 'restore' ? '/restore_wallet' : '/backup_wallet',
@@ -123,8 +120,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                             children: <Widget>[
                               Text(
                                 'Create Password',
-                                style:
-                                    Theme.of(context).textTheme.headlineLarge,
+                                style: Theme.of(context).textTheme.headlineLarge,
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -138,8 +134,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 errorText: viewModel.passwordErrorText,
                                 focusNode: _passwordFocus,
                                 textInputAction: TextInputAction.next,
-                                onSubmitted: (_) =>
-                                    _confirmFocus.requestFocus(),
+                                onSubmitted: (_) => _confirmFocus.requestFocus(),
                               ),
                               const SizedBox(height: 8),
                               PasswordInputWithTooltipStrength(
@@ -174,8 +169,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                     Checkbox(
                                       value: viewModel.rememberPassword,
                                       activeColor: const Color(0xFF4169E1),
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                       visualDensity: VisualDensity.compact,
                                       onChanged: (bool? value) {
                                         if (value != null) {
@@ -189,9 +183,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                     Expanded(
                                       child: Text(
                                         'Remember Password',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium,
+                                        style: Theme.of(context).textTheme.bodyMedium,
                                       ),
                                     ),
                                   ],
@@ -202,32 +194,23 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 focusNode: _checkboxFocus,
                                 child: Builder(
                                   builder: (BuildContext context) {
-                                    final bool hasFocus =
-                                        Focus.of(context).hasFocus;
+                                    final bool hasFocus = Focus.of(context).hasFocus;
                                     return DecoratedBox(
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                          color: hasFocus
-                                              ? Colors.blue
-                                              : Colors.transparent,
+                                          color: hasFocus ? Colors.blue : Colors.transparent,
                                           width: 2,
                                         ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: <Widget>[
-                                          Radio<bool>(
-                                            value: true,
-                                            groupValue: viewModel.isChecked,
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            activeColor:
-                                                const Color(0xFF4169E1),
+                                          Checkbox(
+                                            value: viewModel.isChecked,
+                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            visualDensity: VisualDensity.compact,
+                                            activeColor: const Color(0xFF4169E1),
                                             onChanged: (bool? value) {
                                               viewModel.setChecked(
                                                 value: value ?? false,
@@ -238,9 +221,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                           Expanded(
                                             child: Text(
                                               'I understand that if I lose my password, I will not be able to access my recovery phrase, resulting in the loss of all the funds in my wallet.',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
+                                              style: Theme.of(context).textTheme.bodyMedium,
                                             ),
                                           ),
                                         ],
@@ -256,9 +237,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 width: double.infinity,
                                 child: LoadingButton(
                                   isLoading: viewModel.isLoading,
-                                  onPressed: viewModel.isFormValid
-                                      ? _handleContinue
-                                      : null,
+                                  onPressed: viewModel.isFormValid ? _handleContinue : null,
                                   style: ElevatedButton.styleFrom(
                                     textStyle: const TextStyle(
                                       fontSize: 18,
@@ -287,8 +266,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 class _ImportedWalletInfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final String address = walletProvider.wallet?.address ?? '';
     final bool isValid = _isValidSolanaAddress(address);
     return Container(

@@ -39,18 +39,18 @@ class RequestQRCodeViewModel extends ChangeNotifier {
   String get qrCodeData => paymentRequest.qrCodeData;
 
   Future<void> shareQRCode(GlobalKey qrKey) async {
-    final RenderRepaintBoundary boundary =
-        qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+    final RenderRepaintBoundary boundary = qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
     final ui.Image image = await boundary.toImage();
-    final ByteData? byteData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     final Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-    final ShareResult result = await Share.shareXFiles(
-      <XFile>[
-        XFile.fromData(pngBytes, mimeType: 'image/png', name: 'qr_code.png'),
-      ],
-      subject: 'ZARPLY Payment Request',
+    final ShareResult result = await SharePlus.instance.share(
+      ShareParams(
+        files: <XFile>[
+          XFile.fromData(pngBytes, mimeType: 'image/png', name: 'qr_code.png'),
+        ],
+        subject: 'ZARPLY Payment Request',
+      ),
     );
 
     if (result.status == ShareResultStatus.success) {

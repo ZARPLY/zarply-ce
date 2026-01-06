@@ -54,12 +54,9 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                               child: Text(
                                 'Request Sent',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w400,
-                                    ),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ),
                             ),
                             IconButton(
@@ -73,32 +70,32 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                           key: _qrKey,
                           child: FutureBuilder<ui.Image>(
                             future: viewModel.loadImageFuture,
-                            builder: (
-                              BuildContext context,
-                              AsyncSnapshot<ui.Image> snapshot,
-                            ) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.done) {
-                                if (snapshot.hasError) {
-                                  return const Text('Error loading image');
-                                }
-                                return CustomPaint(
-                                  size: const Size(300, 300),
-                                  painter: QRPainter(
-                                    data: viewModel.qrCodeData,
-                                    version: 10,
-                                    errorCorrectionLevel: QrErrorCorrectLevel.H,
-                                    color: Colors.blue,
-                                    emptyColor: Colors.white,
-                                    gapless: true,
-                                    embeddedImageSize: const Size(60, 60),
-                                    loadedImage: snapshot.data,
-                                  ),
-                                );
-                              } else {
-                                return const CircularProgressIndicator();
-                              }
-                            },
+                            builder:
+                                (
+                                  BuildContext context,
+                                  AsyncSnapshot<ui.Image> snapshot,
+                                ) {
+                                  if (snapshot.connectionState == ConnectionState.done) {
+                                    if (snapshot.hasError) {
+                                      return const Text('Error loading image');
+                                    }
+                                    return CustomPaint(
+                                      size: const Size(300, 300),
+                                      painter: QRPainter(
+                                        data: viewModel.qrCodeData,
+                                        version: 10,
+                                        errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                        color: Colors.blue,
+                                        emptyColor: Colors.white,
+                                        gapless: true,
+                                        embeddedImageSize: const Size(60, 60),
+                                        loadedImage: snapshot.data,
+                                      ),
+                                    );
+                                  } else {
+                                    return const CircularProgressIndicator();
+                                  }
+                                },
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -111,10 +108,9 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                         const SizedBox(height: 8),
                         Text(
                           'Valid for 24 hours',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.blue,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.blue,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
@@ -229,8 +225,7 @@ class QRPainter extends CustomPainter {
         loadedImage!.width.toDouble(),
         loadedImage!.height.toDouble(),
       );
-      final ui.Rect src =
-          Alignment.center.inscribe(srcSize, Offset.zero & srcSize);
+      final ui.Rect src = Alignment.center.inscribe(srcSize, Offset.zero & srcSize);
       final Offset center = Offset(size.width / 2, size.height / 2);
       final ui.Rect dst = Rect.fromCenter(
         center: center,

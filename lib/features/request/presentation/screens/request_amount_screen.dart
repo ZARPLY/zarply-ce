@@ -14,8 +14,7 @@ class RequestAmountScreen extends StatelessWidget {
   });
 
   void _showRequestReviewModal(BuildContext context, String amount) {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final String walletAddress = walletProvider.wallet?.address ?? '';
 
     showModalBottomSheet<void>(
@@ -51,8 +50,7 @@ class RequestAmountScreen extends StatelessWidget {
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
-                padding:
-                    const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
+                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
                 child: InkWell(
                   onTap: () => context.go('/pay_request'),
                   child: DecoratedBox(
@@ -80,8 +78,7 @@ class RequestAmountScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Center(
                     child: ConstrainedBox(
-                      constraints:
-                          const BoxConstraints(minWidth: 250, maxWidth: 350),
+                      constraints: const BoxConstraints(minWidth: 250, maxWidth: 350),
                       child: AmountInput(
                         controller: viewModel.paymentAmountController,
                       ),
@@ -101,9 +98,9 @@ class RequestAmountScreen extends StatelessWidget {
                   ElevatedButton(
                     onPressed: viewModel.isFormValid
                         ? () => _showRequestReviewModal(
-                              context,
-                              viewModel.paymentAmountController.text,
-                            )
+                            context,
+                            viewModel.paymentAmountController.text,
+                          )
                         : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(

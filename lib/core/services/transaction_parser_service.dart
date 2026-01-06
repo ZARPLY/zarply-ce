@@ -7,13 +7,11 @@ class TransactionDetailsParser {
     String accountOwner,
   ) {
     try {
-      if (transaction.meta!.preTokenBalances.isEmpty &&
-          transaction.meta!.postTokenBalances.isEmpty) {
+      if (transaction.meta!.preTokenBalances.isEmpty && transaction.meta!.postTokenBalances.isEmpty) {
         return null;
       }
 
-      final Map<String, dynamic> message =
-          transaction.transaction.toJson()['message'];
+      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
       final List<dynamic> accountKeys = message['accountKeys'];
 
       int userTokenAccountIndex = -1;
@@ -31,8 +29,7 @@ class TransactionDetailsParser {
         return null;
       }
 
-      for (final TokenBalance tokenBalance
-          in transaction.meta!.preTokenBalances) {
+      for (final TokenBalance tokenBalance in transaction.meta!.preTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           preBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -41,8 +38,7 @@ class TransactionDetailsParser {
         }
       }
 
-      for (final TokenBalance tokenBalance
-          in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           postBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -55,8 +51,7 @@ class TransactionDetailsParser {
       final bool isRecipient = amount > 0;
 
       String otherParty = '';
-      for (final TokenBalance tokenBalance
-          in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex != userTokenAccountIndex) {
           otherParty = accountKeys[tokenBalance.accountIndex];
           break;
@@ -64,9 +59,7 @@ class TransactionDetailsParser {
       }
 
       bool isExternalFunding = false;
-      if (accountKeys.length > 4 &&
-          isRecipient &&
-          transaction.meta!.postTokenBalances.length > 1) {
+      if (accountKeys.length > 4 && isRecipient && transaction.meta!.postTokenBalances.length > 1) {
         isExternalFunding = true;
       }
 

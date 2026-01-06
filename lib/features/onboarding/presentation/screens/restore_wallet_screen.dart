@@ -42,8 +42,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
     });
 
     try {
-      final WalletProvider walletProvider =
-          Provider.of<WalletProvider>(context, listen: false);
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
       await showModalBottomSheet<void>(
         context: context,
@@ -60,8 +59,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
             builder: (BuildContext context, StateSetter setState) {
               return FutureBuilder<void>(
                 future: () async {
-                  final bool success =
-                      await _viewModel.restoreWallet(walletProvider);
+                  final bool success = await _viewModel.restoreWallet(walletProvider);
                   if (!success) {
                     if (!context.mounted) return;
                     Navigator.pop(context);
@@ -188,8 +186,8 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                       ),
                       errorText: _viewModel.phraseController.text.isNotEmpty
                           ? _viewModel.isFormValid
-                              ? null
-                              : 'Please enter exactly 12 or 24 words'
+                                ? null
+                                : 'Please enter exactly 12 or 24 words'
                           : null,
                     ),
                   )
@@ -211,11 +209,9 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                           color: Colors.red,
                         ),
                       ),
-                      errorText:
-                          _viewModel.privateKeyController.text.isNotEmpty &&
-                                  !_viewModel.isFormValid
-                              ? 'Please enter a valid private key'
-                              : null,
+                      errorText: _viewModel.privateKeyController.text.isNotEmpty && !_viewModel.isFormValid
+                          ? 'Please enter a valid private key'
+                          : null,
                     ),
                   ),
                 const Spacer(),
@@ -223,9 +219,7 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
                   width: double.infinity,
                   child: LoadingButton(
                     isLoading: _isLoading,
-                    onPressed: _viewModel.isFormValid && !_isLoading
-                        ? _handleRestoreWallet
-                        : null,
+                    onPressed: _viewModel.isFormValid && !_isLoading ? _handleRestoreWallet : null,
                     child: const Text('Import Wallet'),
                   ),
                 ),

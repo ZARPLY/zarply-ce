@@ -24,8 +24,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
   @override
   void initState() {
     super.initState();
-    _recoveryPhrase =
-        Provider.of<WalletProvider>(context, listen: false).recoveryPhrase;
+    _recoveryPhrase = Provider.of<WalletProvider>(context, listen: false).recoveryPhrase;
   }
 
   void _showRevealConfirmationDialog() {
@@ -34,8 +33,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
         context: context,
         builder: (BuildContext context) => CupertinoAlertDialog(
           title: const Text('Reveal Private Keys'),
-          content:
-              const Text('Are you sure you want to reveal your private keys?'),
+          content: const Text('Are you sure you want to reveal your private keys?'),
           actions: <Widget>[
             CupertinoDialogAction(
               isDestructiveAction: true,
@@ -57,8 +55,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: const Text('Reveal Private Keys'),
-          content:
-              const Text('Are you sure you want to reveal your private keys?'),
+          content: const Text('Are you sure you want to reveal your private keys?'),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -154,15 +151,10 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
                               child: Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: _recoveryPhrase
-                                    .split(' ')
-                                    .asMap()
-                                    .entries
-                                    .map((MapEntry<int, String> entry) {
+                                children: _recoveryPhrase.split(' ').asMap().entries.map((MapEntry<int, String> entry) {
                                   return Text(
                                     entry.value,
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                   );
                                 }).toList(),
                               ),
@@ -181,9 +173,7 @@ class _BackupWalletScreenState extends State<BackupWalletScreen> {
                             child: IconButton(
                               onPressed: _showRevealConfirmationDialog,
                               icon: Icon(
-                                _isRecoveryPhraseVisible
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
+                                _isRecoveryPhraseVisible ? Icons.visibility_off : Icons.visibility,
                                 color: Colors.black,
                               ),
                             ),

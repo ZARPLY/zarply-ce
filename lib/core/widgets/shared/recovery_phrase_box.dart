@@ -37,9 +37,7 @@ class RecoveryPhraseBox extends StatelessWidget {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: words
-                        .map((String w) => Text(w, style: textStyle))
-                        .toList(),
+                    children: words.map((String w) => Text(w, style: textStyle)).toList(),
                   ),
                 ),
               ),

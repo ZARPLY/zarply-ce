@@ -30,10 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
     _viewModel = LoginViewModel();
     // Ensure programmatic password changes (e.g., autofill) trigger validation
     _viewModel.passwordController.addListener(_onPasswordControllerChanged);
-    final KeyboardVisibilityController keyboardVisibilityController =
-        KeyboardVisibilityController();
-    keyboardSubscription =
-        keyboardVisibilityController.onChange.listen((bool visible) {
+    final KeyboardVisibilityController keyboardVisibilityController = KeyboardVisibilityController();
+    keyboardSubscription = keyboardVisibilityController.onChange.listen((bool visible) {
       _viewModel.setKeyboardVisibility(visible: visible);
     });
   }
@@ -77,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ]);
 
+        if (!mounted) return;
         // routing happens in app_router.dart based on isAuthenticated
         await Provider.of<AuthProvider>(
           context,
@@ -193,9 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     horizontal: 8,
                                   ),
                                   child: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
+                                    _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
                                     color: Colors.grey.shade600,
                                     size: 20,
                                   ),
@@ -214,9 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: Colors.green,
                                           key: ValueKey<String>('valid'),
                                         )
-                                      : const SizedBox(
-                                          width: 0,
-                                          height: 0,
+                                      : const SizedBox.shrink(
                                           key: ValueKey<String>('empty'),
                                         ),
                                 ),
@@ -228,8 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onChanged: (_) async {
                           setState(() {});
                           // Validate password on change to update checkmark
-                          final bool correct =
-                              await viewModel.validatePassword();
+                          final bool correct = await viewModel.validatePassword();
                           viewModel.setIsPasswordCorrect(value: correct);
                         },
                       ),
@@ -258,9 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 20,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: viewModel.rememberPassword
-                                  ? const Color(0xFF1F75DC)
-                                  : Colors.transparent,
+                              color: viewModel.rememberPassword ? const Color(0xFF1F75DC) : Colors.transparent,
                               border: Border.all(
                                 color: const Color(0xFF1F75DC),
                                 width: 2,
@@ -298,8 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 56,
                             child: LoadingButton(
                               isLoading: viewModel.isLoading,
-                              onPressed:
-                                  isPasswordCorrect ? _performLogin : null,
+                              onPressed: isPasswordCorrect ? _performLogin : null,
                               loadingColor: Colors.blue,
                               style: ElevatedButton.styleFrom(
                                 textStyle: const TextStyle(

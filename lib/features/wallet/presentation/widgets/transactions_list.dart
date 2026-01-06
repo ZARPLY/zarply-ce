@@ -19,8 +19,7 @@ class TransactionsList extends StatefulWidget {
 }
 
 class _TransactionsListState extends State<TransactionsList> {
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -31,11 +30,10 @@ class _TransactionsListState extends State<TransactionsList> {
   Widget _buildTransactionTile(TransactionDetails? transaction) {
     if (transaction == null) return const SizedBox.shrink();
 
-    final TransactionTransferInfo? transferInfo =
-        widget.viewModel.parseTransferDetails(transaction);
+    final TransactionTransferInfo? transferInfo = widget.viewModel.parseTransferDetails(transaction);
 
     if (transferInfo == null) {
-      return const SizedBox.shrink();  // Only filter out null transfer info
+      return const SizedBox.shrink(); // Only filter out null transfer info
     }
 
     return TransactionItem(
@@ -45,8 +43,7 @@ class _TransactionsListState extends State<TransactionsList> {
 
   @override
   Widget build(BuildContext context) {
-    final List<dynamic> transactionItems =
-        widget.viewModel.getSortedTransactionItems();
+    final List<dynamic> transactionItems = widget.viewModel.getSortedTransactionItems();
 
     return RefreshIndicator(
       key: _refreshIndicatorKey,
@@ -60,29 +57,28 @@ class _TransactionsListState extends State<TransactionsList> {
               ),
             )
           : transactionItems.isEmpty
-              ? const Center(
-                  child: Text('No transactions found'),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: transactionItems.length + 1,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (index == transactionItems.length) {
-                      return _buildFooter(context);
-                    }
+          ? const Center(
+              child: Text('No transactions found'),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.only(bottom: 80),
+              itemCount: transactionItems.length + 1,
+              itemBuilder: (BuildContext context, int index) {
+                if (index == transactionItems.length) {
+                  return _buildFooter(context);
+                }
 
-                    final dynamic item = transactionItems[index];
+                final dynamic item = transactionItems[index];
 
-                    if (item is Map<String, dynamic> &&
-                        item['type'] == 'header') {
-                      return _buildMonthHeader(context, item);
-                    } else if (item is TransactionDetails) {
-                      return _buildTransactionItem(context, item);
-                    }
+                if (item is Map<String, dynamic> && item['type'] == 'header') {
+                  return _buildMonthHeader(context, item);
+                } else if (item is TransactionDetails) {
+                  return _buildTransactionItem(context, item);
+                }
 
-                    return const SizedBox.shrink();
-                  },
-                ),
+                return const SizedBox.shrink();
+              },
+            ),
     );
   }
 
@@ -134,8 +130,8 @@ class _TransactionsListState extends State<TransactionsList> {
           Text(
             '${header['count']}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),

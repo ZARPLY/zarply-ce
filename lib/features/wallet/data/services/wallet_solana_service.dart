@@ -27,21 +27,20 @@ class WalletSolanaService {
     required String rpcUrl,
     required String websocketUrl,
   }) : _client = SolanaClient(
-          rpcUrl: Uri.parse(rpcUrl),
-          websocketUrl: Uri.parse(websocketUrl),
-        );
+         rpcUrl: Uri.parse(rpcUrl),
+         websocketUrl: Uri.parse(websocketUrl),
+       );
   WalletSolanaService._({
     required String rpcUrl,
     required String websocketUrl,
   }) : _client = SolanaClient(
-          rpcUrl: Uri.parse(rpcUrl),
-          websocketUrl: Uri.parse(websocketUrl),
-        );
+         rpcUrl: Uri.parse(rpcUrl),
+         websocketUrl: Uri.parse(websocketUrl),
+       );
 
   static Future<WalletSolanaService> create() async {
     final RpcService rpcService = RpcService();
-    final ({String rpcUrl, String websocketUrl}) config =
-        await rpcService.getRpcConfiguration();
+    final ({String rpcUrl, String websocketUrl}) config = await rpcService.getRpcConfiguration();
 
     return WalletSolanaService._(
       rpcUrl: config.rpcUrl,
@@ -51,8 +50,7 @@ class WalletSolanaService {
 
   final SolanaClient _client;
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
-  final TransactionStorageService _transactionStorageService =
-      TransactionStorageService();
+  final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
@@ -75,8 +73,7 @@ class WalletSolanaService {
   }
 
   Future<Wallet> createWalletFromMnemonic(String mnemonic) async {
-    final Ed25519HDKeyPair wallet =
-        await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+    final Ed25519HDKeyPair wallet = await Ed25519HDKeyPair.fromMnemonic(mnemonic);
 
     if (zarpMint.isEmpty) {
       throw WalletSolanaServiceException(
@@ -105,8 +102,7 @@ class WalletSolanaService {
     String walletAddress,
   ) async {
     try {
-      final ProgramAccount? tokenAccount =
-          await _client.getAssociatedTokenAccount(
+      final ProgramAccount? tokenAccount = await _client.getAssociatedTokenAccount(
         owner: Ed25519HDPublicKey.fromBase58(walletAddress),
         mint: Ed25519HDPublicKey.fromBase58(zarpMint),
         commitment: Commitment.confirmed,
@@ -126,8 +122,7 @@ class WalletSolanaService {
         throw WalletSolanaServiceException('Invalid mnemonic phrase');
       }
 
-      final Ed25519HDKeyPair wallet =
-          await Ed25519HDKeyPair.fromMnemonic(mnemonic);
+      final Ed25519HDKeyPair wallet = await Ed25519HDKeyPair.fromMnemonic(mnemonic);
       return wallet;
     } catch (e) {
       throw WalletSolanaServiceException('Failed to restore wallet: $e');
@@ -140,8 +135,7 @@ class WalletSolanaService {
         throw WalletSolanaServiceException('Private key is empty');
       }
 
-      final Ed25519HDKeyPair wallet =
-          await Ed25519HDKeyPair.fromPrivateKeyBytes(
+      final Ed25519HDKeyPair wallet = await Ed25519HDKeyPair.fromPrivateKeyBytes(
         privateKey: base58decode(privateKey),
       );
 
@@ -153,8 +147,7 @@ class WalletSolanaService {
 
   Future<double> getSolBalance(String publicKey) async {
     try {
-      final BalanceResult lamports = await _client.rpcClient
-          .getBalance(publicKey, commitment: Commitment.confirmed);
+      final BalanceResult lamports = await _client.rpcClient.getBalance(publicKey, commitment: Commitment.confirmed);
       return lamports.value.toDouble() / lamportsPerSol;
     } catch (e) {
       throw WalletSolanaServiceException('Could not retrieve SOL balance: $e');
@@ -168,8 +161,7 @@ class WalletSolanaService {
     required double zarpAmount,
   }) async {
     try {
-      final double solBalance =
-          await _balanceCacheService.getSolBalance(senderWallet.address);
+      final double solBalance = await _balanceCacheService.getSolBalance(senderWallet.address);
       if (solBalance < 0.001) {
         throw WalletSolanaServiceException(
           'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
@@ -186,8 +178,7 @@ class WalletSolanaService {
 
       final TokenInstruction instruction = TokenInstruction.transfer(
         source: Ed25519HDPublicKey.fromBase58(senderTokenAccount.pubkey),
-        destination:
-            Ed25519HDPublicKey.fromBase58(recipientTokenAccount.pubkey),
+        destination: Ed25519HDPublicKey.fromBase58(recipientTokenAccount.pubkey),
         owner: senderWallet.publicKey,
         amount: tokenAmount,
         tokenProgram: TokenProgramType.token2022Program,
@@ -199,9 +190,7 @@ class WalletSolanaService {
         ],
       );
 
-      final LatestBlockhash bh = await _client.rpcClient
-          .getLatestBlockhash(commitment: Commitment.confirmed)
-          .value;
+      final LatestBlockhash bh = await _client.rpcClient.getLatestBlockhash(commitment: Commitment.confirmed).value;
 
       final SignedTx tx = await signTransaction(
         bh,
@@ -222,8 +211,10 @@ class WalletSolanaService {
 
   Future<double> getZarpBalance(String publicKey) async {
     try {
-      final TokenAmountResult balance = await _client.rpcClient
-          .getTokenAccountBalance(publicKey, commitment: Commitment.confirmed);
+      final TokenAmountResult balance = await _client.rpcClient.getTokenAccountBalance(
+        publicKey,
+        commitment: Commitment.confirmed,
+      );
       return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       throw WalletSolanaServiceException(
@@ -241,8 +232,7 @@ class WalletSolanaService {
     bool Function()? isCancelled,
   }) async {
     try {
-      final List<TransactionSignatureInformation> signatures =
-          await _client.rpcClient.getSignaturesForAddress(
+      final List<TransactionSignatureInformation> signatures = await _client.rpcClient.getSignaturesForAddress(
         walletAddress,
         limit: limit,
         until: until,
@@ -264,8 +254,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      final StreamController<List<TransactionDetails?>>
-          transactionStreamController =
+      final StreamController<List<TransactionDetails?>> transactionStreamController =
           StreamController<List<TransactionDetails?>>();
       final List<TransactionDetails?> allTransactions = <TransactionDetails?>[];
       late final Future<void> streamProcessing;
@@ -281,9 +270,7 @@ class WalletSolanaService {
         ).asFuture<void>();
 
         await _fetchTransactionsWithCircuitBreaker(
-          signatures
-              .map((TransactionSignatureInformation sig) => sig.signature)
-              .toList(),
+          signatures.map((TransactionSignatureInformation sig) => sig.signature).toList(),
           onBatchLoaded: (List<TransactionDetails?> batch) {
             if (isCancelled != null && isCancelled()) {
               return;
@@ -310,8 +297,7 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      final Map<String, List<TransactionDetails?>> groupedTransactions =
-          <String, List<TransactionDetails?>>{};
+      final Map<String, List<TransactionDetails?>> groupedTransactions = <String, List<TransactionDetails?>>{};
 
       for (final TransactionDetails? transaction in allTransactions) {
         if (transaction == null) continue;
@@ -320,8 +306,7 @@ class WalletSolanaService {
             ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
             : DateTime.now();
 
-        final String monthKey =
-            '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
+        final String monthKey = '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
 
         if (!groupedTransactions.containsKey(monthKey)) {
           groupedTransactions[monthKey] = <TransactionDetails?>[];
@@ -360,8 +345,7 @@ class WalletSolanaService {
 
   Future<TransactionDetails?> getTransactionDetails(String signature) async {
     try {
-      return await _client.rpcClient
-          .getTransaction(signature, commitment: Commitment.confirmed);
+      return await _client.rpcClient.getTransaction(signature, commitment: Commitment.confirmed);
     } catch (e) {
       throw WalletSolanaServiceException(
         'Error fetching transaction details: $e',
@@ -371,9 +355,10 @@ class WalletSolanaService {
 
   Future<int> getTransactionCount(String address) async {
     try {
-      final List<TransactionSignatureInformation> signatures = await _client
-          .rpcClient
-          .getSignaturesForAddress(address, commitment: Commitment.confirmed);
+      final List<TransactionSignatureInformation> signatures = await _client.rpcClient.getSignaturesForAddress(
+        address,
+        commitment: Commitment.confirmed,
+      );
       return signatures.length;
     } catch (e) {
       throw WalletSolanaServiceException(
@@ -429,9 +414,7 @@ class WalletSolanaService {
               commitment: Commitment.confirmed,
             );
           } catch (e) {
-            if (e
-                .toString()
-                .contains('Too many requests for a specific RPC call')) {
+            if (e.toString().contains('Too many requests for a specific RPC call')) {
               isRateLimited = true;
               retryCount++;
             } else {

@@ -40,8 +40,7 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
 
   Future<void> _loadSavedConfiguration() async {
     try {
-      final ({String? rpcUrl, String? websocketUrl}) config =
-          await _storageService.getRpcConfiguration();
+      final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
       if (config.rpcUrl != null && config.websocketUrl != null) {
         setState(() {
           _useCustomRpc = true;
@@ -87,8 +86,7 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
         );
 
         final WelcomeViewModel welcomeViewModel = WelcomeViewModel();
-        final bool success =
-            await welcomeViewModel.createAndStoreWallet(walletProvider);
+        final bool success = await welcomeViewModel.createAndStoreWallet(walletProvider);
 
         if (!mounted) return;
 
@@ -121,9 +119,7 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
     });
 
     // Navigate to the custom RPC configuration screen
-    final String route = widget.isRestoreFlow
-        ? '/custom_rpc_configuration?restore=true'
-        : '/custom_rpc_configuration';
+    final String route = widget.isRestoreFlow ? '/custom_rpc_configuration?restore=true' : '/custom_rpc_configuration';
     context.go(route);
   }
 
@@ -143,9 +139,7 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
               onTap: _isCreatingWallet ? null : () => context.go('/welcome'),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _isCreatingWallet
-                      ? Colors.grey[300]
-                      : const Color(0xFFEBECEF),
+                  color: _isCreatingWallet ? Colors.grey[300] : const Color(0xFFEBECEF),
                   borderRadius: BorderRadius.circular(80),
                 ),
                 child: Padding(
@@ -179,14 +173,11 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      widget.isRestoreFlow
-                          ? 'Configure Network'
-                          : 'Network Configuration',
-                      style:
-                          Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                      widget.isRestoreFlow ? 'Configure Network' : 'Network Configuration',
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     if (widget.isRestoreFlow)
@@ -194,10 +185,9 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Text(
                           'Configure your network settings for your restored wallet.',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
                         ),
                       )
                     else
@@ -205,10 +195,9 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Text(
                           'Choose your preferred network configuration.',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ),
                     const SizedBox(height: 16),
@@ -222,14 +211,11 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: _useDefaultRpc
-                                  ? Colors.blue
-                                  : Colors.grey[300]!,
+                              color: _useDefaultRpc ? Colors.blue : Colors.grey[300]!,
                               width: 2,
                             ),
                             borderRadius: BorderRadius.circular(12),
-                            color:
-                                _useDefaultRpc ? Colors.blue[50] : Colors.white,
+                            color: _useDefaultRpc ? Colors.blue[50] : Colors.white,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,27 +224,20 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                                 children: <Widget>[
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: <Widget>[
                                         Text(
                                           'Use Default (Recommended)',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           'Free public Solana RPC endpoint',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: Colors.grey[600],
-                                              ),
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Colors.grey[600],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -279,8 +258,7 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Text(
                                         'RPC: $_defaultRpcUrl',
@@ -318,14 +296,11 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: _useCustomRpc
-                                  ? Colors.blue
-                                  : Colors.grey[300]!,
+                              color: _useCustomRpc ? Colors.blue : Colors.grey[300]!,
                               width: 2,
                             ),
                             borderRadius: BorderRadius.circular(12),
-                            color:
-                                _useCustomRpc ? Colors.blue[50] : Colors.white,
+                            color: _useCustomRpc ? Colors.blue[50] : Colors.white,
                           ),
                           child: Row(
                             children: <Widget>[
@@ -335,22 +310,16 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                                   children: <Widget>[
                                     Text(
                                       'Use QuickNode (Custom)',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'Use your own QuickNode endpoint',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Colors.grey[600],
-                                          ),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
                                   ],
                                 ),

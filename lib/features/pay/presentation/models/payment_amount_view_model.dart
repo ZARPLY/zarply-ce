@@ -40,10 +40,8 @@ class PaymentAmountViewModel extends ChangeNotifier {
 
     try {
       // Get recipient token account from provider
-      final PaymentProvider paymentProvider =
-          Provider.of<PaymentProvider>(context, listen: false);
-      final ProgramAccount? recipientTokenAccountProgram =
-          paymentProvider.recipientTokenAccount;
+      final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+      final ProgramAccount? recipientTokenAccountProgram = paymentProvider.recipientTokenAccount;
 
       if (recipientTokenAccountProgram == null) {
         _cachedLastTransaction = null;
@@ -53,20 +51,17 @@ class PaymentAmountViewModel extends ChangeNotifier {
 
       final String recipientTokenAccount = recipientTokenAccountProgram.pubkey;
 
-      final Map<String, List<TransactionDetails?>> transactions =
-          await _walletRepository.getStoredTransactions();
+      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
 
       TransactionTransferInfo? lastTransaction;
       DateTime? lastTransactionDate;
 
       // Iterate through transactions to find the most recent payment to this recipient
-      for (final List<TransactionDetails?> monthTransactions
-          in transactions.values) {
+      for (final List<TransactionDetails?> monthTransactions in transactions.values) {
         for (final TransactionDetails? tx in monthTransactions) {
           if (tx == null) continue;
 
-          final TransactionTransferInfo? transferInfo =
-              TransactionDetailsParser.parseTransferDetails(
+          final TransactionTransferInfo? transferInfo = TransactionDetailsParser.parseTransferDetails(
             tx,
             currentWalletAddress,
           );
@@ -75,14 +70,11 @@ class PaymentAmountViewModel extends ChangeNotifier {
             // Check if this is an outgoing transaction to the recipient's token account
             final bool isOutgoingToRecipient =
                 transferInfo.amount < 0 && // Outgoing transaction
-                    transferInfo.recipient != 'myself' &&
-                    transferInfo.recipient ==
-                        recipientTokenAccount; // Match token account address
+                transferInfo.recipient != 'myself' &&
+                transferInfo.recipient == recipientTokenAccount; // Match token account address
 
             if (isOutgoingToRecipient) {
-              if (lastTransactionDate == null ||
-                  (transferInfo.timestamp?.isAfter(lastTransactionDate) ??
-                      false)) {
+              if (lastTransactionDate == null || (transferInfo.timestamp?.isAfter(lastTransactionDate) ?? false)) {
                 lastTransaction = transferInfo;
                 lastTransactionDate = transferInfo.timestamp;
               }

@@ -8,16 +8,18 @@ class MoreOptionsScreen extends StatelessWidget {
   const MoreOptionsScreen({super.key});
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
+    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Public key copied')),
-    );
+    if (context.mounted) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Public key copied')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final String publicKey = walletProvider.wallet?.address ?? '— not set —';
 
     return Scaffold(
@@ -34,10 +36,7 @@ class MoreOptionsScreen extends StatelessWidget {
           children: <Widget>[
             Text(
               'Wallet Public Key',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Container(

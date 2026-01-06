@@ -145,8 +145,7 @@ class PasswordStrengthService {
   static bool _hasSequentialChars(String password) {
     final String lowerPassword = password.toLowerCase();
     for (final String pattern in _sequentialPatterns) {
-      if (lowerPassword.contains(pattern) ||
-          lowerPassword.contains(pattern.split('').reversed.join())) {
+      if (lowerPassword.contains(pattern) || lowerPassword.contains(pattern.split('').reversed.join())) {
         return true;
       }
     }
@@ -155,8 +154,7 @@ class PasswordStrengthService {
 
   static bool _hasRepeatingChars(String password) {
     for (int i = 0; i < password.length - 2; i++) {
-      if (password[i] == password[i + 1] &&
-          password[i + 1] == password[i + 2]) {
+      if (password[i] == password[i + 1] && password[i + 1] == password[i + 2]) {
         return true;
       }
     }
@@ -247,25 +245,25 @@ class PasswordStrengthService {
   }
 
   static String? getPasswordHintText(PasswordStrengthResult result) {
-  if (result.criteria.score >= 8) return null;
+    if (result.criteria.score >= 8) return null;
 
-  final List<String> hints = <String>[];
+    final List<String> hints = <String>[];
 
-  if (!result.criteria.hasMinLength) hints.add('at least 8 characters');
-  if (!result.criteria.hasUppercase) hints.add('an uppercase letter');
-  if (!result.criteria.hasLowercase) hints.add('a lowercase letter');
-  if (!result.criteria.hasNumbers) hints.add('a number');
-  if (!result.criteria.hasSpecialChars) hints.add('a special character');
+    if (!result.criteria.hasMinLength) hints.add('at least 8 characters');
+    if (!result.criteria.hasUppercase) hints.add('an uppercase letter');
+    if (!result.criteria.hasLowercase) hints.add('a lowercase letter');
+    if (!result.criteria.hasNumbers) hints.add('a number');
+    if (!result.criteria.hasSpecialChars) hints.add('a special character');
 
-  if (hints.isEmpty) return null;
+    if (hints.isEmpty) return null;
 
-  final String formattedHints = _formatNaturalLanguageList(hints);
-  return 'Hint: Try adding $formattedHints.';
-}
+    final String formattedHints = _formatNaturalLanguageList(hints);
+    return 'Hint: Try adding $formattedHints.';
+  }
 
-static String _formatNaturalLanguageList(List<String> items) {
-  if (items.length == 1) return items.first;
-  if (items.length == 2) return '${items[0]} and ${items[1]}';
-  return '${items.sublist(0, items.length - 1).join(', ')}, and ${items.last}';
+  static String _formatNaturalLanguageList(List<String> items) {
+    if (items.length == 1) return items.first;
+    if (items.length == 2) return '${items[0]} and ${items[1]}';
+    return '${items.sublist(0, items.length - 1).join(', ')}, and ${items.last}';
   }
 }
