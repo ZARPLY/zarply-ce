@@ -21,12 +21,10 @@ class PaymentRequestDetailsScreen extends StatefulWidget {
   final String recipientAddress;
 
   @override
-  State<PaymentRequestDetailsScreen> createState() =>
-      _PaymentRequestDetailsScreenState();
+  State<PaymentRequestDetailsScreen> createState() => _PaymentRequestDetailsScreenState();
 }
 
-class _PaymentRequestDetailsScreenState
-    extends State<PaymentRequestDetailsScreen> {
+class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScreen> {
   bool _isProcessing = false;
   bool _showCheckmarkFrom = false;
   bool _showCheckmarkTo = false;
@@ -52,23 +50,20 @@ class _PaymentRequestDetailsScreenState
   bool get _insufficientSol => _walletSolBalance < 0.001;
 
   bool get _payingSelf {
-    final WalletProvider wp =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider wp = Provider.of<WalletProvider>(context, listen: false);
     final Wallet? w = wp.wallet;
     final ProgramAccount? token = wp.userTokenAccount;
     final String dest = widget.recipientAddress;
     return dest == w?.address || dest == token?.pubkey;
   }
 
-  bool get _buttonDisabled =>
-      _isProcessing || _insufficientTokens || _insufficientSol || _payingSelf;
+  bool get _buttonDisabled => _isProcessing || _insufficientTokens || _insufficientSol || _payingSelf;
 
   Future<void> _handlePaymentConfirmation() async {
     if (_buttonDisabled) return;
     setState(() => _isProcessing = true);
 
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final Wallet? wallet = walletProvider.wallet;
 
     if (wallet == null) {
@@ -158,9 +153,10 @@ class _PaymentRequestDetailsScreenState
     String text,
     bool isFrom,
   ) async {
+    final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Address copied to clipboard')),
     );
     setState(() {
@@ -242,8 +238,7 @@ class _PaymentRequestDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final double amountInRands = double.parse(widget.amount) / 100;
-    final WalletProvider walletProvider =
-        Provider.of<WalletProvider>(context, listen: false);
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final Wallet? wallet = walletProvider.wallet;
 
     return Scaffold(
@@ -358,8 +353,7 @@ class _PaymentRequestDetailsScreenState
                     width: double.infinity,
                     child: LoadingButton(
                       isLoading: _isProcessing,
-                      onPressed:
-                          _buttonDisabled ? null : _handlePaymentConfirmation,
+                      onPressed: _buttonDisabled ? null : _handlePaymentConfirmation,
                       child: const Text('Confirm Payment'),
                     ),
                   ),

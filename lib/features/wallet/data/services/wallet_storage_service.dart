@@ -52,14 +52,12 @@ class WalletStorageService {
 
   Future<Wallet?> retrieveWallet() async {
     try {
-      final String? walletKey =
-          await _secureStorage.read(key: _walletPrivateKey);
+      final String? walletKey = await _secureStorage.read(key: _walletPrivateKey);
       if (walletKey == null) {
         return null;
       }
 
-      final Ed25519HDKeyPair restoredWallet =
-          await Wallet.fromPrivateKeyBytes(privateKey: base64Decode(walletKey));
+      final Ed25519HDKeyPair restoredWallet = await Wallet.fromPrivateKeyBytes(privateKey: base64Decode(walletKey));
       return restoredWallet;
     } catch (e) {
       throw WalletStorageException('Failed to retrieve wallet key: $e');
@@ -77,15 +75,13 @@ class WalletStorageService {
   }
 
   Future<String?> retrieveAssociatedTokenAccountPublicKey() async {
-    final String? tokenAccount =
-        await _secureStorage.read(key: _associatedTokenAccountKey);
+    final String? tokenAccount = await _secureStorage.read(key: _associatedTokenAccountKey);
     return tokenAccount;
   }
 
   Future<void> deletePrivateKey() async {
     try {
-      final bool exists =
-          await _secureStorage.containsKey(key: _walletPrivateKey);
+      final bool exists = await _secureStorage.containsKey(key: _walletPrivateKey);
       // TODO: destroy wallet
       if (!exists) {
         throw WalletStorageException('No wallet key to delete.');

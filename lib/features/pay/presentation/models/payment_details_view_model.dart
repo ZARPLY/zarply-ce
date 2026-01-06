@@ -3,15 +3,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/solana.dart';
 
 class PaymentDetailsViewModel extends ChangeNotifier {
-  PaymentDetailsViewModel({required this.ownPublicKey}) 
-      : _solanaClient = SolanaClient(
-          rpcUrl: Uri.parse(dotenv.env['solana_wallet_rpc_url']!),
-          websocketUrl: Uri.parse(dotenv.env['solana_wallet_websocket_url']!),
-          ) {
+  PaymentDetailsViewModel({required this.ownPublicKey})
+    : _solanaClient = SolanaClient(
+        rpcUrl: Uri.parse(dotenv.env['solana_wallet_rpc_url']!),
+        websocketUrl: Uri.parse(dotenv.env['solana_wallet_websocket_url']!),
+      ) {
     publicKeyController.addListener(_updateFormValidity);
     descriptionController.addListener(_updateFormValidity);
-    }
-  
+  }
+
   final String ownPublicKey;
   final SolanaClient _solanaClient;
   final TextEditingController publicKeyController = TextEditingController();
@@ -20,8 +20,7 @@ class PaymentDetailsViewModel extends ChangeNotifier {
   String? publicKeyError;
   bool? accountExists;
   bool isCheckingAccount = false;
-  bool get canContinue =>
-      isFormValid && accountExists == true && !isCheckingAccount;
+  bool get canContinue => isFormValid && (accountExists ?? false) && !isCheckingAccount;
 
   @override
   void dispose() {
@@ -33,8 +32,8 @@ class PaymentDetailsViewModel extends ChangeNotifier {
   void _updateFormValidity() {
     final String publicKey = publicKeyController.text;
 
-    publicKeyError  = null;
-    accountExists   = null;
+    publicKeyError = null;
+    accountExists = null;
 
     if (publicKey.isEmpty) {
       publicKeyError = 'Public key is required';
@@ -57,9 +56,9 @@ class PaymentDetailsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _solanaClient.rpcClient.getAccountInfo(publicKey);
-      accountExists = true;                  
+      accountExists = true;
     } catch (_) {
-      accountExists = false;                  
+      accountExists = false;
     }
     isCheckingAccount = false;
     notifyListeners();

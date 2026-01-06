@@ -8,10 +8,8 @@ import '../services/wallet_solana_service.dart';
 class WalletRepositoryImpl implements WalletRepository {
   factory WalletRepositoryImpl() => _instance;
 
-  WalletRepositoryImpl._internal()
-      : _transactionStorageService = TransactionStorageService();
-  static final WalletRepositoryImpl _instance =
-      WalletRepositoryImpl._internal();
+  WalletRepositoryImpl._internal() : _transactionStorageService = TransactionStorageService();
+  static final WalletRepositoryImpl _instance = WalletRepositoryImpl._internal();
 
   WalletSolanaService? _walletSolanaService;
   final TransactionStorageService _transactionStorageService;

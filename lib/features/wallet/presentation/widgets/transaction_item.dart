@@ -38,23 +38,17 @@ class TransactionItem extends StatelessWidget {
                 Text(
                   transferInfo.formattedAmount,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: transferInfo.formattedAmount.startsWith('-')
-                            ? Colors.black
-                            : Colors.blue,
-                      ),
+                    color: transferInfo.formattedAmount.startsWith('-') ? Colors.black : Colors.blue,
+                  ),
                 ),
                 Text(
-                  transferInfo.timestamp != null
-                      ? Formatters.formatDate(transferInfo.timestamp!)
-                      : 'Unknown',
+                  transferInfo.timestamp != null ? Formatters.formatDate(transferInfo.timestamp!) : 'Unknown',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
             Image.asset(
-              transferInfo.formattedAmount.startsWith('-')
-                  ? 'images/payed.png'
-                  : 'images/received.png',
+              transferInfo.formattedAmount.startsWith('-') ? 'images/payed.png' : 'images/received.png',
               width: 40,
               height: 40,
             ),

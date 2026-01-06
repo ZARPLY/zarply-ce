@@ -3,7 +3,7 @@ import '../../domain/repositories/create_password_repository.dart';
 
 class CreatePasswordRepositoryImpl implements CreatePasswordRepository {
   CreatePasswordRepositoryImpl({SecureStorageService? secureStorage})
-      : _secureStorage = secureStorage ?? SecureStorageService();
+    : _secureStorage = secureStorage ?? SecureStorageService();
   final SecureStorageService _secureStorage;
 
   @override

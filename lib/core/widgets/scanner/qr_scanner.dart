@@ -31,8 +31,7 @@ class _QRScannerState extends State<QRScanner> {
             final String recipientAddress = parts[3];
 
             // Set recipient address in payment provider
-            final PaymentProvider paymentProvider =
-                Provider.of<PaymentProvider>(context, listen: false);
+            final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
             paymentProvider.setRecipientAddress(recipientAddress);
 
             if (context.mounted) {
@@ -70,22 +69,22 @@ class _QRScannerState extends State<QRScanner> {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image == null) return;
 
-      final BarcodeCapture? barcodeCapture =
-          await controller.analyzeImage(image.path);
+      final BarcodeCapture? barcodeCapture = await controller.analyzeImage(image.path);
 
       if (barcodeCapture == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not detect a QR code in this image. '
-                'Please ensure the image is clear and contains a valid QR code.'),
+            content: Text(
+              'Could not detect a QR code in this image. '
+              'Please ensure the image is clear and contains a valid QR code.',
+            ),
           ),
         );
         return;
       }
 
-      if (barcodeCapture.barcodes.isNotEmpty &&
-          barcodeCapture.barcodes.first.rawValue != null) {
+      if (barcodeCapture.barcodes.isNotEmpty && barcodeCapture.barcodes.first.rawValue != null) {
         final String code = barcodeCapture.barcodes.first.rawValue!;
         if (code.startsWith('zarply:payment:')) {
           final List<String> parts = code.split(':');
@@ -100,8 +99,7 @@ class _QRScannerState extends State<QRScanner> {
               timestamp: timestamp,
             );
 
-            final bool isExpired =
-                DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
+            final bool isExpired = DateTime.now().millisecondsSinceEpoch - timestamp > 86400000;
 
             if (isExpired) {
               if (!mounted) return;
@@ -117,21 +115,18 @@ class _QRScannerState extends State<QRScanner> {
 
             if (mounted) {
               // Set recipient address in payment provider
-              final PaymentProvider paymentProvider =
-                  Provider.of<PaymentProvider>(context, listen: false);
-              await paymentProvider
-                  .setRecipientAddress(paymentRequest.walletAddress);
+              final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+              await paymentProvider.setRecipientAddress(paymentRequest.walletAddress);
 
-              if (context.mounted) {
-                context.go(
-                  '/payment_amount',
-                  extra: <String, String>{
-                    'amount': paymentRequest.amount,
-                    'recipientAddress': paymentRequest.walletAddress,
-                    'source': '/scan',
-                  },
-                );
-              }
+              if (!mounted) return;
+              context.go(
+                '/payment_amount',
+                extra: <String, String>{
+                  'amount': paymentRequest.amount,
+                  'recipientAddress': paymentRequest.walletAddress,
+                  'source': '/scan',
+                },
+              );
             }
           }
         }
@@ -179,8 +174,7 @@ class _QRScannerState extends State<QRScanner> {
       body: MobileScanner(
         controller: controller,
         onDetect: _onDetect,
-        overlayBuilder: (BuildContext context, BoxConstraints constraints) =>
-            const QRScannerOverlay(),
+        overlayBuilder: (BuildContext context, BoxConstraints constraints) => const QRScannerOverlay(),
       ),
     );
   }

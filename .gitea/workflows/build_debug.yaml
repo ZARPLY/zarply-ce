@@ -1,0 +1,98 @@
+name: Build And Upload
+
+on:
+  push:
+    tags:
+      - '*-debug'
+
+jobs:
+  cleanup:
+    name: Clean Docker Images
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Clean Docker Images
+        run: bash tools/clean_gitea.sh
+  android_build:
+    name: Android APK/Appbundle Build & Upload
+    runs-on: workstation.ubuntu.lts
+    needs: cleanup
+    container:
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+    env:
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+      GITEA_USERNAME: ${{ secrets.USERNAME }}
+      GITEA_PASSWORD: ${{ secrets.PASSWORD }}
+      GITEA_SERVER: ${{ secrets.SERVER }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
+      - name: Update Gradle Properties
+        run: cp android/gradle.docker.properties android/gradle.properties
+      - name: Optimize Gradle Wrapper For CI
+        run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
+      - name: Build Android APK
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          flutter build apk --debug \
+            --obfuscate \
+            --split-per-abi \
+            --target-platform android-arm64 \
+            --split-debug-info=split_debug_info/ \
+            --build-name=$VERSION \
+            --build-number=$BUILD
+      - name: Save Artifacts
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          mkdir artifacts
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk artifacts/zarply-arm64-v8a.apk
+      - name: Build Android App Bundle
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          flutter build appbundle --debug \
+            --obfuscate \
+            --split-debug-info=split_debug_info/ \
+            --build-name=$VERSION \
+            --build-number=$BUILD
+      - name: Save Artifacts
+        run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+          mv build/app/outputs/bundle/debug/app-debug.aab artifacts/zarply.aab
+      - name: Create zip file with correct timestamps
+        run: zip -r artifacts.zip artifacts
+      - name: Store Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: prod-zarply
+          path: artifacts.zip

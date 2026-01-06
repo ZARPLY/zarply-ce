@@ -46,10 +46,7 @@ class _BalanceAmountState extends State<BalanceAmount> {
         children: <Widget>[
           Text(
             Formatters.formatAmount(widget.walletAmount),
-            style: Theme.of(context)
-                .textTheme
-                .headlineLarge
-                ?.copyWith(color: Colors.white),
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 8),
           GestureDetector(
@@ -67,10 +64,7 @@ class _BalanceAmountState extends State<BalanceAmount> {
                   Flexible(
                     child: Text(
                       widget.walletAddress,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white),
                       softWrap: true,
                       textAlign: TextAlign.center,
                     ),

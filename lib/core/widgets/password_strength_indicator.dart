@@ -17,38 +17,37 @@ class PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<PasswordStrengthProvider>(
-      builder: (
-        BuildContext context,
-        PasswordStrengthProvider provider,
-        Widget? child,
-      ) {
-        if (provider.result.message == 'Enter a password') {
-          return const SizedBox.shrink();
-        }
+      builder:
+          (
+            BuildContext context,
+            PasswordStrengthProvider provider,
+            Widget? child,
+          ) {
+            if (provider.result.message == 'Enter a password') {
+              return const SizedBox.shrink();
+            }
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _buildProgressBar(context, provider),
-              const SizedBox(height: 8),
-              _buildStrengthMessage(context, provider),
-              if (showSuggestions &&
-                  provider.suggestions.isNotEmpty &&
-                  !compact) ...<Widget>[
-                const SizedBox(height: 8),
-                _buildSuggestions(context, provider),
-              ],
-              if (showCriteria && !compact) ...<Widget>[
-                const SizedBox(height: 8),
-                _buildCriteria(context, provider),
-              ],
-            ],
-          ),
-        );
-      },
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _buildProgressBar(context, provider),
+                  const SizedBox(height: 8),
+                  _buildStrengthMessage(context, provider),
+                  if (showSuggestions && provider.suggestions.isNotEmpty && !compact) ...<Widget>[
+                    const SizedBox(height: 8),
+                    _buildSuggestions(context, provider),
+                  ],
+                  if (showCriteria && !compact) ...<Widget>[
+                    const SizedBox(height: 8),
+                    _buildCriteria(context, provider),
+                  ],
+                ],
+              ),
+            );
+          },
     );
   }
 
@@ -69,8 +68,8 @@ class PasswordStrengthIndicator extends StatelessWidget {
               decoration: BoxDecoration(
                 color: i < provider.progressLevel
                     ? provider.progressColors[i < provider.progressColors.length
-                        ? i
-                        : provider.progressColors.length - 1]
+                          ? i
+                          : provider.progressColors.length - 1]
                     : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -153,7 +152,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          ...provider.suggestions.take(3).map(
+          ...provider.suggestions
+              .take(3)
+              .map(
                 (String suggestion) => Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Row(

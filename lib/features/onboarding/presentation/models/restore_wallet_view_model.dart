@@ -7,7 +7,7 @@ import '../../domain/repositories/restore_wallet_repository.dart';
 
 class RestoreWalletViewModel extends ChangeNotifier {
   RestoreWalletViewModel({RestoreWalletRepository? repository})
-      : _repository = repository ?? RestoreWalletRepositoryImpl() {
+    : _repository = repository ?? RestoreWalletRepositoryImpl() {
     phraseController.addListener(_updateFormValidity);
     privateKeyController.addListener(_updateFormValidity);
   }
@@ -36,10 +36,11 @@ class RestoreWalletViewModel extends ChangeNotifier {
 
   void _updateFormValidity() {
     if (selectedRestoreMethod == 'Seed Phrase') {
-      isFormValid = phraseController.text.trim().isNotEmpty &&
-          _repository.isValidMnemonic(phraseController.text.trim());
+      isFormValid =
+          phraseController.text.trim().isNotEmpty && _repository.isValidMnemonic(phraseController.text.trim());
     } else {
-      isFormValid = privateKeyController.text.trim().isNotEmpty &&
+      isFormValid =
+          privateKeyController.text.trim().isNotEmpty &&
           _repository.isValidPrivateKey(privateKeyController.text.trim());
     }
     notifyListeners();

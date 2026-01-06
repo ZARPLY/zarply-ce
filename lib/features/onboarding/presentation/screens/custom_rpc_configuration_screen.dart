@@ -14,12 +14,10 @@ class CustomRpcConfigurationScreen extends StatefulWidget {
   final bool isRestoreFlow;
 
   @override
-  State<CustomRpcConfigurationScreen> createState() =>
-      _CustomRpcConfigurationScreenState();
+  State<CustomRpcConfigurationScreen> createState() => _CustomRpcConfigurationScreenState();
 }
 
-class _CustomRpcConfigurationScreenState
-    extends State<CustomRpcConfigurationScreen> {
+class _CustomRpcConfigurationScreenState extends State<CustomRpcConfigurationScreen> {
   final TextEditingController _rpcController = TextEditingController();
   final TextEditingController _websocketController = TextEditingController();
   final SecureStorageService _storageService = SecureStorageService();
@@ -42,8 +40,7 @@ class _CustomRpcConfigurationScreenState
 
   Future<void> _loadSavedConfiguration() async {
     try {
-      final ({String? rpcUrl, String? websocketUrl}) config =
-          await _storageService.getRpcConfiguration();
+      final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
       if (config.rpcUrl != null && config.websocketUrl != null) {
         setState(() {
           _rpcController.text = config.rpcUrl!;
@@ -121,8 +118,7 @@ class _CustomRpcConfigurationScreenState
         );
 
         final WelcomeViewModel welcomeViewModel = WelcomeViewModel();
-        final bool success =
-            await welcomeViewModel.createAndStoreWallet(walletProvider);
+        final bool success = await welcomeViewModel.createAndStoreWallet(walletProvider);
 
         if (!mounted) return;
 
@@ -153,9 +149,7 @@ class _CustomRpcConfigurationScreenState
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
           child: InkWell(
             onTap: () {
-              final String route = widget.isRestoreFlow
-                  ? '/rpc_configuration?restore=true'
-                  : '/rpc_configuration';
+              final String route = widget.isRestoreFlow ? '/rpc_configuration?restore=true' : '/rpc_configuration';
               context.go(route);
             },
             child: DecoratedBox(
@@ -194,16 +188,16 @@ class _CustomRpcConfigurationScreenState
               Text(
                 'Custom RPC Configuration',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Enter your custom QuickNode endpoint details',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                  color: Colors.grey[600],
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -212,8 +206,7 @@ class _CustomRpcConfigurationScreenState
                 controller: _rpcController,
                 decoration: const InputDecoration(
                   labelText: 'RPC URL',
-                  hintText:
-                      'https://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
+                  hintText: 'https://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -232,8 +225,7 @@ class _CustomRpcConfigurationScreenState
                 controller: _websocketController,
                 decoration: const InputDecoration(
                   labelText: 'WebSocket URL',
-                  hintText:
-                      'wss://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
+                  hintText: 'wss://your-endpoint.solana-mainnet.quiknode.pro/xyz/',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -340,9 +332,7 @@ class _CustomRpcConfigurationScreenState
                     ),
                   ),
                   child: Text(
-                    widget.isRestoreFlow
-                        ? 'Continue'
-                        : 'Continue & Create Wallet',
+                    widget.isRestoreFlow ? 'Continue' : 'Continue & Create Wallet',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,

@@ -30,8 +30,7 @@ class ClearIconButton extends StatelessWidget {
                   onPressed: () {
                     controller.clear();
                     if (otherControllers != null) {
-                      for (final TextEditingController otherController
-                          in otherControllers!) {
+                      for (final TextEditingController otherController in otherControllers!) {
                         otherController.clear();
                       }
                     }

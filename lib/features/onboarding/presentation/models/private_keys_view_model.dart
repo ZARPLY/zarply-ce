@@ -4,8 +4,7 @@ import '../../data/repositories/private_keys_repository_impl.dart';
 import '../../domain/repositories/private_keys_repository.dart';
 
 class PrivateKeysViewModel extends ChangeNotifier {
-  PrivateKeysViewModel({PrivateKeysRepository? repository})
-      : _repository = repository ?? PrivateKeysRepositoryImpl() {
+  PrivateKeysViewModel({PrivateKeysRepository? repository}) : _repository = repository ?? PrivateKeysRepositoryImpl() {
     loadKeys();
   }
 
@@ -32,7 +31,8 @@ class PrivateKeysViewModel extends ChangeNotifier {
   }
 
   void copyKeysToClipboard(BuildContext context) {
-    final String formatted = '''
+    final String formatted =
+        '''
 Zarp Token: ${tokenAccountAddress ?? ''}
 Solana Wallet: ${walletAddress ?? ''}
 ''';

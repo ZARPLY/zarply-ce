@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/services/secure_storage_service.dart';
 
 class SplashViewModel extends ChangeNotifier {
-  SplashViewModel(this._walletProvider, this._context);
+  SplashViewModel(this._walletProvider);
   final WalletProvider _walletProvider;
-  final BuildContext _context;
   late AnimationController animationController;
   bool _isDisposed = false;
 
@@ -31,10 +29,10 @@ class SplashViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> playAnimation() async {
+  void playAnimation() {
     if (!_isDisposed) {
       // Start continuous spinning animation
-      await animationController.repeat();
+      animationController.repeat();
     }
   }
 
@@ -44,7 +42,7 @@ class SplashViewModel extends ChangeNotifier {
     }
   }
 
-  Future<String> initializeAndGetRoute() async {
+  Future<String> initializeAndGetRoute(AuthProvider authProvider) async {
     String route = '/wallet';
 
     try {
@@ -58,8 +56,6 @@ class SplashViewModel extends ChangeNotifier {
       }
 
       // Login the user
-      final AuthProvider authProvider =
-          Provider.of<AuthProvider>(_context, listen: false);
       await authProvider.login();
 
       route = '/wallet';

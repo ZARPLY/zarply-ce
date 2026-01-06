@@ -5,8 +5,8 @@ class BalanceCacheService {
   BalanceCacheService({
     SecureStorageService? secureStorageService,
     WalletRepository? walletRepository,
-  })  : _secureStorageService = secureStorageService ?? SecureStorageService(),
-        _walletRepository = walletRepository;
+  }) : _secureStorageService = secureStorageService ?? SecureStorageService(),
+       _walletRepository = walletRepository;
 
   final SecureStorageService _secureStorageService;
   final WalletRepository? _walletRepository;
@@ -22,14 +22,11 @@ class BalanceCacheService {
     try {
       // If force refresh is requested, skip cache
       if (!forceRefresh) {
-        final double? cachedBalance =
-            await _secureStorageService.getCachedZarpBalance();
-        final DateTime? cacheTime =
-            await _secureStorageService.getZarpBalanceTimestamp();
+        final double? cachedBalance = await _secureStorageService.getCachedZarpBalance();
+        final DateTime? cacheTime = await _secureStorageService.getZarpBalanceTimestamp();
 
         if (cachedBalance != null && cacheTime != null) {
-          final bool isCacheFresh =
-              DateTime.now().difference(cacheTime) < _cacheExpiry;
+          final bool isCacheFresh = DateTime.now().difference(cacheTime) < _cacheExpiry;
           if (isCacheFresh) {
             return cachedBalance;
           }
@@ -41,15 +38,13 @@ class BalanceCacheService {
         throw Exception('WalletRepository not available for balance fetching');
       }
 
-      final double freshBalance =
-          await _walletRepository.getZarpBalance(address);
+      final double freshBalance = await _walletRepository.getZarpBalance(address);
 
       await _secureStorageService.saveZarpBalance(freshBalance);
 
       return freshBalance;
     } catch (e) {
-      final double? cachedBalance =
-          await _secureStorageService.getCachedZarpBalance();
+      final double? cachedBalance = await _secureStorageService.getCachedZarpBalance();
       if (cachedBalance != null) {
         return cachedBalance;
       }
@@ -63,14 +58,11 @@ class BalanceCacheService {
   }) async {
     try {
       if (!forceRefresh) {
-        final double? cachedBalance =
-            await _secureStorageService.getCachedSolBalance();
-        final DateTime? cacheTime =
-            await _secureStorageService.getSolBalanceTimestamp();
+        final double? cachedBalance = await _secureStorageService.getCachedSolBalance();
+        final DateTime? cacheTime = await _secureStorageService.getSolBalanceTimestamp();
 
         if (cachedBalance != null && cacheTime != null) {
-          final bool isCacheFresh =
-              DateTime.now().difference(cacheTime) < _cacheExpiry;
+          final bool isCacheFresh = DateTime.now().difference(cacheTime) < _cacheExpiry;
           if (isCacheFresh) {
             return cachedBalance;
           }
@@ -81,15 +73,13 @@ class BalanceCacheService {
         throw Exception('WalletRepository not available for balance fetching');
       }
 
-      final double freshBalance =
-          await _walletRepository.getSolBalance(address);
+      final double freshBalance = await _walletRepository.getSolBalance(address);
 
       await _secureStorageService.saveSolBalance(freshBalance);
 
       return freshBalance;
     } catch (e) {
-      final double? cachedBalance =
-          await _secureStorageService.getCachedSolBalance();
+      final double? cachedBalance = await _secureStorageService.getCachedSolBalance();
       if (cachedBalance != null) {
         return cachedBalance;
       }
@@ -140,10 +130,8 @@ class BalanceCacheService {
 
   /// Check if cached balances are fresh
   Future<bool> areCachedBalancesFresh() async {
-    final DateTime? zarpTime =
-        await _secureStorageService.getZarpBalanceTimestamp();
-    final DateTime? solTime =
-        await _secureStorageService.getSolBalanceTimestamp();
+    final DateTime? zarpTime = await _secureStorageService.getZarpBalanceTimestamp();
+    final DateTime? solTime = await _secureStorageService.getSolBalanceTimestamp();
 
     if (zarpTime == null || solTime == null) return false;
 
@@ -156,10 +144,8 @@ class BalanceCacheService {
 
   /// Get cache age for debugging purposes
   Future<String> getCacheAgeInfo() async {
-    final DateTime? zarpTime =
-        await _secureStorageService.getZarpBalanceTimestamp();
-    final DateTime? solTime =
-        await _secureStorageService.getSolBalanceTimestamp();
+    final DateTime? zarpTime = await _secureStorageService.getZarpBalanceTimestamp();
+    final DateTime? solTime = await _secureStorageService.getSolBalanceTimestamp();
 
     if (zarpTime == null || solTime == null) {
       return 'No cached balances';

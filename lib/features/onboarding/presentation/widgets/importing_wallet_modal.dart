@@ -55,9 +55,7 @@ class ImportingWalletModal extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            isImported
-                ? 'Successfully imported wallet'
-                : 'Checking wallet on chain',
+            isImported ? 'Successfully imported wallet' : 'Checking wallet on chain',
             style: const TextStyle(
               fontSize: 16,
               color: Colors.grey,

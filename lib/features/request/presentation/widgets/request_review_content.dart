@@ -87,15 +87,15 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                   Text(
                     'Minimum amount is R5',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                      color: Colors.grey,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Valid for 24 hours',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.blue,
-                        ),
+                      color: Colors.blue,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Text(

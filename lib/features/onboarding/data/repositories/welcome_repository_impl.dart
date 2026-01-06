@@ -10,8 +10,8 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   WelcomeRepositoryImpl({
     WalletSolanaService? walletService,
     WalletStorageService? storageService,
-  })  : _walletService = walletService,
-        _storageService = storageService ?? WalletStorageService();
+  }) : _walletService = walletService,
+       _storageService = storageService ?? WalletStorageService();
 
   final WalletSolanaService? _walletService;
   final WalletStorageService _storageService;
@@ -22,22 +22,15 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   }
 
   @override
-  Future<
-      ({
-        String? recoveryPhrase,
-        Wallet? wallet,
-        ProgramAccount? tokenAccount,
-        String? errorMessage
-      })> createWallet() async {
+  Future<({String? recoveryPhrase, Wallet? wallet, ProgramAccount? tokenAccount, String? errorMessage})>
+  createWallet() async {
     try {
       final WalletSolanaService service = await _service;
       final String recoveryPhrase = bip39.generateMnemonic();
       await _secureStorage.saveRecoveryPhrase(recoveryPhrase);
-      final Wallet wallet =
-          await service.createWalletFromMnemonic(recoveryPhrase);
+      final Wallet wallet = await service.createWalletFromMnemonic(recoveryPhrase);
       await Future<void>.delayed(const Duration(seconds: 20));
-      final ProgramAccount tokenAccount =
-          await service.createAssociatedTokenAccount(wallet);
+      final ProgramAccount tokenAccount = await service.createAssociatedTokenAccount(wallet);
 
       await service.requestZARP(wallet);
 

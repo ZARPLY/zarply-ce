@@ -31,10 +31,9 @@ class _AmountInputState extends State<AmountInput> {
     super.initState();
     _displayController = TextEditingController();
     if (widget.controller.text.isNotEmpty) {
-      _displayController.text =
-          Formatters.formatAmount(double.parse(widget.controller.text) / 100)
-              .replaceAll('R', '')
-              .trim();
+      _displayController.text = Formatters.formatAmount(
+        double.parse(widget.controller.text) / 100,
+      ).replaceAll('R', '').trim();
     }
     _displayController.addListener(() => setState(() {}));
   }
@@ -47,16 +46,14 @@ class _AmountInputState extends State<AmountInput> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isInvalidAmount = widget.controller.text.isNotEmpty &&
-        (int.tryParse(widget.controller.text) ?? 0) < 500;
+    final bool isInvalidAmount = widget.controller.text.isNotEmpty && (int.tryParse(widget.controller.text) ?? 0) < 500;
 
     return TextField(
       controller: _displayController,
       keyboardType: TextInputType.number,
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction,
-      onSubmitted:
-          widget.onSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
+      onSubmitted: widget.onSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
       readOnly: widget.readOnly,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly,
@@ -69,8 +66,7 @@ class _AmountInputState extends State<AmountInput> {
             final int? cents = int.tryParse(newValue.text);
             if (cents == null) return oldValue;
             final double rands = cents / 100;
-            final String formatted =
-                Formatters.formatAmount(rands).replaceAll('R', '').trim();
+            final String formatted = Formatters.formatAmount(rands).replaceAll('R', '').trim();
             if (formatted.isEmpty) return oldValue;
             widget.controller.text = newValue.text;
             return TextEditingValue(

@@ -44,8 +44,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
   }
 
   Future<void> _makeTransaction() async {
-    final Wallet? wallet =
-        Provider.of<WalletProvider>(context, listen: false).wallet;
+    final Wallet? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
       if (mounted) return;
@@ -177,11 +176,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 width: double.infinity,
                 child: LoadingButton(
                   isLoading: _viewModel.isLoading,
-                  onPressed: (_viewModel.isLoading ||
-                          insufficientTokens ||
-                          insufficientSol)
-                      ? null
-                      : _makeTransaction,
+                  onPressed: (_viewModel.isLoading || insufficientTokens || insufficientSol) ? null : _makeTransaction,
                   style: ElevatedButton.styleFrom(
                     textStyle: const TextStyle(
                       fontSize: 18,

@@ -26,7 +26,8 @@ class RequestAmountViewModel extends ChangeNotifier {
   }
 
   void _updateFormValidity() {
-    final double amount = double.tryParse(
+    final double amount =
+        double.tryParse(
           paymentAmountController.text,
         ) ??
         0;
