@@ -3,7 +3,7 @@ name: Publish Android to Play Store
 on:
   push:
     branches:
-      - '**'  
+      - '**'  @
 
 jobs:
   publish-android:
