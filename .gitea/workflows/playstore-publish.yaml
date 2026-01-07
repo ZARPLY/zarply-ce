@@ -3,42 +3,65 @@ name: Publish Android to Play Store
 on:
   push:
     branches:
-    - '**'        # all
+      - '**'  
 
 jobs:
   publish-android:
+    name: Android App Bundle Build & Upload to Play Store
     runs-on: workstation.ubuntu.lts
-
+    container:
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+    env:
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+      SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.38.4"
-
-      - name: Decode keystore
-        run: echo "${{ secrets.BASE64_KEYSTORE }}" | base64 -d > android/upload-keystore.jks
-
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Decode Android Key Store
+        run: echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
       - name: Create key.properties
         run: |
-          cat <<EOF > android/key.properties
-          storeFile=upload-keystore.jks
-          storePassword=${{ secrets.RELEASE_STORE_PASSWORD }}
-          keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}
-          keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}
-          EOF
-
-      - name: Flutter pub get
-        run: flutter pub get
-
-      - name: Build App Bundle
-        run: flutter build appbundle --release
-
-      - name: Upload to Play Store
-        uses: r0adkll/upload-google-play@v1.1.3
+          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Update Gradle Properties
+        run: cp android/gradle.docker.properties android/gradle.properties
+      - name: Optimize Gradle Wrapper For CI
+        run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
+      - name: Build Android App Bundle
+        run: |
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=split_debug_info/
+      - name: Save Artifacts
+        run: |
+          mkdir -p artifacts
+          mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
+          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt 2>/dev/null || true
+          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/ 2>/dev/null && \
+          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip . 2>/dev/null || \
+          echo "Symbols not found, skipping" && cd ../../../../../../../
+      - name: Create zip file with correct timestamps
+        run: zip -r artifacts.zip artifacts
+      - name: Store Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: prod-zarply
+          path: artifacts.zip
+      - name: Upload Android Release to Play Store
+        uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: za.co.zarply
-          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          releaseFiles: artifacts/zarply.aab
           track: internal
+          status: completed
+          mappingFile: artifacts/appbundle_mapping.txt
+          debugSymbols: artifacts/appbundle_symbols.zip
