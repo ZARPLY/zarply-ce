@@ -1,0 +1,44 @@
+name: Publish Android to Play Store
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-android:
+    runs-on: workstation.ubuntu.lts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.4"
+
+      - name: Decode keystore
+        run: echo "${{ secrets.BASE64_KEYSTORE }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat <<EOF > android/key.properties
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.RELEASE_STORE_PASSWORD }}
+          keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}
+          keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}
+          EOF
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build App Bundle
+        run: flutter build appbundle --release
+
+      - name: Upload to Play Store
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: za.co.zarply
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
