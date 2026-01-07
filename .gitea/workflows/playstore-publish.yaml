@@ -2,8 +2,8 @@ name: Publish Android to Play Store
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+    - '**'        # all
 
 jobs:
   publish-android:
