@@ -89,6 +89,12 @@ class MoreOptionsScreen extends StatelessWidget {
                 },
               ),
             ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz),
+              title: const Text('Connect DEX'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/dex'),
+            ),
             const Spacer(),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features//dex/presentation/screens/dex_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
@@ -80,6 +81,7 @@ GoRouter createRouter(
               '/more',
               '/recovery_phrase',
               '/unlock',
+              '/dex',
             ];
 
             if (protectedRoutes.contains(location)) {
@@ -121,6 +123,10 @@ GoRouter createRouter(
             path: '/more',
             name: 'more',
             builder: (BuildContext context, GoRouterState state) => const MoreOptionsScreen(),
+          ),
+          GoRoute(
+            path: '/dex',
+            builder: (BuildContext context, GoRouterState state) => const DexScreen(),
           ),
           GoRoute(
             path: '/unlock',
