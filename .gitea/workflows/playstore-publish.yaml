@@ -55,6 +55,14 @@ jobs:
           if ! [[ "$BUILD" =~ ^[0-9]+$ ]]; then
             BUILD=$(git rev-list --count HEAD)
           fi
+          
+          # Ensure build number is at least 2 (since 1 is already used)
+          # This prevents conflicts with already published versions
+          if [ "$BUILD" -lt 2 ]; then
+            BUILD=2
+          fi
+
+          echo "Building with version: $VERSION, build number: $BUILD"
 
           flutter build appbundle --release \
             --obfuscate \
