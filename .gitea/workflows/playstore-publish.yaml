@@ -22,29 +22,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Decode Android Key Store
-        run: echo "$BASE64_KEYSTORE" | base64 -d > android/app/zarply-release.keystore
-      - name: Verify keystore was created
-        run: |
-          ls -lh android/app/zarply-release.keystore
-          file android/app/zarply-release.keystore
+        run: echo $BASE64_KEYSTORE | base64 -d | tee android/app/zarply-release.keystore > /dev/null
       - name: Create key.properties
         run: |
-          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s\n' \
-            "$RELEASE_KEY_ALIAS" "$RELEASE_KEY_PASSWORD" "$RELEASE_KEYSTORE" "$RELEASE_STORE_PASSWORD" > android/key.properties
-      - name: Verify key.properties content
-        run: |
-          echo "=== key.properties content ==="
-          cat android/key.properties
-          echo ""
-          echo "=== Verifying storeFile path ==="
-          STORE_FILE=$(grep "^storeFile=" android/key.properties | cut -d'=' -f2)
-          echo "storeFile value: '$STORE_FILE'"
-          if [ -n "$STORE_FILE" ]; then
-            echo "Checking if file exists at: android/$STORE_FILE"
-            ls -lh "android/$STORE_FILE" || echo "FILE NOT FOUND!"
-          else
-            echo "ERROR: storeFile is empty!"
-          fi
+          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
       - name: Verify Flutter Installation
         run: flutter doctor -v
       - name: Get Project Dependencies
