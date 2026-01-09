@@ -36,10 +36,11 @@ jobs:
       - name: Optimize Gradle Wrapper For CI
         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
       - name: Build Android App Bundle
+        shell: bash
         run: |
           TAG=$(git describe --tags --always)
           TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
-          
+
           if echo "$TAG_NO_V" | grep -q '+'; then
             VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
             BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
@@ -50,11 +51,11 @@ jobs:
             BUILD=$(git rev-list --count HEAD)
             ENV=""
           fi
-          
+
           if ! [[ "$BUILD" =~ ^[0-9]+$ ]]; then
             BUILD=$(git rev-list --count HEAD)
           fi
-          
+
           flutter build appbundle --release \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
