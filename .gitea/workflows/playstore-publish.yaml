@@ -37,9 +37,17 @@ jobs:
         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
       - name: Build Android App Bundle
         run: |
+          TAG=$(git describe --tags --always)
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
           flutter build appbundle --release \
             --obfuscate \
-            --split-debug-info=split_debug_info/
+            --split-debug-info=split_debug_info/ \
+            --build-name=$VERSION \
+            --build-number=$BUILD
       - name: Save Artifacts
         run: |
           mkdir -p artifacts
@@ -56,7 +64,7 @@ jobs:
           name: prod-zarply
           path: artifacts.zip
       - name: Upload Android Release to Play Store
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: za.co.zarply
