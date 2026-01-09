@@ -22,7 +22,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Decode Android Key Store
-        run: echo $BASE64_KEYSTORE | base64 -d | tee android/app/keystore > /dev/null
+        run: echo $BASE64_KEYSTORE | base64 -d > android/app/zarply-release.keystore
       - name: Create key.properties
         run: |
           printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
