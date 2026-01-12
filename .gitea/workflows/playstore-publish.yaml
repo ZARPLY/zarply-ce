@@ -2,8 +2,8 @@ name: Publish Android to Play Store
 
 on:
   push:
-    branches:
-      - '**'  
+    tags:
+      - 'v*'  
 
 jobs:
   publish-android:
@@ -36,53 +36,22 @@ jobs:
       - name: Optimize Gradle Wrapper For CI
         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
       - name: Build Android App Bundle
-        shell: bash
         run: |
           TAG=$(git describe --tags --always)
-          # Remove 'v' or 'v.' prefix to handle both v0.7.0 and v.0.7.0 formats
-          TAG_NO_V=$(echo "$TAG" | sed 's/^v\.\?//')
-
-          if echo "$TAG_NO_V" | grep -q '+'; then
-            VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
-            BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
-            BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
-            ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
-          else
-            # Check if TAG_NO_V looks like a version (contains dots and numbers)
-            if echo "$TAG_NO_V" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
-              VERSION="$TAG_NO_V"
-            else
-              VERSION="1.0.0"
-            fi
-            BUILD=$(git rev-list --count HEAD)
-            ENV=""
-          fi
-
-          if ! [[ "$BUILD" =~ ^[0-9]+$ ]]; then
-            BUILD=$(git rev-list --count HEAD)
-          fi
-          
-          # Ensure build number is at least 2 (since 1 is already used)
-          # This prevents conflicts with already published versions
-          if [ "$BUILD" -lt 2 ]; then
-            BUILD=2
-          fi
-
-          echo "Building with version: $VERSION, build number: $BUILD"
-
+          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
           flutter build appbundle --release \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
-            --build-name=$VERSION \
-            --build-number=$BUILD
+            --build-name=$VERSION
       - name: Save Artifacts
         run: |
-          mkdir -p artifacts
+          mkdir artifacts
           mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
-          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt 2>/dev/null || true
-          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/ 2>/dev/null && \
-          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip . 2>/dev/null || \
-          echo "Symbols not found, skipping" && cd ../../../../../../../
+          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
+          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
+          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
+          cd ../../../../../../../
       - name: Create zip file with correct timestamps
         run: zip -r artifacts.zip artifacts
       - name: Store Test Results
