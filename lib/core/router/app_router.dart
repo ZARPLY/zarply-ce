@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features//dex/presentation/screens/dex_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/dex/presentation/screens/dex_screen.dart';
 import '../../features/onboarding/presentation/screens/access_wallet_screen.dart';
 import '../../features/onboarding/presentation/screens/backup_wallet.dart';
 import '../../features/onboarding/presentation/screens/create_password_screen.dart';

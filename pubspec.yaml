@@ -22,6 +22,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   flutter_keyboard_visibility: ^6.0.0
   flutter_secure_storage: ^10.0.0
+  flutter_svg: ^2.0.9
   flutter_web_plugins:
     sdk: flutter
   go_router: ^17.0.1
@@ -58,6 +59,7 @@ flutter:
     - images/qr-code-logo.png
     - images/payed.png
     - images/received.png
+    - images/ovex_icon.svg
     - .env
 
   # TODO: ask a designer to provide fonts for our project and specify them here
