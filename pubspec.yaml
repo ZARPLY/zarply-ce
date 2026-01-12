@@ -9,7 +9,7 @@ platforms:
   android:
   ios:
 
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: ^3.9.2
