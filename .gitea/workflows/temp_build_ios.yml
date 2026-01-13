@@ -1,0 +1,45 @@
+#name: Android Build and Upload
+#
+#on:
+#  push:
+#    tags:
+#      - 'v*'
+#
+#ios_build:
+#    name: iOS IPA Build & Upload
+#    runs-on: workstation.mac
+#    env:
+#      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+#      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+#      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
+#    steps:
+#      - name: Checkout Repository
+#        uses: actions/checkout@v2
+#      - name: Verify Flutter Installation
+#        run: flutter doctor -v
+#      - name: Get Project Dependencies
+#        run: flutter pub get --no-precompile
+#      - name: Get iOS Dependencies
+#        run: |
+#          cd ios
+#          pod install --repo-update
+#          cd ..
+#      # - name: Generate Dart Files
+#      #   run: |
+#      #     flutter pub run build_runner build --release \
+#      #       --delete-conflicting-outputs \
+#      #       --config prod
+#      # - name: Generate Launcher Icons
+#      #   run: dart run flutter_launcher_icons
+#      - name: Build iOS IPA
+#        run: |
+#          flutter build ipa --release \
+#            --no-pub \
+#            --obfuscate \
+#            --codesign \
+#            --split-debug-info=split_debug_info/ \
+#            --dart-define-from-file=.env.prod
+#      - name: Upload to TestFlight
+#        run: |
+#          cd ios
+#          fastlane beta
