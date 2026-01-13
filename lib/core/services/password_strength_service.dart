@@ -13,6 +13,7 @@ class PasswordStrengthCriteria {
     required this.hasNoRepeatingChars,
     required this.hasMinLengthStrong,
   });
+
   final bool hasMinLength;
   final bool hasUppercase;
   final bool hasLowercase;
@@ -59,6 +60,7 @@ class PasswordStrengthResult {
     required this.message,
     required this.suggestions,
   });
+
   final PasswordStrength strength;
   final PasswordStrengthCriteria criteria;
   final double score;
@@ -152,7 +154,8 @@ class PasswordStrengthService {
     return false;
   }
 
-  static bool _hasRepeatingChars(String password) => RegExp(r'(.)\1\1').hasMatch(password); //checks for 3 identical consecutive characters
+  // checks for 3 identical consecutive characters
+  static bool _hasRepeatingChars(String password) => RegExp(r'(.)\1\1').hasMatch(password);
 
   static PasswordStrength _calculateStrength(
     PasswordStrengthCriteria criteria,
