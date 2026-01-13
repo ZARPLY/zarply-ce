@@ -3,7 +3,9 @@ name: Publish Android to Play Store
 on:
   push:
     tags:
-      - 'v*'  
+      - 'v*'
+      - '!*-debug'
+      - '!*-release'
 
 jobs:
   publish-android:
