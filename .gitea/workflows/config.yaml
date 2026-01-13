@@ -32,3 +32,40 @@ jobs:
         run: flutter pub get --no-precompile --enforce-lockfile
       - name: Run Flutter Tests
         run: flutter test
+  gitleaks:
+    runs-on: workstation.ubuntu.lts
+    needs: flutter_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Gitleaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz
+          tar -xzf gitleaks_8.24.0_linux_x64.tar.gz
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+      - name: Run Gitleaks scan
+        run: gitleaks detect --source . --report-path gitleaks-report.json --exit-code 1
+      - name: Upload Gitleaks Report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+  clean_containers:
+    needs: gitleaks
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Stop Docker Containers and Uvicorn
+        run: |
+          docker ps -a
+          docker image ls
+          docker stop $(docker ps -a -q) || true
+          docker rm $(docker ps -a -q) || true
+          docker image prune -f || true # shellcheck disable=SC2046
+          docker volume rm $(docker volume ls --format "{{.Name}}") || true
+          docker network prune -f || true
+          pid=$(sudo lsof -t -i:8000) || true
+          sudo kill $pid || true
+          pid=$(sudo lsof -t -i:8001) || true
+          sudo kill $pid || true
