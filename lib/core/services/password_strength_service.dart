@@ -152,14 +152,7 @@ class PasswordStrengthService {
     return false;
   }
 
-  static bool _hasRepeatingChars(String password) {
-    for (int i = 0; i < password.length - 2; i++) {
-      if (password[i] == password[i + 1] && password[i + 1] == password[i + 2]) {
-        return true;
-      }
-    }
-    return false;
-  }
+  static bool _hasRepeatingChars(String password) => RegExp(r'(.)\1\1').hasMatch(password); //checks for 3 identical consecutive characters
 
   static PasswordStrength _calculateStrength(
     PasswordStrengthCriteria criteria,
