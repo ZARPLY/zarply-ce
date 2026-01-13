@@ -8,7 +8,7 @@ on:
       - '!*-release'
 
 jobs:
-  publish-android:
+  android_build:
     name: Android App Bundle Build & Upload to Play Store
     runs-on: workstation.ubuntu.lts
     container:
