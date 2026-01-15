@@ -5,7 +5,8 @@ on:
     branches:
     - '*'
 
-ios_build:
+jobs:
+ ios_build:
     name: iOS IPA Build
     runs-on: workstation.mac
     env:
