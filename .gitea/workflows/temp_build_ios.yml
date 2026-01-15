@@ -2,11 +2,11 @@ name: iOS Build and Upload
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+    - '*'
 
 ios_build:
-    name: iOS IPA Build & Upload
+    name: iOS IPA Build
     runs-on: workstation.mac
     env:
       FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
@@ -18,28 +18,35 @@ ios_build:
       - name: Verify Flutter Installation
         run: flutter doctor -v
       - name: Get Project Dependencies
-        run: flutter pub get --no-precompile
+        run: flutter pub get --no-precompile --enforce-lockfile
       - name: Get iOS Dependencies
         run: |
           cd ios
           pod install --repo-update
           cd ..
-      # - name: Generate Dart Files
-      #   run: |
-      #     flutter pub run build_runner build --release \
-      #       --delete-conflicting-outputs \
-      #       --config prod
-      # - name: Generate Launcher Icons
-      #   run: dart run flutter_launcher_icons
+      - name: Generate Dart Files
+        run: |
+          dart run build_runner build --debug \
+            --delete-conflicting-outputs \
+            --config qa
+    
       - name: Build iOS IPA
         run: |
-          flutter build ipa --release \
+          REPO_VERSION=steps.meta.outputs.REPO_VERSION
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
+          echo $REPO_VERSION
+          flutter build ipa --debug \
             --no-pub \
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.prod
-      - name: Upload to TestFlight
+            --dart-define-from-file=.env.qa
+
+      - name: Build Success
+        if: success()
         run: |
-          cd ios
-          fastlane beta
+          echo "Build successful"
+   #   - name: Upload to TestFlight
+   #     run: |
+     #       cd ios
+   #       fastlane ios beta
