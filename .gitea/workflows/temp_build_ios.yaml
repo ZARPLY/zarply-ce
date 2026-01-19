@@ -21,11 +21,6 @@ jobs:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Generate Dart Files
-        run: |
-          dart run build_runner build --debug \
-            --delete-conflicting-outputs \
-            --config qa
       - name: Build iOS IPA
         run: |
           REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
