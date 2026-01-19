@@ -1,0 +1,52 @@
+name: iOS Build and Upload
+on:
+  push:
+    branches:
+    - '*'
+
+jobs:
+  ios_build:
+    name: iOS IPA Build
+    runs-on: workstation.mac
+    env:
+      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Get iOS Dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Generate Dart Files
+        run: |
+          dart run build_runner build --debug \
+            --delete-conflicting-outputs \
+            --config qa
+
+      - name: Build iOS IPA
+        run: |
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+          echo "REPO_VERSION=$REPO_VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $REPO_VERSION"
+          flutter build ipa --debug \
+            --no-pub \
+            --obfuscate \
+            --codesign \
+            --split-debug-info=split_debug_info/ \
+            --dart-define-from-file=.env.qa
+
+      - name: Build Success
+        if: success()
+        run: |
+          echo "Build successful"
+      # - name: Upload to TestFlight
+      #   run: |
+      #     cd ios
+      #     fastlane ios beta
