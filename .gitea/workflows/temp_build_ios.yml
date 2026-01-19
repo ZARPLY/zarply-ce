@@ -1,12 +1,11 @@
 name: iOS Build and Upload
-
 on:
   push:
     branches:
     - '*'
 
 jobs:
- ios_build:
+  ios_build:
     name: iOS IPA Build
     runs-on: workstation.mac
     env:
@@ -33,9 +32,9 @@ jobs:
     
       - name: Build iOS IPA
         run: |
-          REPO_VERSION=steps.meta.outputs.REPO_VERSION
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//') >> $GITHUB_OUTPUT
-          echo $REPO_VERSION
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+          echo "REPO_VERSION=$REPO_VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $REPO_VERSION"
           flutter build ipa --debug \
             --no-pub \
             --obfuscate \
@@ -47,7 +46,7 @@ jobs:
         if: success()
         run: |
           echo "Build successful"
-   #   - name: Upload to TestFlight
-   #     run: |
-     #       cd ios
-   #       fastlane ios beta
+      # - name: Upload to TestFlight
+      #   run: |
+      #     cd ios
+      #     fastlane ios beta
