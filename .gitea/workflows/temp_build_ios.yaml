@@ -1,8 +1,5 @@
 name: iOS Build and Upload
-on:
-  push:
-    branches:
-    - '*'
+on: [ push ]
 
 jobs:
   ios_build:
@@ -29,24 +26,13 @@ jobs:
           dart run build_runner build --debug \
             --delete-conflicting-outputs \
             --config qa
-
       - name: Build iOS IPA
         run: |
           REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
-          echo "REPO_VERSION=$REPO_VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $REPO_VERSION"
+          echo $REPO_VERSION
           flutter build ipa --debug \
             --no-pub \
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
             --dart-define-from-file=.env.qa
-
-      - name: Build Success
-        if: success()
-        run: |
-          echo "Build successful"
-      # - name: Upload to TestFlight
-      #   run: |
-      #     cd ios
-      #     fastlane ios beta
