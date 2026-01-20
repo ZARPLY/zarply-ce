@@ -1,9 +1,10 @@
-name: iOS Build and Upload
+name: Build and Upload
+
 on: [ push ]
 
 jobs:
   ios_build:
-    name: iOS IPA Build
+    name: iOS IPA Build & Upload
     runs-on: workstation.mac
     env:
       FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
@@ -21,13 +22,71 @@ jobs:
           cd ios
           pod install --repo-update
           cd ..
+      - name: Generate Launcher Icons
+        run: |
+          # Generate iOS launcher icons from the same source image used for Android
+          # Source: images/icon.png (configured in flutter_launcher_icons.yaml)
+          # This ensures both platforms use the same icon source
+          dart run flutter_launcher_icons
+      - name: Install Fastlane Dependencies
+        run: |
+          cd ios
+          bundle install
+          cd ..
+      - name: Prepare Apple API Key
+        run: |
+          # Create directory for API key if it doesn't exist
+          mkdir -p ios/fastlane
+          
+          # Handle API key - it might be base64 encoded or plain text
+          # Try to decode as base64 first, if that fails, use as-is
+          if [ -n "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+            # Try to decode as base64, if it fails, use the content directly
+            echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null || \
+            echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
+            chmod 600 ios/fastlane/AuthKey.p8
+            echo "Apple API key prepared at ios/fastlane/AuthKey.p8"
+          else
+            echo "Warning: FASTLANE_APPLE_API_KEY_PATH is not set"
+          fi
       - name: Build iOS IPA
         run: |
           REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
           echo $REPO_VERSION
-          flutter build ipa --debug \
+          flutter build ipa --release \
             --no-pub \
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.qa
+            --dart-define-from-file=.env
+      - name: Upload to TestFlight
+        run: |
+          cd ios
+          # Set the API key path to the file we created
+          export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
+          
+          # Verify API key file exists
+          if [ ! -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+            echo "Error: API key file not found at $FASTLANE_APPLE_API_KEY_PATH"
+            exit 1
+          fi
+          
+          # Find the IPA file (Flutter may name it differently)
+          IPA_FILE=$(find ../build/ios/ipa -name "*.ipa" | head -1)
+          if [ -z "$IPA_FILE" ]; then
+            echo "Error: IPA file not found in build/ios/ipa/"
+            ls -la ../build/ios/ipa/ || echo "Directory does not exist"
+            exit 1
+          fi
+          
+          echo "Found IPA: $IPA_FILE"
+          
+          # Copy or rename IPA to match Fastfile expectation if needed
+          if [ ! -f "../build/ios/ipa/zarply.ipa" ]; then
+            cp "$IPA_FILE" ../build/ios/ipa/zarply.ipa
+            echo "Copied IPA to zarply.ipa for Fastlane"
+          fi
+          
+          # Run Fastlane to upload to TestFlight/App Store
+          bundle exec fastlane beta
+          cd ..
