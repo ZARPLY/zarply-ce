@@ -28,11 +28,6 @@ jobs:
           # Source: images/icon.png (configured in flutter_launcher_icons.yaml)
           # This ensures both platforms use the same icon source
           dart run flutter_launcher_icons
-      - name: Install Fastlane Dependencies
-        run: |
-          cd ios
-          bundle install
-          cd ..
       - name: Prepare Apple API Key
         run: |
           # Create directory for API key if it doesn't exist
@@ -64,29 +59,4 @@ jobs:
           cd ios
           # Set the API key path to the file we created
           export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
-          
-          # Verify API key file exists
-          if [ ! -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
-            echo "Error: API key file not found at $FASTLANE_APPLE_API_KEY_PATH"
-            exit 1
-          fi
-          
-          # Find the IPA file (Flutter may name it differently)
-          IPA_FILE=$(find ../build/ios/ipa -name "*.ipa" | head -1)
-          if [ -z "$IPA_FILE" ]; then
-            echo "Error: IPA file not found in build/ios/ipa/"
-            ls -la ../build/ios/ipa/ || echo "Directory does not exist"
-            exit 1
-          fi
-          
-          echo "Found IPA: $IPA_FILE"
-          
-          # Copy or rename IPA to match Fastfile expectation if needed
-          if [ ! -f "../build/ios/ipa/zarply.ipa" ]; then
-            cp "$IPA_FILE" ../build/ios/ipa/zarply.ipa
-            echo "Copied IPA to zarply.ipa for Fastlane"
-          fi
-          
-          # Run Fastlane to upload to TestFlight/App Store
-          bundle exec fastlane beta
-          cd ..
+          fastlane ios beta
