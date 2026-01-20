@@ -24,9 +24,8 @@ jobs:
           cd ..
       - name: Generate Launcher Icons
         run: |
-          # Generate iOS launcher icons from the same source image used for Android
-          # Source: images/icon.png (configured in flutter_launcher_icons.yaml)
-          # This ensures both platforms use the same icon source
+          # Generate iOS launcher icons from images/icon.png
+          # This ensures icons are generated from the source image during build
           dart run flutter_launcher_icons
       - name: Install Fastlane Dependencies
         run: |
