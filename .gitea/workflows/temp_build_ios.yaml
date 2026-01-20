@@ -12,13 +12,58 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Select Xcode 26
+      - name: Select Xcode and Display Version
         run: |
-    
-          sudo xcode-select -s /Applications/Xcode-26.0.app/Contents/Developer || \
-          sudo xcode-select -s /Applications/Xcode_26.0.app/Contents/Developer || \
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          # Try to find Xcode 26 first (for iOS 26 SDK requirement starting April 2026)
+          # If not found, fall back to default Xcode
+          XCODE_PATH=""
+          if [ -d "/Applications/Xcode-26.0.app/Contents/Developer" ]; then
+            XCODE_PATH="/Applications/Xcode-26.0.app/Contents/Developer"
+            sudo xcode-select -s "$XCODE_PATH"
+            echo "Selected: Xcode-26.0.app"
+          elif [ -d "/Applications/Xcode_26.0.app/Contents/Developer" ]; then
+            XCODE_PATH="/Applications/Xcode_26.0.app/Contents/Developer"
+            sudo xcode-select -s "$XCODE_PATH"
+            echo "Selected: Xcode_26.0.app"
+          elif [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+            XCODE_PATH="/Applications/Xcode.app/Contents/Developer"
+            sudo xcode-select -s "$XCODE_PATH"
+            echo "Selected: Xcode.app (default)"
+          else
+            echo "Error: Xcode not found in standard locations"
+            exit 1
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo "XCODE VERSION INFORMATION"
+          echo "=========================================="
+          echo "Xcode Path: $XCODE_PATH"
+          echo ""
+          echo "Xcode Version:"
           xcodebuild -version
+          echo ""
+          echo "Available iOS SDKs:"
+          xcodebuild -showsdks | grep iphoneos
+          echo ""
+          
+          # Extract and display the iOS SDK version
+          SDK_VERSION=$(xcodebuild -showsdks | grep iphoneos | head -1 | sed 's/.*iphoneos\([0-9.]*\).*/\1/')
+          if [ -n "$SDK_VERSION" ]; then
+            echo "=========================================="
+            echo "iOS SDK Version: $SDK_VERSION"
+            echo "=========================================="
+            
+            # Check if SDK version meets requirement (iOS 26.0+)
+            SDK_MAJOR=$(echo "$SDK_VERSION" | cut -d. -f1)
+            if [ "$SDK_MAJOR" -ge 26 ]; then
+              echo "SDK version meets iOS 26 requirement"
+            else
+              echo "WARNING: SDK version $SDK_VERSION does not meet iOS 26 requirement"
+              echo "Apple requires iOS 26 SDK starting April 2026"
+            fi
+          fi
+          echo ""
       - name: Verify Flutter Installation
         run: flutter doctor -v
       - name: Get Project Dependencies
