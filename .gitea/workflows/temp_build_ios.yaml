@@ -12,6 +12,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Select Xcode 26
+        run: |
+          # Select Xcode 26 (adjust path if Xcode is installed in a different location)
+          sudo xcode-select -s /Applications/Xcode-26.0.app/Contents/Developer || \
+          sudo xcode-select -s /Applications/Xcode_26.0.app/Contents/Developer || \
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
       - name: Verify Flutter Installation
         run: flutter doctor -v
       - name: Get Project Dependencies
