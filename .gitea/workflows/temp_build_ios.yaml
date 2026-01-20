@@ -28,18 +28,47 @@ jobs:
           # Source: images/icon.png (configured in flutter_launcher_icons.yaml)
           # This ensures both platforms use the same icon source
           dart run flutter_launcher_icons
+      - name: Install Fastlane Dependencies
+        run: |
+          cd ios
+          # Configure bundle to install gems locally to avoid permission issues
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+          cd ..
       - name: Prepare Apple API Key
         run: |
           # Create directory for API key if it doesn't exist
           mkdir -p ios/fastlane
           
-          # Handle API key - it might be base64 encoded or plain text
-          # Try to decode as base64 first, if that fails, use as-is
+          # Handle API key - the secret might contain:
+          # 1. Base64 encoded key content
+          # 2. Plain text key content (PEM format)
+          # 3. A file path (if key is already on the system)
+          
           if [ -n "$FASTLANE_APPLE_API_KEY_PATH" ]; then
-            # Try to decode as base64, if it fails, use the content directly
-            echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null || \
-            echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
+            # Check if it's a file path that already exists
+            if [ -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+              echo "Using existing API key file at: $FASTLANE_APPLE_API_KEY_PATH"
+              cp "$FASTLANE_APPLE_API_KEY_PATH" ios/fastlane/AuthKey.p8
+            else
+              # Try to decode as base64 first
+              if echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null; then
+                echo "Decoded base64 API key"
+              else
+                # Use as plain text (PEM format)
+                echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
+                echo "Using plain text API key"
+              fi
+            fi
             chmod 600 ios/fastlane/AuthKey.p8
+            
+            # Verify the key file is valid
+            if openssl ec -in ios/fastlane/AuthKey.p8 -noout 2>/dev/null; then
+              echo "API key file is valid"
+            else
+              echo "Warning: API key file validation failed, but continuing..."
+            fi
+            
             echo "Apple API key prepared at ios/fastlane/AuthKey.p8"
           else
             echo "Warning: FASTLANE_APPLE_API_KEY_PATH is not set"
@@ -59,4 +88,5 @@ jobs:
           cd ios
           # Set the API key path to the file we created
           export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
-          fastlane ios beta
+          # Use bundle exec as recommended by Fastlane when Gemfile is present
+          bundle exec fastlane ios beta
