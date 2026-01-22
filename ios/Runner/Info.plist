@@ -56,8 +56,6 @@
 		<string>remote-notification</string>
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
-	<true/>
-	<key>ITSEncryptionExportComplianceCode</key>
-	<string></string>
+	<false/>
 </dict>
 </plist>
