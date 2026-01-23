@@ -1,4 +1,4 @@
-name: Publish Android to Play Store
+name: Build and Publish Android & iOS
 
 on:
   push:
@@ -8,6 +8,77 @@ on:
       - '!*-release'
 
 jobs:
+  ios_build:
+    name: iOS IPA Build & Upload
+    runs-on: workstation.mac
+    env:
+      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+      - name: Get Project Dependencies
+        run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Get iOS Dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Generate Launcher Icons
+        run: |
+          dart run flutter_launcher_icons
+      - name: Install Fastlane Dependencies
+        run: |
+          cd ios
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+          cd ..
+      - name: Prepare Apple API Key
+        run: |
+          mkdir -p ios/fastlane
+          
+          if [ -n "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+            if [ -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+              echo "Using existing API key file at: $FASTLANE_APPLE_API_KEY_PATH"
+              cp "$FASTLANE_APPLE_API_KEY_PATH" ios/fastlane/AuthKey.p8
+            else
+              if echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null; then
+                echo "Decoded base64 API key"
+              else
+                echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
+                echo "Using plain text API key"
+              fi
+            fi
+            chmod 600 ios/fastlane/AuthKey.p8
+            
+            if openssl ec -in ios/fastlane/AuthKey.p8 -noout 2>/dev/null; then
+              echo "API key file is valid"
+            else
+              echo "Warning: API key file validation failed, but continuing..."
+            fi
+            
+            echo "Apple API key prepared at ios/fastlane/AuthKey.p8"
+          else
+            echo "Warning: FASTLANE_APPLE_API_KEY_PATH is not set"
+          fi
+      - name: Build iOS IPA
+        run: |
+          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+          echo $REPO_VERSION
+          flutter build ipa --release \
+            --no-pub \
+            --obfuscate \
+            --codesign \
+            --split-debug-info=split_debug_info/ \
+            --dart-define-from-file=.env
+      - name: Upload to TestFlight
+        run: |
+          cd ios
+          export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
+          bundle exec fastlane ios beta
   android_build:
     name: Android App Bundle Build & Upload to Play Store
     runs-on: workstation.ubuntu.lts
