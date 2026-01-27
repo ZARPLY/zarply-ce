@@ -54,6 +54,18 @@ class WalletSolanaService {
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
+  static bool get _isFaucetEnabled {
+    final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
+
+    // Disable faucet-based auto funding when we are pointing at mainnet (PROD).
+    // QA and other non-prod environments use devnet/testnet URLs and will keep auto funding enabled.
+    if (rpcUrl == null) {
+      return true;
+    }
+
+    return !rpcUrl.contains('mainnet');
+  }
+
   Future<Wallet> createWallet() async {
     try {
       final Ed25519HDKeyPair wallet = await Wallet.random();
@@ -64,7 +76,9 @@ class WalletSolanaService {
         );
       }
 
-      await _requestSOL(wallet);
+      if (_isFaucetEnabled) {
+        await _requestSOL(wallet);
+      }
 
       return wallet;
     } catch (e) {
@@ -81,7 +95,9 @@ class WalletSolanaService {
       );
     }
 
-    await _requestSOL(wallet);
+    if (_isFaucetEnabled) {
+      await _requestSOL(wallet);
+    }
 
     return wallet;
   }
@@ -323,6 +339,12 @@ class WalletSolanaService {
   }
 
   Future<String> requestZARP(Wallet wallet) async {
+    if (!_isFaucetEnabled) {
+      throw WalletSolanaServiceException(
+        'Faucet is not available in production environment',
+      );
+    }
+
     // call ZARPLY faucet
     final http.Response response = await http.post(
       Uri.parse('https://faucet.zarply.co.za/api/faucet'),
@@ -450,6 +472,12 @@ class WalletSolanaService {
   }
 
   Future<String> _requestSOL(Wallet wallet) async {
+    if (!_isFaucetEnabled) {
+      throw WalletSolanaServiceException(
+        'Faucet is not available in production environment',
+      );
+    }
+
     // call ZARPLY faucet
     final http.Response response = await http.post(
       Uri.parse('https://faucet.zarply.co.za/api/faucet'),

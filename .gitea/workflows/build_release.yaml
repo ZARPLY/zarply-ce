@@ -62,6 +62,7 @@ jobs:
             --split-per-abi \
             --target-platform android-arm64 \
             --split-debug-info=split_debug_info/ \
+            --flavor $ENV \
             --build-name=$VERSION \
             --build-number=$BUILD
       - name: Save APK Artifacts
@@ -86,6 +87,7 @@ jobs:
           flutter build appbundle --release \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
+            --flavor $ENV \
             --build-name=$VERSION \
             --build-number=$BUILD
       - name: Save AAB Artifacts
@@ -96,9 +98,9 @@ jobs:
           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
-          mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
-          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
-          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
+          mv build/app/outputs/bundle/${ENV}Release/app-${ENV}-release.aab artifacts/zarply.aab
+          mv build/app/outputs/mapping/${ENV}Release/mapping.txt artifacts/appbundle_mapping.txt
+          cd build/app/intermediates/merged_native_libs/${ENV}Release/merge${ENV^}ReleaseNativeLibs/out/lib/
           zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
           cd ../../../../../../../
       - name: Create zip file with correct timestamps
