@@ -90,15 +90,11 @@ class MoreOptionsScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            Text(
+              'Version 1.0.2+10',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
-        ),
-      ),
-      // Close button at bottom
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: () => context.go('/wallet'),
-          child: const Text('Close'),
         ),
       ),
     );
