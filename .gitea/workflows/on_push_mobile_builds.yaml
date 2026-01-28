@@ -317,8 +317,7 @@ jobs:
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
-            --dart-define-from-file=.env.${ENV} \
-            --flavor $ENV \
+            --dart-define-from-file=.env.prod \
             --build-name=$VERSION_NAME \
             --build-number=$BUILD_NUMBER
       - name: Upload Prod to TestFlight
