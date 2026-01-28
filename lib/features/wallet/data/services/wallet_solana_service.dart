@@ -52,7 +52,7 @@ class WalletSolanaService {
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
-  static const int zarpDecimalFactor = 1000000000;
+  static const int zarpDecimalFactor = 1000000;
 
   static bool get _isFaucetEnabled {
     final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
