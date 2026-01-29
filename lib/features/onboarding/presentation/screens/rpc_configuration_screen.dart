@@ -95,7 +95,9 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
         final WelcomeViewModel welcomeViewModel = WelcomeViewModel();
         debugPrint('[RpcConfig] Calling createAndStoreWallet...');
         final bool success = await welcomeViewModel.createAndStoreWallet(walletProvider);
-        debugPrint('[RpcConfig] createAndStoreWallet returned: success=$success, errorMessage=${welcomeViewModel.errorMessage}');
+        debugPrint(
+          '[RpcConfig] createAndStoreWallet returned: success=$success, errorMessage=${welcomeViewModel.errorMessage}',
+        );
 
         if (!mounted) return;
 
