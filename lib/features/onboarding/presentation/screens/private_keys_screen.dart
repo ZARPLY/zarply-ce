@@ -128,7 +128,7 @@ class PrivateKeysView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      viewModel.walletAddress ?? '',
+                      viewModel.tokenAccountAddress ?? '',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
@@ -158,7 +158,7 @@ class PrivateKeysView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      viewModel.tokenAccountAddress ?? '',
+                      viewModel.walletAddress ?? '',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
