@@ -55,14 +55,13 @@ class WalletSolanaService {
   static const int zarpDecimalFactor = 1000000;
 
   static bool get _isFaucetEnabled {
+    // QA build: always create ATA and use faucet (original d0f9bf6 flow). Prod: never.
+    const String appEnv = String.fromEnvironment('FLUTTER_APP_ENV', defaultValue: 'qa');
+    if (appEnv == 'qa') return true;
+    if (appEnv == 'prod') return false;
+    // Fallback: use RPC URL (e.g. local dev without flavor)
     final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
-
-    // Disable faucet-based auto funding when we are pointing at mainnet (PROD).
-    // QA and other non-prod environments use devnet/testnet URLs and will keep auto funding enabled.
-    if (rpcUrl == null) {
-      return true;
-    }
-
+    if (rpcUrl == null) return true;
     return !rpcUrl.contains('mainnet');
   }
 
