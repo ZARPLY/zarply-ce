@@ -1,4 +1,5 @@
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/foundation.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -29,10 +30,19 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
       final String recoveryPhrase = bip39.generateMnemonic();
       await _secureStorage.saveRecoveryPhrase(recoveryPhrase);
       final Wallet wallet = await service.createWalletFromMnemonic(recoveryPhrase);
-      await Future<void>.delayed(const Duration(seconds: 20));
-      final ProgramAccount tokenAccount = await service.createAssociatedTokenAccount(wallet);
+      ProgramAccount? tokenAccount;
 
-      await service.requestZARP(wallet);
+      if (WalletSolanaService.isFaucetEnabled) {
+        // Non-mainnet (e.g. devnet/QA): fund via faucet and create ATA immediately
+        await Future<void>.delayed(const Duration(seconds: 20));
+        tokenAccount = await service.createAssociatedTokenAccount(wallet);
+        await service.requestZARP(wallet);
+      } else {
+        // Mainnet/prod: skip ATA creation and faucet-based ZARP funding.
+        // The associated token account can be created later once the wallet
+        // has been funded with SOL.
+        tokenAccount = null;
+      }
 
       return (
         recoveryPhrase: recoveryPhrase,
@@ -40,12 +50,15 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
         tokenAccount: tokenAccount,
         errorMessage: null,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[WelcomeRepo] createWallet failed: $e');
+      debugPrint('[WelcomeRepo] StackTrace: $stackTrace');
+      final String message = e.toString();
       return (
         recoveryPhrase: null,
         wallet: null,
         tokenAccount: null,
-        errorMessage: 'Could not create wallet. Please try again later.',
+        errorMessage: 'Could not create wallet. Please try again later. $message',
       );
     }
   }
@@ -53,7 +66,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
   @override
   Future<void> storeWalletKeys({
     required Wallet wallet,
-    required ProgramAccount tokenAccount,
+    required ProgramAccount? tokenAccount,
   }) async {
     await _storageService.saveWalletPrivateKey(wallet);
     await _storageService.saveWalletPublicKey(wallet);

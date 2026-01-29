@@ -55,6 +55,7 @@ jobs:
             --flavor $ENV \
             --build-name=$VERSION_NAME \
             --build-number=$BUILD_NUMBER \
+            --dart-define=FLUTTER_APP_ENV=$ENV \
             --dart-define-from-file=.env.$ENV
 
       - name: Save QA AAB Artifacts
@@ -137,6 +138,7 @@ jobs:
             --flavor $ENV \
             --build-name=$VERSION_NAME \
             --build-number=$BUILD_NUMBER \
+            --dart-define=FLUTTER_APP_ENV=$ENV \
             --dart-define-from-file=.env.$ENV
 
       - name: Save Prod AAB Artifacts
@@ -233,6 +235,7 @@ jobs:
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
+            --dart-define=FLUTTER_APP_ENV=$ENV \
             --dart-define-from-file=.env.${ENV} \
             --flavor $ENV \
             --build-name=$VERSION_NAME \
@@ -317,6 +320,7 @@ jobs:
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
+            --dart-define=FLUTTER_APP_ENV=prod \
             --dart-define-from-file=.env.prod \
             --build-name=$VERSION_NAME \
             --build-number=$BUILD_NUMBER

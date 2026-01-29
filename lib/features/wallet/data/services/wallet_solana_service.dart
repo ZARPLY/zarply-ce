@@ -66,6 +66,11 @@ class WalletSolanaService {
     return !rpcUrl.contains('mainnet');
   }
 
+  /// Expose whether faucet-based funding is enabled.
+  ///
+  /// When this is `false` we are effectively on the mainnet/prod environment.
+  static bool get isFaucetEnabled => _isFaucetEnabled;
+
   Future<Wallet> createWallet() async {
     try {
       final Ed25519HDKeyPair wallet = await Wallet.random();
@@ -340,9 +345,8 @@ class WalletSolanaService {
 
   Future<String> requestZARP(Wallet wallet) async {
     if (!_isFaucetEnabled) {
-      throw WalletSolanaServiceException(
-        'Faucet is not available in production environment',
-      );
+      // Mainnet/production: skip faucet so wallet creation can complete
+      return '';
     }
 
     // call ZARPLY faucet

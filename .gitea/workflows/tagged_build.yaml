@@ -94,6 +94,7 @@ jobs:
             --obfuscate \
             --codesign \
             --split-debug-info=split_debug_info/ \
+            --dart-define=FLUTTER_APP_ENV=$ENV \
             --dart-define-from-file=.env.${ENV} \
             --flavor $ENV \
             --build-number=$BUILD
@@ -157,6 +158,7 @@ jobs:
             --obfuscate \
             --split-debug-info=split_debug_info/ \
             --build-name=$VERSION \
+            --dart-define=FLUTTER_APP_ENV=$ENV \
             --dart-define-from-file=.env.$ENV \
             --flavor $ENV
       - name: Save Artifacts
