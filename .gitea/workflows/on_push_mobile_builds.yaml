@@ -2,7 +2,8 @@ name: On Push Mobile Builds (iOS QA & Prod)
 
 on:
   push:
-
+    tags:
+      - '*-debug'
 jobs:
   # Android jobs commented out - uncomment to re-enable.
   # android_qa_build:

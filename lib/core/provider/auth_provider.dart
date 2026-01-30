@@ -29,7 +29,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: _sessionKey);
+    try {
+      await _storage.delete(key: _sessionKey);
+    } catch (_) {
+      // Ignore storage errors (e.g. iOS secure storage); still clear session state
+    }
     _isAuthenticated = false;
     _expiryTimer?.cancel();
     notifyListeners();

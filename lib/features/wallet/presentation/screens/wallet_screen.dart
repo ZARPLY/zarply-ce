@@ -340,7 +340,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                 GestureDetector(
                   onTap: () async {
                     final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    final GoRouter router = GoRouter.of(context);
 
                     final String? value = await showMenu(
                       context: context,
@@ -366,11 +365,16 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
                     if (value != 'logout' || !mounted) return;
 
-                    await authProvider.logout();
-
-                    if (!mounted) return;
-                    // Use replace to avoid navigation stack issues
-                    await router.replace('/login');
+                    try {
+                      await authProvider.logout();
+                      // Router's refreshListenable will redirect to /login; avoid explicit replace to prevent double navigation on iOS
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Logout failed: $e')),
+                        );
+                      }
+                    }
                   },
                   child: Container(
                     width: 40,
