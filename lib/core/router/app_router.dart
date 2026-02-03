@@ -23,6 +23,7 @@ import '../../features/wallet/presentation/screens/unlock_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
+import '../services/secure_storage_service.dart';
 import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
 
@@ -58,13 +59,53 @@ GoRouter createRouter(
         builder: (BuildContext context, GoRouterState state) => const SplashScreen(),
       ),
       ShellRoute(
-        redirect: (BuildContext context, GoRouterState state) {
+        redirect: (BuildContext context, GoRouterState state) async {
           final String location = state.uri.toString();
           final bool isAuthenticated = authProvider.isAuthenticated;
 
           // NEVER redirect /login - this is the logout screen
           if (location == '/login') {
             return null;
+          }
+
+          // CRITICAL: Check if password exists before allowing access to wallet
+          // This prevents users from accessing wallet without completing password setup
+          if (walletProvider.hasWallet) {
+            try {
+              final String pin = await SecureStorageService().getPin();
+              if (pin.isEmpty) {
+                // Wallet exists but no password - must create password first
+                if (location == '/wallet' ||
+                    location == '/pay_request' ||
+                    location == '/payment_amount' ||
+                    location == '/payment_details' ||
+                    location == '/transaction_details' ||
+                    location == '/request_amount' ||
+                    location == '/scan' ||
+                    location == '/more' ||
+                    location == '/recovery_phrase' ||
+                    location == '/unlock') {
+                  return '/create_password';
+                }
+              }
+            } catch (e) {
+              // Password doesn't exist - redirect to create password for protected routes
+              final List<String> protectedRoutes = <String>[
+                '/wallet',
+                '/pay_request',
+                '/payment_amount',
+                '/payment_details',
+                '/transaction_details',
+                '/request_amount',
+                '/scan',
+                '/more',
+                '/recovery_phrase',
+                '/unlock',
+              ];
+              if (protectedRoutes.contains(location)) {
+                return '/create_password';
+              }
+            }
           }
 
           // SIMPLE LOGIC: Only redirect to login if trying to access protected routes while not authenticated
