@@ -20,7 +20,6 @@ class CreatePasswordScreen extends StatefulWidget {
 
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   late CreatePasswordViewModel _viewModel;
-  String? _from;
 
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
@@ -33,9 +32,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   void initState() {
     super.initState();
     _viewModel = CreatePasswordViewModel();
-    if (widget.extra is Map<String, dynamic> && (widget.extra as Map<String, dynamic>).containsKey('from')) {
-      _from = (widget.extra as Map<String, dynamic>)['from'] as String?;
-    }
 
     _viewModel.passwordController.addListener(_validatePasswords);
     _viewModel.confirmPasswordController.addListener(_validatePasswords);
@@ -78,24 +74,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         builder: (BuildContext context, CreatePasswordViewModel viewModel, _) {
           return Scaffold(
             appBar: AppBar(
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
-                child: InkWell(
-                  onTap: () => context.go(
-                    _from == 'restore' ? '/restore_wallet' : '/backup_wallet',
-                  ),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEBECEF),
-                      borderRadius: BorderRadius.circular(80),
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 8),
-                      child: Icon(Icons.arrow_back_ios, size: 18),
-                    ),
-                  ),
-                ),
-              ),
+              automaticallyImplyLeading: false, // Remove back button
               title: const Padding(
                 padding: EdgeInsets.only(right: 24),
                 child: ProgressSteps(

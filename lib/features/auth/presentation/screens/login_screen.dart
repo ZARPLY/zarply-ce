@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/widgets/clear_icon_button.dart';
 import '../../../../core/widgets/loading_button.dart';
 import '../models/login_view_model.dart';
@@ -47,6 +49,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _performLogin() async {
     _viewModel.setIsLoading(value: true);
+
+    // CRITICAL: Check if password exists before attempting login
+    try {
+      final SecureStorageService secureStorage = SecureStorageService();
+      final String pin = await secureStorage.getPin();
+      if (pin.isEmpty) {
+        // No password exists - redirect to create password
+        if (mounted) {
+          _viewModel.setIsLoading(value: false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please create a password first'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          context.go('/create_password');
+        }
+        return;
+      }
+    } catch (e) {
+      // Password doesn't exist - redirect to create password
+      if (mounted) {
+        _viewModel.setIsLoading(value: false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please create a password first'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        context.go('/create_password');
+      }
+      return;
+    }
+
     final bool success = await _viewModel.validatePassword();
     try {
       if (success && mounted) {
