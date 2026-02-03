@@ -32,6 +32,7 @@ String _getInitialLocation(
   WalletProvider walletProvider,
 ) {
   // If user is authenticated and has wallet, go to wallet
+  // Note: Password check happens in ShellRoute redirect to catch edge cases
   if (authProvider.isAuthenticated && walletProvider.hasWallet) {
     return '/wallet';
   }
