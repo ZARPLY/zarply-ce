@@ -2,7 +2,6 @@ name: On Push Mobile Builds (iOS QA & Prod)
 
 on:
   push:
-    branches: 
     tags:
       - '*-prod'
       - '*-qa'
@@ -145,6 +144,7 @@ jobs:
   ios_qa_build:
     
     name: iOS QA IPA Build & Upload
+  # This ensures the job ONLY starts if the tag ends with -qa
     if: endsWith(github.ref_name, '-qa')
     runs-on: workstation.mac
     env:
@@ -231,6 +231,7 @@ jobs:
 
   ios_prod_build:
     name: iOS Prod IPA Build & Upload
+    # This ensures the job ONLY starts if the tag ends with -prod
     if: endsWith(github.ref_name, '-prod')
     runs-on: workstation.mac
     env:
