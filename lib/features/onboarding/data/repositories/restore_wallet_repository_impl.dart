@@ -42,14 +42,24 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
     final WalletSolanaService service = await _service;
     final Wallet wallet = await service.restoreWalletFromMnemonic(mnemonic);
     await _secureStorage.saveRecoveryPhrase(mnemonic);
+    
+    // Legacy migration check is done later in WalletViewModel after wallet setup is complete
+    // This keeps the import flow fast
+    
     return wallet;
   }
 
   @override
   Future<Wallet> restoreWalletFromPrivateKey(String privateKey) async {
     final WalletSolanaService service = await _service;
-    return service.restoreWalletFromPrivateKey(privateKey);
+    final Wallet wallet = await service.restoreWalletFromPrivateKey(privateKey);
+    
+    // Legacy migration check is done later in WalletViewModel after wallet setup is complete
+    // This keeps the import flow fast
+    
+    return wallet;
   }
+
 
   @override
   Future<void> storeWallet(Wallet wallet, WalletProvider walletProvider) async {

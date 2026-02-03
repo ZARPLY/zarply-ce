@@ -53,6 +53,9 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
       // Load cached data first for immediate display
       await _viewModel.loadCachedBalances();
 
+      // Check legacy migration for existing wallets
+      await _viewModel.checkLegacyMigrationIfNeeded();
+
       // Then load fresh data in background
       await Future.wait(<Future<void>>[
         _loadTransactionsFromRepository(),
@@ -110,6 +113,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     if (state == AppLifecycleState.resumed) {
       _refreshBalances();
       _loadTransactionsFromRepository();
+      // Check legacy balance when app resumes
+      _viewModel.checkLegacyBalance();
     }
   }
 

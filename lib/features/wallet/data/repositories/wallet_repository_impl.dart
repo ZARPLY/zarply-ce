@@ -1,4 +1,5 @@
 import 'package:solana/dto.dart';
+import 'package:solana/solana.dart';
 
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
@@ -140,5 +141,34 @@ class WalletRepositoryImpl implements WalletRepository {
   ) async {
     final WalletSolanaService service = await _service;
     return service.getAssociatedTokenAccount(walletAddress);
+  }
+
+  @override
+  Future<Map<String, List<TransactionDetails?>>> getStoredLegacyTransactions() {
+    return _transactionStorageService.getStoredLegacyTransactions();
+  }
+
+  @override
+  Future<({
+    bool hasLegacyAccount,
+    bool needsMigration,
+    bool migrationComplete,
+    String? migrationSignature,
+    int? migrationTimestamp,
+  })> checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
+    final WalletSolanaService service = await _service;
+    return service.checkAndMigrateLegacyIfNeeded(wallet);
+  }
+
+  @override
+  Future<List<TransactionSignatureInformation>> getTransactionSignatures(String address) async {
+    final WalletSolanaService service = await _service;
+    return service.getTransactionSignatures(address);
+  }
+
+  @override
+  Future<ProgramAccount?> getLegacyAssociatedTokenAccount(String walletAddress) async {
+    final WalletSolanaService service = await _service;
+    return service.getLegacyAssociatedTokenAccount(walletAddress);
   }
 }

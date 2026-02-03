@@ -7,6 +7,7 @@ import '../../features/wallet/data/services/wallet_solana_service.dart';
 import '../../features/wallet/data/services/wallet_storage_service.dart';
 import '../../features/wallet/domain/repositories/wallet_repository.dart';
 import '../services/balance_cache_service.dart';
+import '../services/transaction_storage_service.dart';
 
 class WalletProvider extends ChangeNotifier {
   WalletProvider() {
@@ -36,6 +37,7 @@ class WalletProvider extends ChangeNotifier {
   final WalletStorageService _walletStorageService = WalletStorageService();
   WalletSolanaService? _walletSolanaService;
   final WalletRepository _walletRepository = WalletRepositoryImpl();
+  final TransactionStorageService _transactionStorageService = TransactionStorageService();
   late final BalanceCacheService _balanceCacheService;
 
   Future<WalletSolanaService> get _service async {
@@ -172,9 +174,30 @@ class WalletProvider extends ChangeNotifier {
   ) async {
     try {
       final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
+      final Map<String, List<String>> existingSignatures = await _transactionStorageService.getStoredTransactionSignatures();
+      final Map<String, List<String>> signaturesByMonth = <String, List<String>>{};
+
+      // Copy existing signatures
+      existingSignatures.forEach((String monthKey, List<String> sigs) {
+        signaturesByMonth[monthKey] = List<String>.from(sigs);
+      });
 
       for (final TransactionDetails? tx in batch) {
         if (tx == null) continue;
+
+        // Extract signature from transaction
+        String? signature;
+        try {
+          final dynamic txJson = tx.transaction.toJson();
+          if (txJson is Map<String, dynamic> && txJson['signatures'] != null) {
+            final List<dynamic> sigs = txJson['signatures'] as List<dynamic>;
+            if (sigs.isNotEmpty) {
+              signature = sigs[0].toString();
+            }
+          }
+        } catch (e) {
+          // Ignore signature extraction errors
+        }
 
         final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
           tx.blockTime! * 1000,
@@ -184,10 +207,19 @@ class WalletProvider extends ChangeNotifier {
         if (!transactions.containsKey(monthKey)) {
           transactions[monthKey] = <TransactionDetails?>[];
         }
+        if (!signaturesByMonth.containsKey(monthKey)) {
+          signaturesByMonth[monthKey] = <String>[];
+        }
+
+        // Insert at start (newer transactions)
         transactions[monthKey]!.insert(0, tx);
+        if (signature != null && !signaturesByMonth[monthKey]!.contains(signature)) {
+          signaturesByMonth[monthKey]!.insert(0, signature);
+        }
       }
 
       await _walletRepository.storeTransactions(transactions);
+      await _transactionStorageService.storeTransactionSignatures(signaturesByMonth);
 
       if (batch.isNotEmpty && batch.first != null) {
         final String signature = batch.first!.transaction.toJson()['signatures'][0];
