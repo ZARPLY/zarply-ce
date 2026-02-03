@@ -161,7 +161,7 @@ class WalletViewModel extends ChangeNotifier {
                   notifyListeners();
                 }
               }
-            }).catchError((e) {
+            }).catchError((Object e) {
               debugPrint('[WalletVM] Error processing batch: $e');
             });
           },
@@ -413,7 +413,7 @@ class WalletViewModel extends ChangeNotifier {
                   notifyListeners();
                 }
               }
-            }).catchError((e) {
+            }).catchError((Object e) {
               debugPrint('[WalletVM] Error processing batch: $e');
             });
           },
