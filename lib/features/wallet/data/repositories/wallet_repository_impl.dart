@@ -149,13 +149,16 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<({
-    bool hasLegacyAccount,
-    bool needsMigration,
-    bool migrationComplete,
-    String? migrationSignature,
-    int? migrationTimestamp,
-  })> checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
     final WalletSolanaService service = await _service;
     return service.checkAndMigrateLegacyIfNeeded(wallet);
   }

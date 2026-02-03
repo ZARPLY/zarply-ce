@@ -176,7 +176,6 @@ class WalletSolanaService {
     }
   }
 
-
   Future<String> sendTransaction({
     required Wallet senderWallet,
     required ProgramAccount? senderTokenAccount,
@@ -269,9 +268,11 @@ class WalletSolanaService {
 
       // Filter out system transaction signatures
       final Set<String> systemTxs = await _transactionStorageService.getSystemTransactionSignatures();
-      final List<TransactionSignatureInformation> filteredSignatures = signatures.where(
-        (TransactionSignatureInformation sig) => !systemTxs.contains(sig.signature),
-      ).toList();
+      final List<TransactionSignatureInformation> filteredSignatures = signatures
+          .where(
+            (TransactionSignatureInformation sig) => !systemTxs.contains(sig.signature),
+          )
+          .toList();
 
       if (filteredSignatures.isEmpty) {
         return <String, List<TransactionDetails?>>{};
@@ -580,9 +581,11 @@ class WalletSolanaService {
 
       // Filter out system transaction signatures
       final Set<String> systemTxs = await _transactionStorageService.getSystemTransactionSignatures();
-      final List<TransactionSignatureInformation> filteredSignatures = signatures.where(
-        (TransactionSignatureInformation sig) => !systemTxs.contains(sig.signature),
-      ).toList();
+      final List<TransactionSignatureInformation> filteredSignatures = signatures
+          .where(
+            (TransactionSignatureInformation sig) => !systemTxs.contains(sig.signature),
+          )
+          .toList();
 
       if (filteredSignatures.isEmpty) {
         return <String, List<TransactionDetails?>>{};
@@ -633,13 +636,16 @@ class WalletSolanaService {
   }
 
   /// Check if wallet has legacy account and migrate if needed
-  Future<({
-    bool hasLegacyAccount,
-    bool needsMigration,
-    bool migrationComplete,
-    String? migrationSignature,
-    int? migrationTimestamp,
-  })> checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
     try {
       final ProgramAccount? legacyAccount = await getLegacyAssociatedTokenAccount(wallet.address);
 
@@ -757,9 +763,11 @@ class WalletSolanaService {
       );
 
       // Get blockhash
-      final LatestBlockhash bh = await _client.rpcClient.getLatestBlockhash(
-        commitment: Commitment.confirmed,
-      ).value;
+      final LatestBlockhash bh = await _client.rpcClient
+          .getLatestBlockhash(
+            commitment: Commitment.confirmed,
+          )
+          .value;
 
       // Sign transaction
       final SignedTx signedTx = await signTransaction(

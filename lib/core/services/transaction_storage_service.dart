@@ -126,19 +126,19 @@ class TransactionStorageService {
 
       // Filter out system transactions by extracting signature from each transaction
       final Set<String> systemTxs = await getSystemTransactionSignatures();
-      
+
       if (systemTxs.isEmpty) return transactions; // No system transactions to filter
 
       final Map<String, List<TransactionDetails?>> filtered = <String, List<TransactionDetails?>>{};
-      
+
       transactions.forEach((String monthKey, List<TransactionDetails?> txList) {
         final List<TransactionDetails?> filteredList = <TransactionDetails?>[];
-        
+
         for (final TransactionDetails? tx in txList) {
           if (tx == null) {
             continue;
           }
-          
+
           // Extract signature directly from transaction
           String? txSignature;
           try {
@@ -152,20 +152,20 @@ class TransactionStorageService {
           } catch (e) {
             // If we can't extract signature, include the transaction
           }
-          
+
           // Skip if this is a system transaction
           if (txSignature != null && systemTxs.contains(txSignature)) {
             continue;
           }
-          
+
           filteredList.add(tx);
         }
-        
+
         if (filteredList.isNotEmpty) {
           filtered[monthKey] = filteredList;
         }
       });
-      
+
       return filtered;
     } catch (e) {
       throw Exception('Failed to retrieve transactions: $e');
@@ -274,9 +274,7 @@ class TransactionStorageService {
           key,
           (value as List<dynamic>)
               .map(
-                (dynamic tx) => tx == null
-                    ? null
-                    : TransactionDetails.fromJson(tx as Map<String, dynamic>),
+                (dynamic tx) => tx == null ? null : TransactionDetails.fromJson(tx as Map<String, dynamic>),
               )
               .toList(),
         ),
@@ -284,19 +282,19 @@ class TransactionStorageService {
 
       // Filter out system transactions by extracting signature from each transaction
       final Set<String> systemTxs = await getSystemTransactionSignatures();
-      
+
       if (systemTxs.isEmpty) return transactions; // No system transactions to filter
 
       final Map<String, List<TransactionDetails?>> filtered = <String, List<TransactionDetails?>>{};
-      
+
       transactions.forEach((String monthKey, List<TransactionDetails?> txList) {
         final List<TransactionDetails?> filteredList = <TransactionDetails?>[];
-        
+
         for (final TransactionDetails? tx in txList) {
           if (tx == null) {
             continue;
           }
-          
+
           // Extract signature directly from transaction
           String? txSignature;
           try {
@@ -310,20 +308,20 @@ class TransactionStorageService {
           } catch (e) {
             // If we can't extract signature, include the transaction
           }
-          
+
           // Skip if this is a system transaction
           if (txSignature != null && systemTxs.contains(txSignature)) {
             continue;
           }
-          
+
           filteredList.add(tx);
         }
-        
+
         if (filteredList.isNotEmpty) {
           filtered[monthKey] = filteredList;
         }
       });
-      
+
       return filtered;
     } catch (e) {
       return <String, List<TransactionDetails?>>{};

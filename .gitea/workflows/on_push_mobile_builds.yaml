@@ -3,7 +3,9 @@ name: On Push Mobile Builds (iOS QA & Prod)
 on:
   push:
     branches:
-      - '*'
+    Tags:
+      - '*-debug'
+  
 jobs:
   # Android jobs commented out - uncomment to re-enable.
   # android_qa_build:

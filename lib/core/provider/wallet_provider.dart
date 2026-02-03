@@ -174,7 +174,8 @@ class WalletProvider extends ChangeNotifier {
   ) async {
     try {
       final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
-      final Map<String, List<String>> existingSignatures = await _transactionStorageService.getStoredTransactionSignatures();
+      final Map<String, List<String>> existingSignatures = await _transactionStorageService
+          .getStoredTransactionSignatures();
       final Map<String, List<String>> signaturesByMonth = <String, List<String>>{};
 
       // Copy existing signatures

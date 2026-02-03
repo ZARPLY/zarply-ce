@@ -107,7 +107,7 @@ class WalletViewModel extends ChangeNotifier {
     }
 
     final Map<String, List<TransactionDetails?>> storedTransactions = await loadStoredTransactions();
-    
+
     if (_disposed) return; // Check again after async operation
 
     if (storedTransactions.isNotEmpty) {
@@ -151,24 +151,26 @@ class WalletViewModel extends ChangeNotifier {
             }
 
             // Process batch and store signatures asynchronously (fire and forget)
-            _processNewTransactionBatch(batch, storedTransactions).then((_) {
-              if (!_disposed && !_walletRepository.isCancelled) {
-                loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
-                transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
-                _updateOldestSignature(storedTransactions);
-                isLoadingTransactions = false;
-                if (!_disposed) {
-                  notifyListeners();
-                }
-              }
-            }).catchError((Object e) {
-              debugPrint('[WalletVM] Error processing batch: $e');
-            });
+            _processNewTransactionBatch(batch, storedTransactions)
+                .then((_) {
+                  if (!_disposed && !_walletRepository.isCancelled) {
+                    loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
+                    transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
+                    _updateOldestSignature(storedTransactions);
+                    isLoadingTransactions = false;
+                    if (!_disposed) {
+                      notifyListeners();
+                    }
+                  }
+                })
+                .catchError((Object e) {
+                  debugPrint('[WalletVM] Error processing batch: $e');
+                });
           },
         );
-        
+
         if (_disposed) return; // Check after async operation
-        
+
         // Merge legacy history after loading new transactions
         if (!_disposed) {
           await _mergeLegacyHistory();
@@ -184,11 +186,10 @@ class WalletViewModel extends ChangeNotifier {
   /// Merge legacy transaction history with current transactions
   Future<void> _mergeLegacyHistory() async {
     if (_disposed) return;
-    
+
     try {
       // Load legacy transactions (already filtered by signatures in getStoredLegacyTransactions)
-      final Map<String, List<TransactionDetails?>> legacyTx =
-          await _walletRepository.getStoredLegacyTransactions();
+      final Map<String, List<TransactionDetails?>> legacyTx = await _walletRepository.getStoredLegacyTransactions();
 
       if (_disposed) return; // Check after async operation
       if (legacyTx.isEmpty) return; // No legacy history
@@ -261,7 +262,8 @@ class WalletViewModel extends ChangeNotifier {
         bool migrationComplete,
         String? migrationSignature,
         int? migrationTimestamp,
-      }) result = await _walletRepository.checkAndMigrateLegacyIfNeeded(wallet!);
+      })
+      result = await _walletRepository.checkAndMigrateLegacyIfNeeded(wallet!);
 
       if (_disposed) return; // Check again after async operation
 
@@ -394,29 +396,31 @@ class WalletViewModel extends ChangeNotifier {
       await _walletRepository.getOlderTransactions(
         walletAddress: tokenAccount!.pubkey,
         oldestSignature: oldestLoadedSignature!,
-          onBatchLoaded: (List<TransactionDetails?> batch) {
-            if (_walletRepository.isCancelled || _disposed) {
-              return;
-            }
+        onBatchLoaded: (List<TransactionDetails?> batch) {
+          if (_walletRepository.isCancelled || _disposed) {
+            return;
+          }
 
-            // Process batch and store signatures asynchronously (fire and forget)
-            _processNewTransactionBatch(
-              batch,
-              storedTransactions,
-              isOlderTransactions: true,
-            ).then((_) {
-              if (!_disposed && !_walletRepository.isCancelled) {
-                loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
-                transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
-                _updateOldestSignature(storedTransactions);
-                if (!_disposed) {
-                  notifyListeners();
+          // Process batch and store signatures asynchronously (fire and forget)
+          _processNewTransactionBatch(
+                batch,
+                storedTransactions,
+                isOlderTransactions: true,
+              )
+              .then((_) {
+                if (!_disposed && !_walletRepository.isCancelled) {
+                  loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
+                  transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
+                  _updateOldestSignature(storedTransactions);
+                  if (!_disposed) {
+                    notifyListeners();
+                  }
                 }
-              }
-            }).catchError((Object e) {
-              debugPrint('[WalletVM] Error processing batch: $e');
-            });
-          },
+              })
+              .catchError((Object e) {
+                debugPrint('[WalletVM] Error processing batch: $e');
+              });
+        },
       );
 
       if (!_walletRepository.isCancelled) {
@@ -470,7 +474,7 @@ class WalletViewModel extends ChangeNotifier {
   }) async {
     // Extract signatures from transactions and store them
     final Map<String, List<String>> signaturesByMonth = <String, List<String>>{};
-    
+
     for (final TransactionDetails? tx in batch) {
       if (tx == null) continue;
 
@@ -513,26 +517,27 @@ class WalletViewModel extends ChangeNotifier {
 
     // Store transactions
     await _walletRepository.storeTransactions(storedTransactions);
-    
+
     // Store signatures for filtering
     if (signaturesByMonth.isNotEmpty) {
       // Merge with existing signatures, preserving order
-      final Map<String, List<String>> existingSignatures = await _transactionStorageService.getStoredTransactionSignatures();
-      
+      final Map<String, List<String>> existingSignatures = await _transactionStorageService
+          .getStoredTransactionSignatures();
+
       // For each month, merge signatures while preserving order
       final Map<String, List<String>> mergedSignatures = <String, List<String>>{};
-      
+
       // First, add existing signatures
       existingSignatures.forEach((String monthKey, List<String> sigs) {
         mergedSignatures[monthKey] = List<String>.from(sigs);
       });
-      
+
       // Then, add new signatures in the correct position
       signaturesByMonth.forEach((String monthKey, List<String> newSigs) {
         if (!mergedSignatures.containsKey(monthKey)) {
           mergedSignatures[monthKey] = <String>[];
         }
-        
+
         // For newer transactions (inserted at start), prepend new signatures
         if (!isOlderTransactions) {
           // Prepend new signatures, avoiding duplicates
@@ -550,7 +555,7 @@ class WalletViewModel extends ChangeNotifier {
           }
         }
       });
-      
+
       await _transactionStorageService.storeTransactionSignatures(mergedSignatures);
     }
   }

@@ -60,13 +60,16 @@ abstract class WalletRepository {
   Future<Map<String, List<TransactionDetails?>>> getStoredLegacyTransactions();
 
   /// Check and migrate legacy account if needed
-  Future<({
-    bool hasLegacyAccount,
-    bool needsMigration,
-    bool migrationComplete,
-    String? migrationSignature,
-    int? migrationTimestamp,
-  })> checkAndMigrateLegacyIfNeeded(Wallet wallet);
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet);
 
   /// Get transaction signatures for an address
   Future<List<TransactionSignatureInformation>> getTransactionSignatures(String address);
