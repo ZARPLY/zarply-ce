@@ -37,14 +37,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
     if (walletProvider.hasWallet) {
-      // Check if onboarding is completed
-      final bool onboardingCompleted = await SecureStorageService().isOnboardingCompleted();
+      // Run checks in parallel for faster navigation
+      final SecureStorageService secureStorage = SecureStorageService();
+      final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      // Check onboarding status and password in parallel
+      final Future<bool> onboardingCheck = secureStorage.isOnboardingCompleted();
+      final Future<String> passwordCheck = secureStorage.getPin().catchError((_) => '');
+
+      final bool onboardingCompleted = await onboardingCheck;
+      final String pin = await passwordCheck;
+
+      if (!mounted) return;
 
       if (onboardingCompleted) {
         // User has completed onboarding, check if they're authenticated
-        if (!mounted) return;
-        final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
-
         if (authProvider.isAuthenticated) {
           // User is authenticated, go to wallet immediately
           if (mounted) {
@@ -61,24 +68,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       } else {
         // User has wallet but onboarding is not completed
         // Check if they have a password - if yes, they've completed setup and should go to login
-        try {
-          final String pin = await SecureStorageService().getPin();
-          if (pin.isNotEmpty) {
-            // User has password - they've completed the setup
-            // If they're not authenticated, they should go to login, not continue onboarding
-            if (mounted) {
-              context.go('/login');
-            }
-            return;
-          } else {
-            // User has wallet but no password, go to create password
-            if (mounted) {
-              context.go('/create_password');
-            }
-            return;
+        if (pin.isNotEmpty) {
+          // User has password - they've completed the setup
+          // If they're not authenticated, they should go to login, not continue onboarding
+          if (mounted) {
+            context.go('/login');
           }
-        } catch (e) {
-          // Error checking password, assume user needs to create password
+          return;
+        } else {
+          // User has wallet but no password, go to create password
           if (mounted) {
             context.go('/create_password');
           }

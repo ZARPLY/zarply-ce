@@ -59,37 +59,6 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
     });
 
     try {
-      // CRITICAL: Check if password exists before proceeding
-      // If no password, redirect to create password screen
-      try {
-        final String pin = await SecureStorageService().getPin();
-        if (pin.isEmpty) {
-          // No password set - redirect to create password
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please create a password before accessing your wallet'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-          if (!mounted) return;
-          context.go('/create_password');
-          return;
-        }
-      } catch (e) {
-        // Password doesn't exist - redirect to create password
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please create a password before accessing your wallet'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        if (!mounted) return;
-        context.go('/create_password');
-        return;
-      }
-
       // Get providers for wallet and auth setup
       if (!mounted) return;
       final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);

@@ -37,6 +37,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   Future<void> _initializeData() async {
     try {
       // Ensure wallet and token account are set
+      if (!mounted) return;
       if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
         final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
         _viewModel.wallet = walletProvider.wallet;
