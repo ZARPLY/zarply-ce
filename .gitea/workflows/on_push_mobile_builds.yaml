@@ -2,8 +2,11 @@ name: On Push Mobile Builds (iOS QA & Prod)
 
 on:
   push:
-    branches:
-      - '*'
+    branches: 
+    tags:
+      - '*-prod'
+      - '*-qa'
+
 jobs:
   # Android jobs commented out - uncomment to re-enable.
   # android_qa_build:
@@ -140,7 +143,9 @@ jobs:
   #         debugSymbols: artifacts/appbundle_symbols_prod.zip
   #
   ios_qa_build:
+    
     name: iOS QA IPA Build & Upload
+    if: endsWith(github.ref_name, '-qa')
     runs-on: workstation.mac
     env:
       FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
@@ -226,6 +231,7 @@ jobs:
 
   ios_prod_build:
     name: iOS Prod IPA Build & Upload
+    if: endsWith(github.ref_name, '-prod')
     runs-on: workstation.mac
     env:
       FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}

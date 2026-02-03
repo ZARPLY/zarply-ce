@@ -1,188 +1,188 @@
-name: Build and Publish Android & iOS
+# name: Build and Publish Android & iOS
 
-on:
-  push:
-    tags:
-      - 'v*'
-      - '!*-debug'
-      - '!*-release'
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+#       - '!*-debug'
+#       - '!*-release'
 
-jobs:
-  ios_build:
-    name: iOS IPA Build & Upload
-    runs-on: workstation.mac
-    env:
-      FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
-      FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
-      FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Prepare environment configuration
-        run: |
-          TAG=$(git describe --tags --always)
-          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
-          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
-          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+# jobs:
+#   ios_build:
+#     name: iOS IPA Build & Upload
+#     runs-on: workstation.mac
+#     env:
+#       FASTLANE_APPLE_API_KEY_ID: ${{ secrets.FASTLANE_APPLE_API_KEY_ID }}
+#       FASTLANE_APPLE_ISSUER_ID: ${{ secrets.FASTLANE_APPLE_ISSUER_ID }}
+#       FASTLANE_APPLE_API_KEY_PATH: ${{ secrets.FASTLANE_APPLE_API_KEY_PATH }}
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v2
+#       - name: Prepare environment configuration
+#         run: |
+#           TAG=$(git describe --tags --always)
+#           TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+#           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+#           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
 
-          echo "Detected build environment: $ENV"
+#           echo "Detected build environment: $ENV"
 
-          if [ "$ENV" = "qa" ]; then
-            cp .env.qa .env
-          elif [ "$ENV" = "prod" ]; then
-            cp .env.prod .env
-          else
-            echo "Unknown environment '$ENV', keeping existing .env file"
-          fi
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
-      - name: Get Project Dependencies
-        run: flutter pub get --no-precompile --enforce-lockfile
-      - name: Get iOS Dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-          cd ..
-      - name: Generate Launcher Icons
-        run: |
-          dart run flutter_launcher_icons
-      - name: Install Fastlane Dependencies
-        run: |
-          cd ios
-          bundle config set --local path 'vendor/bundle'
-          bundle install
-          cd ..
-      - name: Prepare Apple API Key
-        run: |
-          mkdir -p ios/fastlane
+#           if [ "$ENV" = "qa" ]; then
+#             cp .env.qa .env
+#           elif [ "$ENV" = "prod" ]; then
+#             cp .env.prod .env
+#           else
+#             echo "Unknown environment '$ENV', keeping existing .env file"
+#           fi
+#       - name: Verify Flutter Installation
+#         run: flutter doctor -v
+#       - name: Get Project Dependencies
+#         run: flutter pub get --no-precompile --enforce-lockfile
+#       - name: Get iOS Dependencies
+#         run: |
+#           cd ios
+#           pod install --repo-update
+#           cd ..
+#       - name: Generate Launcher Icons
+#         run: |
+#           dart run flutter_launcher_icons
+#       - name: Install Fastlane Dependencies
+#         run: |
+#           cd ios
+#           bundle config set --local path 'vendor/bundle'
+#           bundle install
+#           cd ..
+#       - name: Prepare Apple API Key
+#         run: |
+#           mkdir -p ios/fastlane
           
-          if [ -n "$FASTLANE_APPLE_API_KEY_PATH" ]; then
-            if [ -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
-              echo "Using existing API key file at: $FASTLANE_APPLE_API_KEY_PATH"
-              cp "$FASTLANE_APPLE_API_KEY_PATH" ios/fastlane/AuthKey.p8
-            else
-              if echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null; then
-                echo "Decoded base64 API key"
-              else
-                echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
-                echo "Using plain text API key"
-              fi
-            fi
-            chmod 600 ios/fastlane/AuthKey.p8
+#           if [ -n "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+#             if [ -f "$FASTLANE_APPLE_API_KEY_PATH" ]; then
+#               echo "Using existing API key file at: $FASTLANE_APPLE_API_KEY_PATH"
+#               cp "$FASTLANE_APPLE_API_KEY_PATH" ios/fastlane/AuthKey.p8
+#             else
+#               if echo "$FASTLANE_APPLE_API_KEY_PATH" | base64 -d > ios/fastlane/AuthKey.p8 2>/dev/null; then
+#                 echo "Decoded base64 API key"
+#               else
+#                 echo "$FASTLANE_APPLE_API_KEY_PATH" > ios/fastlane/AuthKey.p8
+#                 echo "Using plain text API key"
+#               fi
+#             fi
+#             chmod 600 ios/fastlane/AuthKey.p8
             
-            if openssl ec -in ios/fastlane/AuthKey.p8 -noout 2>/dev/null; then
-              echo "API key file is valid"
-            else
-              echo "Warning: API key file validation failed, but continuing..."
-            fi
+#             if openssl ec -in ios/fastlane/AuthKey.p8 -noout 2>/dev/null; then
+#               echo "API key file is valid"
+#             else
+#               echo "Warning: API key file validation failed, but continuing..."
+#             fi
             
-            echo "Apple API key prepared at ios/fastlane/AuthKey.p8"
-          else
-            echo "Warning: FASTLANE_APPLE_API_KEY_PATH is not set"
-          fi
-      - name: Build iOS IPA
-        run: |
-          REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
-          echo $REPO_VERSION
-          TAG=$(git describe --tags --always)
-          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
-          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
-          BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
-          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
-          flutter build ipa --release \
-            --no-pub \
-            --obfuscate \
-            --codesign \
-            --split-debug-info=split_debug_info/ \
-            --dart-define=FLUTTER_APP_ENV=$ENV \
-            --dart-define-from-file=.env.${ENV} \
-            --flavor $ENV \
-            --build-number=$BUILD
-      - name: Upload to TestFlight
-        run: |
-          cd ios
-          export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
-          bundle exec fastlane ios beta
-  android_build:
-    name: Android App Bundle Build & Upload to Play Store
-    runs-on: workstation.ubuntu.lts
-    container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
-    env:
-      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
-      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-      BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
-      SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Prepare environment configuration
-        run: |
-          TAG=$(git describe --tags --always)
-          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
-          BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
-          ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+#             echo "Apple API key prepared at ios/fastlane/AuthKey.p8"
+#           else
+#             echo "Warning: FASTLANE_APPLE_API_KEY_PATH is not set"
+#           fi
+#       - name: Build iOS IPA
+#         run: |
+#           REPO_VERSION=$(git describe --tags --always | sed 's/^v//')
+#           echo $REPO_VERSION
+#           TAG=$(git describe --tags --always)
+#           TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+#           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+#           BUILD=$(echo "$BUILD_AND_ENV" | cut -d '-' -f1)
+#           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
+#           flutter build ipa --release \
+#             --no-pub \
+#             --obfuscate \
+#             --codesign \
+#             --split-debug-info=split_debug_info/ \
+#             --dart-define=FLUTTER_APP_ENV=$ENV \
+#             --dart-define-from-file=.env.${ENV} \
+#             --flavor $ENV \
+#             --build-number=$BUILD
+#       - name: Upload to TestFlight
+#         run: |
+#           cd ios
+#           export FASTLANE_APPLE_API_KEY_PATH="fastlane/AuthKey.p8"
+#           bundle exec fastlane ios beta
+#   android_build:
+#     name: Android App Bundle Build & Upload to Play Store
+#     runs-on: workstation.ubuntu.lts
+#     container:
+#       image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+#     env:
+#       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+#       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+#       RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+#       RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+#       BASE64_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+#       SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v2
+#       - name: Prepare environment configuration
+#         run: |
+#           TAG=$(git describe --tags --always)
+#           TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+#           BUILD_AND_ENV=$(echo "$TAG_NO_V" | cut -d '+' -f2)
+#           ENV=$(echo "$BUILD_AND_ENV" | cut -d '-' -f2)
 
-          echo "Detected build environment: $ENV"
+#           echo "Detected build environment: $ENV"
 
-          if [ "$ENV" = "qa" ]; then
-            echo "PLAY_TRACK=internal" >> $GITHUB_ENV
-          elif [ "$ENV" = "prod" ]; then
-            echo "PLAY_TRACK=production" >> $GITHUB_ENV
-          else
-            echo "Unknown environment '$ENV'"
-            echo "PLAY_TRACK=internal" >> $GITHUB_ENV
-          fi
-      - name: Decode Android Key Store
-        run: echo $BASE64_KEYSTORE | base64 -d | tee android/app/zarply-release.keystore > /dev/null
-      - name: Create key.properties
-        run: |
-          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
-            $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
-      - name: Get Project Dependencies
-        run: flutter pub get --no-precompile --enforce-lockfile
-      - name: Update Gradle Properties
-        run: cp android/gradle.docker.properties android/gradle.properties
-      - name: Optimize Gradle Wrapper For CI
-        run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
-      - name: Build Android App Bundle
-        run: |
-          TAG=$(git describe --tags --always)
-          TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
-          VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
-          flutter build appbundle --release \
-            --obfuscate \
-            --split-debug-info=split_debug_info/ \
-            --build-name=$VERSION \
-            --dart-define=FLUTTER_APP_ENV=$ENV \
-            --dart-define-from-file=.env.$ENV \
-            --flavor $ENV
-      - name: Save Artifacts
-        run: |
-          mkdir artifacts
-          mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
-          mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
-          cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
-          zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
-          cd ../../../../../../../
-      - name: Create zip file with correct timestamps
-        run: zip -r artifacts.zip artifacts
-      - name: Store Test Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: prod-zarply
-          path: artifacts.zip
-      - name: Upload Android Release to Play Store
-        uses: r0adkll/upload-google-play@v1.1.3
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: za.co.zarply
-          releaseFiles: artifacts/zarply.aab
-          track: ${{ env.PLAY_TRACK }}
-          status: completed
-          mappingFile: artifacts/appbundle_mapping.txt
-          debugSymbols: artifacts/appbundle_symbols.zip
+#           if [ "$ENV" = "qa" ]; then
+#             echo "PLAY_TRACK=internal" >> $GITHUB_ENV
+#           elif [ "$ENV" = "prod" ]; then
+#             echo "PLAY_TRACK=production" >> $GITHUB_ENV
+#           else
+#             echo "Unknown environment '$ENV'"
+#             echo "PLAY_TRACK=internal" >> $GITHUB_ENV
+#           fi
+#       - name: Decode Android Key Store
+#         run: echo $BASE64_KEYSTORE | base64 -d | tee android/app/zarply-release.keystore > /dev/null
+#       - name: Create key.properties
+#         run: |
+#           printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s' \
+#             $RELEASE_KEY_ALIAS $RELEASE_KEY_PASSWORD $RELEASE_KEYSTORE $RELEASE_STORE_PASSWORD > android/key.properties
+#       - name: Verify Flutter Installation
+#         run: flutter doctor -v
+#       - name: Get Project Dependencies
+#         run: flutter pub get --no-precompile --enforce-lockfile
+#       - name: Update Gradle Properties
+#         run: cp android/gradle.docker.properties android/gradle.properties
+#       - name: Optimize Gradle Wrapper For CI
+#         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
+#       - name: Build Android App Bundle
+#         run: |
+#           TAG=$(git describe --tags --always)
+#           TAG_NO_V=$(echo "$TAG" | sed 's/^v//')
+#           VERSION=$(echo "$TAG_NO_V" | cut -d '+' -f1)
+#           flutter build appbundle --release \
+#             --obfuscate \
+#             --split-debug-info=split_debug_info/ \
+#             --build-name=$VERSION \
+#             --dart-define=FLUTTER_APP_ENV=$ENV \
+#             --dart-define-from-file=.env.$ENV \
+#             --flavor $ENV
+#       - name: Save Artifacts
+#         run: |
+#           mkdir artifacts
+#           mv build/app/outputs/bundle/release/app-release.aab artifacts/zarply.aab
+#           mv build/app/outputs/mapping/release/mapping.txt artifacts/appbundle_mapping.txt
+#           cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/
+#           zip -r ../../../../../../../../artifacts/appbundle_symbols.zip .
+#           cd ../../../../../../../
+#       - name: Create zip file with correct timestamps
+#         run: zip -r artifacts.zip artifacts
+#       - name: Store Test Results
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: prod-zarply
+#           path: artifacts.zip
+#       - name: Upload Android Release to Play Store
+#         uses: r0adkll/upload-google-play@v1.1.3
+#         with:
+#           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+#           packageName: za.co.zarply
+#           releaseFiles: artifacts/zarply.aab
+#           track: ${{ env.PLAY_TRACK }}
+#           status: completed
+#           mappingFile: artifacts/appbundle_mapping.txt
+#           debugSymbols: artifacts/appbundle_symbols.zip
