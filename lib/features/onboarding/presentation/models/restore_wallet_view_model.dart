@@ -92,18 +92,7 @@ class RestoreWalletViewModel extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      final String raw = e.toString();
-
-      // Map low-level Solana ATA errors to a clear, user-friendly message.
-      if (raw.contains('Failed to restore associated token account') ||
-          raw.contains('Could not get associated token account')) {
-        errorMessage =
-            'This wallet does not yet have a funded ZARP account on this network.\n\n'
-            'Please fund the wallet with SOL (and ZARP if required) first, then '
-            'try importing it again.';
-      } else {
-        errorMessage = raw;
-      }
+      errorMessage = e.toString();
 
       isImporting = false;
       notifyListeners();

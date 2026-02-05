@@ -91,8 +91,11 @@ class MoreOptionsScreen extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              'Version 1.0.2+10',
-              style: Theme.of(context).textTheme.bodySmall,
+              'Version 1.0.2',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

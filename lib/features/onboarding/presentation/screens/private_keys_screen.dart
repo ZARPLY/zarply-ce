@@ -32,8 +32,6 @@ class PrivateKeysView extends StatelessWidget {
     super.key,
   });
 
-  static const bool _isMainnet = String.fromEnvironment('FLUTTER_APP_ENV', defaultValue: 'qa') == 'prod';
-
   final PrivateKeysViewModel viewModel;
   final bool hideProgress;
 
@@ -112,39 +110,36 @@ class PrivateKeysView extends StatelessWidget {
       children: <Widget>[
         Column(
           children: <Widget>[
-            // On mainnet no ATA is created at wallet creation; hide ZARP section to avoid showing empty key.
-            if (!_isMainnet) ...<Widget>[
-              Container(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: <Widget>[
-                    const Image(
-                      image: AssetImage('images/zarp.png'),
-                      fit: BoxFit.contain,
-                      width: 30,
-                      height: 30,
+            Container(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: <Widget>[
+                  const Image(
+                    image: AssetImage('images/zarp.png'),
+                    fit: BoxFit.contain,
+                    width: 30,
+                    height: 30,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        viewModel.tokenAccountAddress ?? '',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'monospace',
-                        ),
+                    child: Text(
+                      viewModel.walletAddress ?? '',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'monospace',
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
+            ),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(8),
               child: Column(
@@ -163,7 +158,7 @@ class PrivateKeysView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      viewModel.walletAddress ?? '',
+                      viewModel.tokenAccountAddress ?? '',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
