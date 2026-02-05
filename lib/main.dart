@@ -31,18 +31,14 @@ void main() async {
     DeviceOrientation.portraitUp,
   ]);
 
-  // Load env per flavor: prod → .env.prod (mainnet), qa → .env.qa (devnet).
+  // Load env per flavor only: prod → .env.prod (mainnet), qa → .env.qa (devnet).
   // Set via --dart-define=FLUTTER_APP_ENV=prod|qa when building.
   const String envName = String.fromEnvironment(
     'FLUTTER_APP_ENV',
     defaultValue: 'qa',
   );
   const String envFile = '.env.$envName';
-  try {
-    await dotenv.load(fileName: envFile);
-  } catch (_) {
-    await dotenv.load(fileName: '.env');
-  }
+  await dotenv.load(fileName: envFile);
   usePathUrlStrategy();
   await checkFirstInstall();
   runApp(MyApp());

@@ -1,4 +1,4 @@
-name: On Push Mobile Builds (iOS QA & Prod)
+name: Mobile Builds
 
 on:
   push:

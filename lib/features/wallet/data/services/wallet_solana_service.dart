@@ -231,6 +231,14 @@ class WalletSolanaService {
         publicKey,
         commitment: Commitment.confirmed,
       );
+      // Prefer the UI amount string reported by Solana so that we respect the
+      // mint's configured decimals instead of assuming a fixed factor. This
+      // ensures that values such as 3510.009999 are displayed as 3510.00.
+      final String? uiAmountString = balance.value.uiAmountString;
+      if (uiAmountString != null) {
+        return double.parse(uiAmountString);
+      }
+      // Fallback to legacy calculation using the fixed decimal factor.
       return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       throw WalletSolanaServiceException(

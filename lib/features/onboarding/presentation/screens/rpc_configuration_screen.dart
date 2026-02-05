@@ -58,7 +58,6 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
   }
 
   Future<void> _onDefaultRpcChanged() async {
-    debugPrint('[RpcConfig] _onDefaultRpcChanged called (isRestoreFlow=${widget.isRestoreFlow})');
     if (_useDefaultRpc || _isCreatingWallet) {
       debugPrint('[RpcConfig] Early return: _useDefaultRpc=$_useDefaultRpc, _isCreatingWallet=$_isCreatingWallet');
       return; // Already selected or creating wallet
