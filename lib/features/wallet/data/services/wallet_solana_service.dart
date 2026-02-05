@@ -52,23 +52,19 @@ class WalletSolanaService {
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
-  static const int zarpDecimalFactor = 1000000;
+  static const int zarpDecimalFactor = 1000000000;
 
   static bool get _isFaucetEnabled {
-    // QA build: always create ATA and use faucet (original d0f9bf6 flow). Prod: never.
-    const String appEnv = String.fromEnvironment('FLUTTER_APP_ENV', defaultValue: 'qa');
-    if (appEnv == 'qa') return true;
-    if (appEnv == 'prod') return false;
-    // Fallback: use RPC URL (e.g. local dev without flavor)
     final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
-    if (rpcUrl == null) return true;
+
+    // Disable faucet-based auto funding when we are pointing at mainnet (PROD).
+    // QA and other non-prod environments use devnet/testnet URLs and will keep auto funding enabled.
+    if (rpcUrl == null) {
+      return true;
+    }
+
     return !rpcUrl.contains('mainnet');
   }
-
-  /// Expose whether faucet-based funding is enabled.
-  ///
-  /// When this is `false` we are effectively on the mainnet/prod environment.
-  static bool get isFaucetEnabled => _isFaucetEnabled;
 
   Future<Wallet> createWallet() async {
     try {
@@ -344,8 +340,9 @@ class WalletSolanaService {
 
   Future<String> requestZARP(Wallet wallet) async {
     if (!_isFaucetEnabled) {
-      // Mainnet/production: skip faucet so wallet creation can complete
-      return '';
+      throw WalletSolanaServiceException(
+        'Faucet is not available in production environment',
+      );
     }
 
     // call ZARPLY faucet
