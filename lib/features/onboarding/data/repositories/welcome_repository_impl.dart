@@ -1,4 +1,5 @@
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/foundation.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -29,10 +30,20 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
       final String recoveryPhrase = bip39.generateMnemonic();
       await _secureStorage.saveRecoveryPhrase(recoveryPhrase);
       final Wallet wallet = await service.createWalletFromMnemonic(recoveryPhrase);
-      await Future<void>.delayed(const Duration(seconds: 20));
-      final ProgramAccount tokenAccount = await service.createAssociatedTokenAccount(wallet);
 
-      await service.requestZARP(wallet);
+      // Resolve ZARP token account: mainnet = derive only; devnet/QA = try create + faucet, fallback to derive.
+      ProgramAccount tokenAccount;
+      if (service.isMainnet) {
+        tokenAccount = await service.deriveAssociatedTokenAddress(wallet);
+      } else {
+        try {
+          tokenAccount = await service.createAssociatedTokenAccount(wallet);
+          await service.requestZARP(wallet);
+        } catch (e) {
+          debugPrint('[WelcomeRepo] Devnet ATA/faucet failed, using derived ATA: $e');
+          tokenAccount = await service.deriveAssociatedTokenAddress(wallet);
+        }
+      }
 
       return (
         recoveryPhrase: recoveryPhrase,
@@ -40,7 +51,9 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
         tokenAccount: tokenAccount,
         errorMessage: null,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[WelcomeRepo] createWallet error: $e');
+      debugPrint('[WelcomeRepo] stackTrace: $stackTrace');
       return (
         recoveryPhrase: null,
         wallet: null,

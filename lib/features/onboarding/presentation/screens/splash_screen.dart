@@ -36,6 +36,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _checkAndNavigate() async {
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
+    // Load wallet from storage first so hasWallet reflects actual state (e.g. after closing mid-onboarding).
+    await walletProvider.initialize();
+
+    if (!mounted) return;
+
     if (walletProvider.hasWallet) {
       // Run checks in parallel for faster navigation
       final SecureStorageService secureStorage = SecureStorageService();

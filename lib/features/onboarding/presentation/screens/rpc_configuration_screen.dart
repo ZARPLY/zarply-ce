@@ -59,7 +59,6 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
 
   Future<void> _onDefaultRpcChanged() async {
     if (_useDefaultRpc || _isCreatingWallet) {
-      debugPrint('[RpcConfig] Early return: _useDefaultRpc=$_useDefaultRpc, _isCreatingWallet=$_isCreatingWallet');
       return; // Already selected or creating wallet
     }
 
@@ -69,22 +68,17 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
       _isCreatingWallet = true;
       _errorMessage = null;
     });
-    debugPrint('[RpcConfig] State set: creating wallet with default RPC');
 
     try {
       // Clear any existing custom configuration
       await _storageService.clearRpcConfiguration();
-      debugPrint('[RpcConfig] Cleared existing RPC configuration');
 
       if (!mounted) return;
-      debugPrint('[RpcConfig] Mounted check passed');
 
       if (widget.isRestoreFlow) {
-        debugPrint('[RpcConfig] Restore flow: navigating to /restore_wallet');
         // For restore flow, proceed to restore wallet screen
         context.go('/restore_wallet');
       } else {
-        debugPrint('[RpcConfig] New wallet flow: creating wallet');
         // For new wallet flow, create the wallet using the configured RPC
         final WalletProvider walletProvider = Provider.of<WalletProvider>(
           context,
@@ -92,33 +86,24 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
         );
 
         final WelcomeViewModel welcomeViewModel = WelcomeViewModel();
-        debugPrint('[RpcConfig] Calling createAndStoreWallet...');
         final bool success = await welcomeViewModel.createAndStoreWallet(walletProvider);
-        debugPrint(
-          '[RpcConfig] createAndStoreWallet returned: success=$success, errorMessage=${welcomeViewModel.errorMessage}',
-        );
 
         if (!mounted) return;
 
         if (success) {
-          debugPrint('[RpcConfig] Success: navigating to /backup_wallet');
           context.go('/backup_wallet');
         } else {
           final String msg = welcomeViewModel.errorMessage ?? 'Failed to create wallet';
-          debugPrint('[RpcConfig] Failed: $msg');
           _setError(msg);
         }
       }
-    } catch (e, stackTrace) {
-      debugPrint('[RpcConfig] Exception: $e');
-      debugPrint('[RpcConfig] StackTrace: $stackTrace');
+    } catch (e) {
       _setError('Failed to save configuration: $e');
     } finally {
       if (mounted) {
         setState(() {
           _isCreatingWallet = false;
         });
-        debugPrint('[RpcConfig] Done: _isCreatingWallet set to false');
       }
     }
   }

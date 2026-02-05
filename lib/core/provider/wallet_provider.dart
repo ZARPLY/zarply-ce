@@ -74,44 +74,84 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<bool> initialize() async {
+    _wallet = await _walletStorageService.retrieveWallet();
+
+    if (_wallet == null) {
+      _userTokenAccount = null;
+      _zarpBalance = 0.0;
+      _solBalance = 0.0;
+      _isReady = true;
+      notifyListeners();
+      return false;
+    }
+
     try {
-      _wallet = await _walletStorageService.retrieveWallet();
-
-      if (_wallet == null) {
-        _userTokenAccount = null;
-        _zarpBalance = 0.0;
-        _solBalance = 0.0;
-        _isReady = true;
-        notifyListeners();
-        return false;
-      }
-
       final WalletSolanaService service = await _service;
       _userTokenAccount = await service.getAssociatedTokenAccount(_wallet!.address);
+
+      // Mainnet: ATA may only be derived (not created on-chain). Use stored ATA pubkey if present.
+      if (_userTokenAccount == null) {
+        final String? storedAtaPubkey = await _walletStorageService.retrieveAssociatedTokenAccountPublicKey();
+        if (storedAtaPubkey != null && storedAtaPubkey.isNotEmpty) {
+          _userTokenAccount = ProgramAccount(
+            pubkey: storedAtaPubkey,
+            account: Account(
+              lamports: 0,
+              owner: '',
+              data: null,
+              executable: false,
+              rentEpoch: BigInt.zero,
+            ),
+          );
+        }
+      }
 
       if (_userTokenAccount == null) {
         _zarpBalance = 0.0;
       } else {
-        _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
-
-        // Fetch limited transactions during initialization to pre-populate the list
+        try {
+          _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
+        } catch (_) {
+          _zarpBalance = 0.0;
+        }
         try {
           await fetchLimitedTransactions();
-        } catch (e) {
-          // Don't fail initialization if transaction fetching fails
+        } catch (_) {
           // Transactions will be loaded when the wallet screen is opened
         }
       }
-      _solBalance = await service.getSolBalance(_wallet!.address);
+
+      try {
+        _solBalance = await service.getSolBalance(_wallet!.address);
+      } catch (_) {
+        _solBalance = 0.0;
+      }
 
       _isReady = true;
       notifyListeners();
       return true;
     } catch (e) {
-      reset();
+      // Wallet exists in storage; don't clear it. Use safe defaults so user can resume onboarding.
+      _zarpBalance = 0.0;
+      _solBalance = 0.0;
+      if (_userTokenAccount == null) {
+        final String? storedAtaPubkey = await _walletStorageService.retrieveAssociatedTokenAccountPublicKey();
+        if (storedAtaPubkey != null && storedAtaPubkey.isNotEmpty) {
+          _userTokenAccount = ProgramAccount(
+            pubkey: storedAtaPubkey,
+            account: Account(
+              lamports: 0,
+              owner: '',
+              data: null,
+              executable: false,
+              rentEpoch: BigInt.zero,
+            ),
+          );
+        }
+      }
       _isReady = true;
       notifyListeners();
-      return false;
+      return true;
     }
   }
 
@@ -210,8 +250,11 @@ class WalletProvider extends ChangeNotifier {
       _zarpBalance = balances.zarpBalance;
       _solBalance = balances.solBalance;
       notifyListeners();
-    } catch (e) {
-      throw Exception(e);
+    } catch (_) {
+      // Account may not exist yet (e.g. unfunded mainnet wallet). Use 0 so login still succeeds.
+      _zarpBalance = 0.0;
+      _solBalance = 0.0;
+      notifyListeners();
     }
   }
 

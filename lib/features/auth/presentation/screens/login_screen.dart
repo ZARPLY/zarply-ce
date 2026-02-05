@@ -59,28 +59,49 @@ class _LoginScreenState extends State<LoginScreen> {
           await walletProvider.initialize();
         }
 
-        // Add timeout to prevent infinite loading
-        await Future.wait(<Future<void>>[
-          walletProvider.refreshTransactions().timeout(
+        // Refresh transactions and balances; do not block login on failure (e.g. account not funded yet).
+        try {
+          await walletProvider.refreshTransactions().timeout(
             const Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('Transaction refresh timed out');
-            },
-          ),
-          walletProvider.fetchAndCacheBalances().timeout(
+            onTimeout: () => null,
+          );
+        } catch (_) {}
+        try {
+          await walletProvider.fetchAndCacheBalances().timeout(
             const Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('Balance fetch timed out');
-            },
-          ),
-        ]);
+            onTimeout: () => null,
+          );
+        } catch (_) {}
 
         if (!mounted) return;
-        // routing happens in app_router.dart based on isAuthenticated
         await Provider.of<AuthProvider>(
           context,
           listen: false,
         ).login();
+
+        if (!mounted) return;
+        // If balance is zero, prompt user to fund their account.
+        if (walletProvider.walletBalance == 0 && walletProvider.solBalance == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'To use your Zarply wallet you need to fund your account and fund your ZARP ATA account to begin transactions.',
+              ),
+              duration: Duration(seconds: 6),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (walletProvider.walletBalance == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'To send and receive ZARP you need to fund your ZARP ATA account. Fund your account to begin transactions.',
+              ),
+              duration: Duration(seconds: 5),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
