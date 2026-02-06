@@ -71,6 +71,27 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
         setState(() {
           _viewModel.isLoadingTransactions = false;
         });
+
+        // If SOL balance is zero, show permanent dialog to fund SOL account.
+        if (_viewModel.solBalance == 0) {
+          // ignore: use_build_context_synchronously
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext dialogContext) => AlertDialog(
+              title: const Text('Fund your account'),
+              content: const Text(
+                'You have to fund your SOL account to begin making transactions. Please fund the account.',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
       }
     }
   }
