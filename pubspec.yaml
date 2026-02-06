@@ -9,11 +9,7 @@ platforms:
   android:
   ios:
 
-<<<<<<< HEAD
 version: 1.0.2+13
-=======
-version: 1.0.2+14
->>>>>>> fa1ed98 (Refactor login and wallet screens to improve user feedback for funding accounts)
 
 environment:
   sdk: ^3.9.2
