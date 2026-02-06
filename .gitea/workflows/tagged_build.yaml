@@ -40,11 +40,13 @@ jobs:
         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
       - name: Build Android QA App Bundle
         run: |
-          VERSION_LINE=$(grep '^version:' pubspec.yaml | head -n 1 | sed 's/version:[ ]*//')
-          VERSION_NAME=$(echo "$VERSION_LINE" | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$VERSION_LINE" | cut -d'+' -f2)
-          ENV=qa
-          echo "Building QA bundle with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER"
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_WITHOUT_V=${TAG_NAME#v}
+          VERSION_NAME=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f2)
+          BUILD_NUMBER=$(echo "$BUILD_AND_ENV" | cut -d'-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d'-' -f2)
+          echo "Building QA bundle with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER from tag $TAG_NAME"
           flutter build appbundle --release \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
@@ -111,11 +113,13 @@ jobs:
         run: cp android/gradle/wrapper/gradle-wrapper.docker.properties android/gradle/wrapper/gradle-wrapper.properties
       - name: Build Android Prod App Bundle
         run: |
-          VERSION_LINE=$(grep '^version:' pubspec.yaml | head -n 1 | sed 's/version:[ ]*//')
-          VERSION_NAME=$(echo "$VERSION_LINE" | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$VERSION_LINE" | cut -d'+' -f2)
-          ENV=prod
-          echo "Building Prod bundle with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER"
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_WITHOUT_V=${TAG_NAME#v}
+          VERSION_NAME=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f2)
+          BUILD_NUMBER=$(echo "$BUILD_AND_ENV" | cut -d'-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d'-' -f2)
+          echo "Building Prod bundle with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER from tag $TAG_NAME"
           flutter build appbundle --release \
             --obfuscate \
             --split-debug-info=split_debug_info/ \
@@ -211,9 +215,13 @@ jobs:
           fi
       - name: Build iOS QA IPA
         run: |
-          VERSION_LINE=$(grep '^version:' pubspec.yaml | head -n 1 | sed 's/version:[ ]*//')
-          VERSION_NAME=$(echo "$VERSION_LINE" | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$VERSION_LINE" | cut -d'+' -f2)
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_WITHOUT_V=${TAG_NAME#v}
+          VERSION_NAME=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f2)
+          BUILD_NUMBER=$(echo "$BUILD_AND_ENV" | cut -d'-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d'-' -f2)
+          echo "Building QA IPA with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER from tag $TAG_NAME"
           flutter build ipa --release \
             --no-pub \
             --obfuscate \
@@ -298,9 +306,13 @@ jobs:
           fi
       - name: Build iOS Prod IPA
         run: |
-          VERSION_LINE=$(grep '^version:' pubspec.yaml | head -n 1 | sed 's/version:[ ]*//')
-          VERSION_NAME=$(echo "$VERSION_LINE" | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$VERSION_LINE" | cut -d'+' -f2)
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_WITHOUT_V=${TAG_NAME#v}
+          VERSION_NAME=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f1)
+          BUILD_AND_ENV=$(echo "$TAG_WITHOUT_V" | cut -d'+' -f2)
+          BUILD_NUMBER=$(echo "$BUILD_AND_ENV" | cut -d'-' -f1)
+          ENV=$(echo "$BUILD_AND_ENV" | cut -d'-' -f2)
+          echo "Building Prod IPA with versionName=$VERSION_NAME buildNumber=$BUILD_NUMBER from tag $TAG_NAME"
           flutter build ipa --release \
             --no-pub \
             --obfuscate \
