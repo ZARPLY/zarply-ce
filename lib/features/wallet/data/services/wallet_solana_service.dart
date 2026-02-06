@@ -270,16 +270,7 @@ class WalletSolanaService {
       return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
       // ATA not created on-chain yet (e.g. mainnet new wallet) — treat as 0.
-      final String msg = e.toString().toLowerCase();
-      if (msg.contains('could not find') ||
-          msg.contains('account not found') ||
-          msg.contains('invalid param') ||
-          msg.contains('find account')) {
-        return 0.0;
-      }
-      throw WalletSolanaServiceException(
-        'Could not retrieve ZARP balance: $e',
-      );
+      return 0.0;
     }
   }
 
