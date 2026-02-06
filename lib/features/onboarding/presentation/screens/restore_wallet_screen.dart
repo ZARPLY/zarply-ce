@@ -55,36 +55,9 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
         ),
         builder: (BuildContext context) => SizedBox(
           height: MediaQuery.of(context).size.height * 0.90,
-          child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return FutureBuilder<void>(
-                future: () async {
-                  final bool success = await _viewModel.restoreWallet(walletProvider);
-                  if (!success) {
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                    return;
-                  }
-
-                  final bool hasPassword = await walletProvider.hasPassword();
-                  if (!context.mounted) return;
-
-                  if (!hasPassword) {
-                    context.replace(
-                      '/create_password',
-                      extra: <String, String>{'from': 'restore'},
-                    );
-                  } else {
-                    context.replace('/login');
-                  }
-                }(),
-                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-                  return ImportingWalletModal(
-                    isImported: _viewModel.importComplete,
-                  );
-                },
-              );
-            },
+          child: _RestoreWalletBottomSheet(
+            viewModel: _viewModel,
+            walletProvider: walletProvider,
           ),
         ),
       );
@@ -228,6 +201,57 @@ class _RestoreWalletScreenState extends State<RestoreWalletScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _RestoreWalletBottomSheet extends StatefulWidget {
+  const _RestoreWalletBottomSheet({
+    required this.viewModel,
+    required this.walletProvider,
+  });
+
+  final RestoreWalletViewModel viewModel;
+  final WalletProvider walletProvider;
+
+  @override
+  State<_RestoreWalletBottomSheet> createState() => _RestoreWalletBottomSheetState();
+}
+
+class _RestoreWalletBottomSheetState extends State<_RestoreWalletBottomSheet> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Defer the restore + navigation until after the first frame so we don't
+    // trigger rebuilds or navigation while the bottom sheet is still building.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final bool success = await widget.viewModel.restoreWallet(widget.walletProvider);
+      if (!mounted) return;
+
+      if (!success) {
+        Navigator.of(context).pop();
+        return;
+      }
+
+      final bool hasPassword = await widget.walletProvider.hasPassword();
+      if (!mounted) return;
+
+      if (!hasPassword) {
+        context.replace(
+          '/create_password',
+          extra: <String, String>{'from': 'restore'},
+        );
+      } else {
+        context.replace('/login');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ImportingWalletModal(
+      isImported: widget.viewModel.importComplete,
     );
   }
 }

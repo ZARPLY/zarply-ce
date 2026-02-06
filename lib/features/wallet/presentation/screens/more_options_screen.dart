@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/provider/wallet_provider.dart';
 
 class MoreOptionsScreen extends StatelessWidget {
   const MoreOptionsScreen({super.key});
+
+  Future<String> _getAppVersionLabel() async {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    final String version = info.version; // e.g. "1.0.2"
+    return 'Version $version';
+  }
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
     final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -90,15 +98,23 @@ class MoreOptionsScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            FutureBuilder<String>(
+              future: _getAppVersionLabel(),
+              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                final String text = snapshot.data ?? '';
+                if (text.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              },
+            ),
           ],
-        ),
-      ),
-      // Close button at bottom
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: () => context.go('/wallet'),
-          child: const Text('Close'),
         ),
       ),
     );

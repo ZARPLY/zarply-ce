@@ -93,6 +93,7 @@ class RestoreWalletViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       errorMessage = e.toString();
+
       isImporting = false;
       notifyListeners();
       return false;

@@ -53,6 +53,28 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
   }
+
+  // Environment-specific product flavors to mirror QA / PROD behaviour
+  flavorDimensions += "environment"
+  productFlavors {
+    create("qa") {
+      dimension = "environment"
+      applicationIdSuffix = ".qa"
+      resValue(
+        type = "string",
+        name = "app_name",
+        value = "Zarply QA"
+      )
+    }
+    create("prod") {
+      dimension = "environment"
+      resValue(
+        type = "string",
+        name = "app_name",
+        value = "Zarply"
+      )
+    }
+  }
 }
 
 flutter {

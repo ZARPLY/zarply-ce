@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
@@ -32,17 +33,20 @@ class WelcomeViewModel extends ChangeNotifier {
 
       if (result.errorMessage != null) {
         _errorMessage = result.errorMessage;
+        debugPrint('[WelcomeVM] createWallet returned error: $_errorMessage');
         return false;
       }
 
       walletProvider.setRecoveryPhrase(result.recoveryPhrase!);
       await _repository.storeWalletKeys(
         wallet: result.wallet!,
-        tokenAccount: result.tokenAccount!,
+        tokenAccount: result.tokenAccount,
       );
       return true;
-    } catch (e) {
-      _errorMessage = 'Unexpected error. Please try again later.';
+    } catch (e, stackTrace) {
+      _errorMessage = 'Unexpected error. Please try again later. $e';
+      debugPrint('[WelcomeVM] createAndStoreWallet threw: $e');
+      debugPrint('[WelcomeVM] StackTrace: $stackTrace');
       return false;
     } finally {
       _isLoading = false;

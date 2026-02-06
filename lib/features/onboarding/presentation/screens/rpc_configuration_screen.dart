@@ -93,7 +93,8 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
         if (success) {
           context.go('/backup_wallet');
         } else {
-          _setError(welcomeViewModel.errorMessage ?? 'Failed to create wallet');
+          final String msg = welcomeViewModel.errorMessage ?? 'Failed to create wallet';
+          _setError(msg);
         }
       }
     } catch (e) {
@@ -249,36 +250,34 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
                                   ),
                                 ],
                               ),
-                              if (_useDefaultRpc) ...<Widget>[
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        'RPC: $_defaultRpcUrl',
-                                        style: const TextStyle(
-                                          fontFamily: 'monospace',
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'WS: $_defaultWebsocketUrl',
-                                        style: const TextStyle(
-                                          fontFamily: 'monospace',
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      'RPC: $_defaultRpcUrl',
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'WS: $_defaultWebsocketUrl',
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),

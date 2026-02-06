@@ -1,0 +1,9 @@
+# QA flavor: use QA ZARPLY icon for Android and iOS launcher icons.
+flutter_launcher_icons:
+  image_path: 'images/QA-ZARPLY-ICON.png'
+  image_path_android: 'images/QA-ZARPLY-ICON.png'
+  image_path_ios: 'images/QA-ZARPLY-ICON.png'
+  android: true
+  ios: true
+  min_sdk_android: 21
+  remove_alpha_ios: true

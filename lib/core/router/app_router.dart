@@ -23,14 +23,29 @@ import '../../features/wallet/presentation/screens/unlock_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../provider/auth_provider.dart';
 import '../provider/wallet_provider.dart';
+import '../services/secure_storage_service.dart';
 import '../widgets/initializer/app_initializer.dart';
 import '../widgets/scanner/qr_scanner.dart';
+
+const List<String> _protectedRoutes = <String>[
+  '/wallet',
+  '/pay_request',
+  '/payment_amount',
+  '/payment_details',
+  '/transaction_details',
+  '/request_amount',
+  '/scan',
+  '/more',
+  '/recovery_phrase',
+  '/unlock',
+];
 
 String _getInitialLocation(
   AuthProvider authProvider,
   WalletProvider walletProvider,
 ) {
   // If user is authenticated and has wallet, go to wallet
+  // Note: Password check happens in ShellRoute redirect to catch edge cases
   if (authProvider.isAuthenticated && walletProvider.hasWallet) {
     return '/wallet';
   }
@@ -58,7 +73,7 @@ GoRouter createRouter(
         builder: (BuildContext context, GoRouterState state) => const SplashScreen(),
       ),
       ShellRoute(
-        redirect: (BuildContext context, GoRouterState state) {
+        redirect: (BuildContext context, GoRouterState state) async {
           final String location = state.uri.toString();
           final bool isAuthenticated = authProvider.isAuthenticated;
 
@@ -67,24 +82,24 @@ GoRouter createRouter(
             return null;
           }
 
-          // SIMPLE LOGIC: Only redirect to login if trying to access protected routes while not authenticated
-          if (!isAuthenticated) {
-            final List<String> protectedRoutes = <String>[
-              '/wallet',
-              '/pay_request',
-              '/payment_amount',
-              '/payment_details',
-              '/transaction_details',
-              '/request_amount',
-              '/scan',
-              '/more',
-              '/recovery_phrase',
-              '/unlock',
-            ];
-
-            if (protectedRoutes.contains(location)) {
-              return '/login';
+          // CRITICAL: Check if password exists before allowing access to protected wallet routes.
+          // This prevents users from accessing wallet without completing password setup.
+          if (walletProvider.hasWallet && _protectedRoutes.contains(location)) {
+            try {
+              final String pin = await SecureStorageService().getPin();
+              if (pin.isEmpty) {
+                // Wallet exists but no password - must create password first
+                return '/create_password';
+              }
+            } catch (_) {
+              // Any error reading the password should be treated as "no password set"
+              return '/create_password';
             }
+          }
+
+          // SIMPLE LOGIC: Only redirect to login if trying to access protected routes while not authenticated
+          if (!isAuthenticated && _protectedRoutes.contains(location)) {
+            return '/login';
           }
 
           // For all other cases, stay where you are

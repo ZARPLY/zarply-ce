@@ -60,6 +60,7 @@ class _AccessWalletScreenState extends State<AccessWalletScreen> {
 
     try {
       // Get providers for wallet and auth setup
+      if (!mounted) return;
       final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
       final AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
 

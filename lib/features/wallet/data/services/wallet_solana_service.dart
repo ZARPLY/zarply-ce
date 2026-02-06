@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
@@ -54,6 +55,41 @@ class WalletSolanaService {
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
+  static bool get _isFaucetEnabled {
+    final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
+
+    // Disable faucet-based auto funding when we are pointing at mainnet (PROD).
+    // QA and other non-prod environments use devnet/testnet URLs and will keep auto funding enabled.
+    if (rpcUrl == null) {
+      return true;
+    }
+
+    return !rpcUrl.contains('mainnet');
+  }
+
+  /// True when RPC is mainnet (no faucet, no on-chain ATA creation at wallet creation).
+  bool get isMainnet => !_isFaucetEnabled;
+
+  /// Derives the ZARP Associated Token Account address for [wallet] (PDA). Does not create the account on-chain.
+  /// Use on mainnet where we do not fund the wallet or create the ATA at creation time.
+  Future<ProgramAccount> deriveAssociatedTokenAddress(Wallet wallet) async {
+    final Ed25519HDPublicKey ataKey = await findAssociatedTokenAddress(
+      owner: wallet.publicKey,
+      mint: Ed25519HDPublicKey.fromBase58(zarpMint),
+      tokenProgramType: TokenProgramType.token2022Program,
+    );
+    return ProgramAccount(
+      pubkey: ataKey.toBase58(),
+      account: Account(
+        lamports: 0,
+        owner: '',
+        data: null,
+        executable: false,
+        rentEpoch: BigInt.zero,
+      ),
+    );
+  }
+
   Future<Wallet> createWallet() async {
     try {
       final Ed25519HDKeyPair wallet = await Wallet.random();
@@ -64,7 +100,9 @@ class WalletSolanaService {
         );
       }
 
-      await _requestSOL(wallet);
+      if (_isFaucetEnabled) {
+        await _requestSOL(wallet);
+      }
 
       return wallet;
     } catch (e) {
@@ -81,7 +119,13 @@ class WalletSolanaService {
       );
     }
 
-    await _requestSOL(wallet);
+    if (_isFaucetEnabled) {
+      try {
+        await _requestSOL(wallet);
+      } catch (e) {
+        debugPrint('SOL faucet request failed: $e');
+      }
+    }
 
     return wallet;
   }
@@ -215,11 +259,18 @@ class WalletSolanaService {
         publicKey,
         commitment: Commitment.confirmed,
       );
+      // Prefer the UI amount string reported by Solana so that we respect the
+      // mint's configured decimals instead of assuming a fixed factor. This
+      // ensures that values such as 3510.009999 are displayed as 3510.00.
+      final String? uiAmountString = balance.value.uiAmountString;
+      if (uiAmountString != null) {
+        return double.parse(uiAmountString);
+      }
+      // Fallback to legacy calculation using the fixed decimal factor.
       return double.parse(balance.value.amount) / zarpDecimalFactor;
     } catch (e) {
-      throw WalletSolanaServiceException(
-        'Could not retrieve ZARP balance: $e',
-      );
+      // ATA not created on-chain yet (e.g. mainnet new wallet) — treat as 0.
+      return 0.0;
     }
   }
 
@@ -323,6 +374,12 @@ class WalletSolanaService {
   }
 
   Future<String> requestZARP(Wallet wallet) async {
+    if (!_isFaucetEnabled) {
+      throw WalletSolanaServiceException(
+        'Faucet is not available in production environment',
+      );
+    }
+
     // call ZARPLY faucet
     final http.Response response = await http.post(
       Uri.parse('https://faucet.zarply.co.za/api/faucet'),
@@ -450,6 +507,12 @@ class WalletSolanaService {
   }
 
   Future<String> _requestSOL(Wallet wallet) async {
+    if (!_isFaucetEnabled) {
+      throw WalletSolanaServiceException(
+        'Faucet is not available in production environment',
+      );
+    }
+
     // call ZARPLY faucet
     final http.Response response = await http.post(
       Uri.parse('https://faucet.zarply.co.za/api/faucet'),
