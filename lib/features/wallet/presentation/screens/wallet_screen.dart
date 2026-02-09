@@ -131,12 +131,23 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
           context: context,
           barrierDismissible: false,
           builder: (BuildContext dialogContext) => AlertDialog(
-            title: const Text('Fund your account'),
+            backgroundColor: Colors.white,
+            title: const Text(
+              'Fund your account',
+              style: TextStyle(color: Colors.black),
+            ),
             content: const Text(
               'Your SOL account requires funding before transactions can be processed. Please transfer SOL to your wallet address to continue.',
+              style: TextStyle(color: Colors.black),
             ),
             actions: <Widget>[
               TextButton(
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all<Color>(Colors.blue),
+                  overlayColor: WidgetStateProperty.all<Color?>(
+                    Colors.grey.withValues(alpha: 0.1),
+                  ),
+                ),
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
                   _lastDialogShownTime = DateTime.now();
