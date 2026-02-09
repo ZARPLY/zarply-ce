@@ -82,27 +82,40 @@ class WalletRepositoryImpl implements WalletRepository {
 
   @override
   Future<void> storeTransactions(
-    Map<String, List<TransactionDetails?>> transactions,
-  ) {
+    Map<String, List<TransactionDetails?>> transactions, {
+    required String walletAddress,
+  }) {
     if (_isCancelled) {
       return Future<void>.value();
     }
-    return _transactionStorageService.storeTransactions(transactions);
+    return _transactionStorageService.storeTransactions(
+      transactions,
+      walletAddress: walletAddress,
+    );
   }
 
   @override
-  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions() {
-    return _transactionStorageService.getStoredTransactions();
+  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions({
+    required String walletAddress,
+  }) {
+    return _transactionStorageService.getStoredTransactions(
+      walletAddress: walletAddress,
+    );
   }
 
   @override
-  Future<String?> getLastTransactionSignature() {
-    return _transactionStorageService.getLastTransactionSignature();
+  Future<String?> getLastTransactionSignature({required String walletAddress}) {
+    return _transactionStorageService.getLastTransactionSignature(
+      walletAddress: walletAddress,
+    );
   }
 
   @override
-  Future<void> storeLastTransactionSignature(String signature) {
-    return _transactionStorageService.storeLastTransactionSignature(signature);
+  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress}) {
+    return _transactionStorageService.storeLastTransactionSignature(
+      signature,
+      walletAddress: walletAddress,
+    );
   }
 
   @override

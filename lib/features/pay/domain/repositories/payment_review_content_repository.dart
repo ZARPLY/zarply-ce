@@ -11,7 +11,10 @@ abstract class PaymentReviewContentRepository {
 
   Future<TransactionDetails?> getTransactionDetails(String txSignature);
 
-  Future<void> storeTransactionDetails(TransactionDetails txDetails);
+  Future<void> storeTransactionDetails(
+    TransactionDetails txDetails, {
+    required String walletAddress,
+  });
 
   Future<double> getZarpBalance(String publicKey);
 

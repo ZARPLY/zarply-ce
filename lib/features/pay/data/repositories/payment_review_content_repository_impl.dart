@@ -43,8 +43,13 @@ class PaymentReviewContentRepositoryImpl implements PaymentReviewContentReposito
   }
 
   @override
-  Future<void> storeTransactionDetails(TransactionDetails txDetails) async {
-    final Map<String, List<TransactionDetails?>> stored = await _transactionStorageService.getStoredTransactions();
+  Future<void> storeTransactionDetails(
+    TransactionDetails txDetails, {
+    required String walletAddress,
+  }) async {
+    final Map<String, List<TransactionDetails?>> stored = await _transactionStorageService.getStoredTransactions(
+      walletAddress: walletAddress,
+    );
 
     final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
       txDetails.blockTime! * 1000,
@@ -56,7 +61,10 @@ class PaymentReviewContentRepositoryImpl implements PaymentReviewContentReposito
     }
     stored[monthKey]!.insert(0, txDetails);
 
-    await _transactionStorageService.storeTransactions(stored);
+    await _transactionStorageService.storeTransactions(
+      stored,
+      walletAddress: walletAddress,
+    );
   }
 
   @override

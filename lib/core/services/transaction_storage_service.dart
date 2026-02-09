@@ -7,10 +7,39 @@ class TransactionStorageService {
   final String _transactionsKey = 'wallet_transactions';
   final String _lastTransactionKey = 'last_transaction_signature';
   final String _transactionCountKey = 'transaction_count';
+  static const String _cachedWalletAddressKey = 'cached_wallet_address';
+
+  /// Store the wallet address that transactions belong to
+  Future<void> storeCachedWalletAddress(String walletAddress) async {
+    try {
+      await _secureStorage.write(
+        key: _cachedWalletAddressKey,
+        value: walletAddress,
+      );
+    } catch (e) {
+      throw Exception('Failed to store cached wallet address: $e');
+    }
+  }
+
+  /// Get the wallet address that cached transactions belong to
+  Future<String?> getCachedWalletAddress() async {
+    try {
+      return await _secureStorage.read(key: _cachedWalletAddressKey);
+    } catch (e) {
+      throw Exception('Failed to get cached wallet address: $e');
+    }
+  }
+
+  /// Check if the cached wallet matches the current wallet
+  Future<bool> isCachedWalletMatch(String walletAddress) async {
+    final String? cachedAddress = await getCachedWalletAddress();
+    return cachedAddress == walletAddress;
+  }
 
   Future<void> storeTransactions(
-    Map<String, List<TransactionDetails?>> transactions,
-  ) async {
+    Map<String, List<TransactionDetails?>> transactions, {
+    required String walletAddress,
+  }) async {
     try {
       final String encodedData = jsonEncode(
         transactions.map(
@@ -25,13 +54,26 @@ class TransactionStorageService {
         key: _transactionsKey,
         value: encodedData,
       );
+
+      // Store the wallet address for future validation
+      await storeCachedWalletAddress(walletAddress);
     } catch (e) {
       throw Exception('Failed to store transactions: $e');
     }
   }
 
-  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions() async {
+  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions({
+    required String walletAddress,
+  }) async {
     try {
+      // Check if cached wallet matches current wallet
+      final bool walletMatch = await isCachedWalletMatch(walletAddress);
+      if (!walletMatch) {
+        // Clear cache if wallet doesn't match
+        await clearTransactionCache();
+        return <String, List<TransactionDetails?>>{};
+      }
+
       final String? encodedData = await _secureStorage.read(key: _transactionsKey);
       if (encodedData == null) return <String, List<TransactionDetails?>>{};
 
@@ -55,19 +97,29 @@ class TransactionStorageService {
     }
   }
 
-  Future<void> storeLastTransactionSignature(String signature) async {
+  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress}) async {
     try {
       await _secureStorage.write(
         key: _lastTransactionKey,
         value: signature,
       );
+      // Update cached wallet address when storing signature
+      await storeCachedWalletAddress(walletAddress);
     } catch (e) {
       throw Exception('Failed to store last transaction signature: $e');
     }
   }
 
-  Future<String?> getLastTransactionSignature() async {
+  Future<String?> getLastTransactionSignature({required String walletAddress}) async {
     try {
+      // Check if cached wallet matches current wallet
+      final bool walletMatch = await isCachedWalletMatch(walletAddress);
+      if (!walletMatch) {
+        // Clear cache if wallet doesn't match
+        await clearTransactionCache();
+        return null;
+      }
+
       return await _secureStorage.read(key: _lastTransactionKey);
     } catch (e) {
       throw Exception('Failed to get last transaction signature: $e');
@@ -91,6 +143,18 @@ class TransactionStorageService {
       return count != null ? int.parse(count) : null;
     } catch (e) {
       throw Exception('Failed to retrieve transaction count: $e');
+    }
+  }
+
+  /// Clear all transaction cache data
+  Future<void> clearTransactionCache() async {
+    try {
+      await _secureStorage.delete(key: _transactionsKey);
+      await _secureStorage.delete(key: _lastTransactionKey);
+      await _secureStorage.delete(key: _transactionCountKey);
+      await _secureStorage.delete(key: _cachedWalletAddressKey);
+    } catch (e) {
+      throw Exception('Failed to clear transaction cache: $e');
     }
   }
 }

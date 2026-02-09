@@ -298,6 +298,7 @@ class WalletSolanaService {
       if (signatures.isNotEmpty && before == null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
+          walletAddress: walletAddress,
         );
       }
 

@@ -163,7 +163,9 @@ class WalletProvider extends ChangeNotifier {
     }
 
     try {
-      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature(
+        walletAddress: _userTokenAccount!.pubkey,
+      );
 
       (_walletRepository as WalletRepositoryImpl).resetCancellation();
       final WalletSolanaService service = await _service;
@@ -191,7 +193,9 @@ class WalletProvider extends ChangeNotifier {
     (_walletRepository as WalletRepositoryImpl).resetCancellation();
 
     try {
-      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature(
+        walletAddress: _userTokenAccount!.pubkey,
+      );
 
       await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
@@ -211,7 +215,9 @@ class WalletProvider extends ChangeNotifier {
     List<TransactionDetails?> batch,
   ) async {
     try {
-      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
+      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions(
+        walletAddress: _userTokenAccount!.pubkey,
+      );
 
       for (final TransactionDetails? tx in batch) {
         if (tx == null) continue;
@@ -227,11 +233,17 @@ class WalletProvider extends ChangeNotifier {
         transactions[monthKey]!.insert(0, tx);
       }
 
-      await _walletRepository.storeTransactions(transactions);
+      await _walletRepository.storeTransactions(
+        transactions,
+        walletAddress: _userTokenAccount!.pubkey,
+      );
 
       if (batch.isNotEmpty && batch.first != null) {
         final String signature = batch.first!.transaction.toJson()['signatures'][0];
-        await _walletRepository.storeLastTransactionSignature(signature);
+        await _walletRepository.storeLastTransactionSignature(
+          signature,
+          walletAddress: _userTokenAccount!.pubkey,
+        );
       }
     } catch (e) {
       throw Exception(e);

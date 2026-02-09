@@ -63,10 +63,14 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         throw Exception('Transaction not confirmed after multiple attempts');
       }
 
-      await _repository.storeTransactionDetails(txDetails);
+      await _repository.storeTransactionDetails(
+        txDetails,
+        walletAddress: walletProvider.userTokenAccount!.pubkey,
+      );
 
       await _transactionStorageService.storeLastTransactionSignature(
         txDetails.transaction.toJson()['signatures'][0],
+        walletAddress: walletProvider.userTokenAccount!.pubkey,
       );
 
       final double currentBalance = await _repository.getZarpBalance(
