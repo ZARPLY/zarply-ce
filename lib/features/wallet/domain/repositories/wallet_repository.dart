@@ -25,17 +25,20 @@ abstract class WalletRepository {
 
   /// Store transactions in local storage
   Future<void> storeTransactions(
-    Map<String, List<TransactionDetails?>> transactions,
-  );
+    Map<String, List<TransactionDetails?>> transactions, {
+    required String walletAddress,
+  });
 
   /// Get stored transactions from local storage
-  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions();
+  Future<Map<String, List<TransactionDetails?>>> getStoredTransactions({
+    required String walletAddress,
+  });
 
   /// Get the signature of the last transaction
-  Future<String?> getLastTransactionSignature();
+  Future<String?> getLastTransactionSignature({required String walletAddress});
 
   /// Store the signature of the last transaction
-  Future<void> storeLastTransactionSignature(String signature);
+  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress});
 
   /// Parse transfer details from a transaction
   TransactionTransferInfo? parseTransferDetails(

@@ -120,7 +120,9 @@ class WalletViewModel extends ChangeNotifier {
     (_walletRepository as WalletRepositoryImpl).resetCancellation();
 
     if (storedTransactions.isEmpty || isRefreshing) {
-      final String? lastSignature = await _walletRepository.getLastTransactionSignature();
+      final String? lastSignature = await _walletRepository.getLastTransactionSignature(
+        walletAddress: tokenAccount!.pubkey,
+      );
 
       loadedTransactions = 0;
       notifyListeners();
@@ -152,7 +154,13 @@ class WalletViewModel extends ChangeNotifier {
 
   // Load transactions from the repository
   Future<Map<String, List<TransactionDetails?>>> loadStoredTransactions() async {
-    final Map<String, List<TransactionDetails?>> storedTransactions = await _walletRepository.getStoredTransactions();
+    if (tokenAccount == null) {
+      return <String, List<TransactionDetails?>>{};
+    }
+
+    final Map<String, List<TransactionDetails?>> storedTransactions = await _walletRepository.getStoredTransactions(
+      walletAddress: tokenAccount!.pubkey,
+    );
 
     transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
     notifyListeners();
@@ -327,7 +335,12 @@ class WalletViewModel extends ChangeNotifier {
       }
     }
 
-    _walletRepository.storeTransactions(storedTransactions);
+    if (tokenAccount != null) {
+      _walletRepository.storeTransactions(
+        storedTransactions,
+        walletAddress: tokenAccount!.pubkey,
+      );
+    }
   }
 
   /// Update the oldest signature based on the current transactions

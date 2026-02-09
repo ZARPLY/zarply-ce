@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:solana/dto.dart';
 
 import '../../../../core/provider/payment_provider.dart';
+import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../../wallet/data/repositories/wallet_repository_impl.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
@@ -51,7 +52,17 @@ class PaymentAmountViewModel extends ChangeNotifier {
 
       final String recipientTokenAccount = recipientTokenAccountProgram.pubkey;
 
-      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions();
+      // Get sender token account address from WalletProvider
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      if (walletProvider.userTokenAccount == null) {
+        _cachedLastTransaction = null;
+        _hasLoadedTransaction = true;
+        return null;
+      }
+
+      final Map<String, List<TransactionDetails?>> transactions = await _walletRepository.getStoredTransactions(
+        walletAddress: walletProvider.userTokenAccount!.pubkey,
+      );
 
       TransactionTransferInfo? lastTransaction;
       DateTime? lastTransactionDate;
