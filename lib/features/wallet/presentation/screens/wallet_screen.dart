@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../data/services/wallet_storage_service.dart';
 import '../models/wallet_view_model.dart';
 import '../widgets/balance_amount.dart';
 import '../widgets/quick_actions.dart';
@@ -18,6 +20,8 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver {
   late WalletViewModel _viewModel;
+  final WalletStorageService _walletStorageService = WalletStorageService();
+  DateTime? _lastDialogShownTime;
 
   @override
   void initState() {
@@ -32,6 +36,14 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
     // Load fresh data on initialization
     _initializeData();
+  }
+
+  bool get _isMainnet {
+    final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
+    if (rpcUrl == null) {
+      return false;
+    }
+    return rpcUrl.contains('mainnet');
   }
 
   Future<void> _initializeData() async {
@@ -53,11 +65,17 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
       // Load cached data first for immediate display
       await _viewModel.loadCachedBalances();
 
+      // Check if wallet needs funding on mainnet (before refreshing, using cached balance)
+      await _checkAndShowFundingDialog();
+
       // Then load fresh data in background
       await Future.wait(<Future<void>>[
         _loadTransactionsFromRepository(),
         _refreshBalances(),
       ]);
+
+      // Check again after refreshing balances to catch any changes
+      await _checkAndShowFundingDialog();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -71,27 +89,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
         setState(() {
           _viewModel.isLoadingTransactions = false;
         });
-
-        // If SOL balance is zero, show permanent dialog to fund SOL account.
-        if (_viewModel.solBalance == 0) {
-          // ignore: use_build_context_synchronously
-          await showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext dialogContext) => AlertDialog(
-              title: const Text('Fund your account'),
-              content: const Text(
-                'You have to fund your SOL account to begin making transactions. Please fund the account.',
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
       }
     }
   }
@@ -118,6 +115,44 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     await _viewModel.loadCachedBalances();
   }
 
+  Future<void> _checkAndShowFundingDialog() async {
+    // Check if wallet needs funding on mainnet
+    if (_isMainnet && _viewModel.wallet != null && mounted) {
+      // Check if SOL balance is insufficient (less than 0.001 SOL needed for transactions)
+      if (_viewModel.solBalance < 0.001) {
+        final DateTime now = DateTime.now();
+        if (_lastDialogShownTime != null && now.difference(_lastDialogShownTime!).inSeconds < 30) {
+          return;
+        }
+
+        // Show dialog if account needs funding
+        // ignore: use_build_context_synchronously
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: const Text('Fund your account'),
+            content: const Text(
+              'Your SOL account requires funding before transactions can be processed. Please transfer SOL to your wallet address to continue.',
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  _lastDialogShownTime = DateTime.now();
+                  // Clear the first-time flag if it was set (for first-time users)
+                  _walletStorageService.clearFirstTimeUserFlag();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        _lastDialogShownTime = DateTime.now();
+      }
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -131,6 +166,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     if (state == AppLifecycleState.resumed) {
       _refreshBalances();
       _loadTransactionsFromRepository();
+      // Check funding status when app resumes (after balances refresh)
+      Future<void>.delayed(const Duration(milliseconds: 500), _checkAndShowFundingDialog);
     }
   }
 
@@ -295,10 +332,39 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                       ),
                                     ),
                                     TextSpan(
+                                      text: 'Network: ${_isMainnet ? 'Mainnet' : 'Devnet'}\n',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: '\n',
+                                      style: TextStyle(fontSize: 8),
+                                    ),
+                                    const TextSpan(
+                                      text: 'Address:\n',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
                                       text: '${viewModel.wallet?.address}\n',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: '\nBalance:\n',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     TextSpan(
@@ -306,11 +372,24 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: '\nToken Account:\n',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     TextSpan(
                                       text: '${viewModel.tokenAccount?.pubkey}\n',
-                                      style: const TextStyle(fontSize: 14),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),

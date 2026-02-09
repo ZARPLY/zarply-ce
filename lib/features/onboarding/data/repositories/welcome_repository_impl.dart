@@ -71,5 +71,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
     await _storageService.saveWalletPrivateKey(wallet);
     await _storageService.saveWalletPublicKey(wallet);
     await _storageService.saveAssociatedTokenAccountPublicKey(tokenAccount);
+    // Mark as first-time user when wallet is created through the app
+    await _storageService.setFirstTimeUser(isFirstTime: true);
   }
 }
