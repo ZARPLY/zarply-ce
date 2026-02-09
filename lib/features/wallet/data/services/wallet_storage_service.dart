@@ -17,6 +17,7 @@ class WalletStorageService {
   final String _walletPrivateKey = 'wallet_private_key';
   final String _walletPublicKey = 'wallet_public_key';
   final String _associatedTokenAccountKey = 'associated_token_account_key';
+  final String _isFirstTimeUserKey = 'is_first_time_user';
 
   Future<void> saveWalletPrivateKey(Wallet wallet) async {
     try {
@@ -97,6 +98,37 @@ class WalletStorageService {
       return await _secureStorage.containsKey(key: 'user_pin');
     } catch (e) {
       throw WalletStorageException('Failed to check password existence: $e');
+    }
+  }
+
+  Future<void> setFirstTimeUser({required bool isFirstTime}) async {
+    try {
+      await _secureStorage.write(
+        key: _isFirstTimeUserKey,
+        value: isFirstTime.toString(),
+      );
+    } catch (e) {
+      throw WalletStorageException('Failed to save first-time user flag: $e');
+    }
+  }
+
+  Future<bool> isFirstTimeUser() async {
+    try {
+      final String? value = await _secureStorage.read(key: _isFirstTimeUserKey);
+      if (value == null) {
+        return false;
+      }
+      return value.toLowerCase() == 'true';
+    } catch (e) {
+      throw WalletStorageException('Failed to retrieve first-time user flag: $e');
+    }
+  }
+
+  Future<void> clearFirstTimeUserFlag() async {
+    try {
+      await _secureStorage.delete(key: _isFirstTimeUserKey);
+    } catch (e) {
+      throw WalletStorageException('Failed to clear first-time user flag: $e');
     }
   }
 }

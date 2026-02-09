@@ -65,9 +65,23 @@ class RestoreWalletRepositoryImpl implements RestoreWalletRepository {
   ) async {
     try {
       final WalletSolanaService service = await _service;
-      final ProgramAccount? tokenAccount = await service.getAssociatedTokenAccount(wallet.address);
-      if (tokenAccount == null) return;
+
+      // First, check if ATA exists on-chain
+      ProgramAccount tokenAccount;
+      try {
+        final ProgramAccount? existingAccount = await service.getAssociatedTokenAccount(wallet.address);
+        if (existingAccount != null) {
+          // ATA exists on-chain, use it
+          tokenAccount = existingAccount;
+        } else {
+          tokenAccount = await service.deriveAssociatedTokenAddress(wallet);
+        }
+      } catch (e) {
+        tokenAccount = await service.deriveAssociatedTokenAddress(wallet);
+      }
+
       await walletProvider.storeAssociatedTokenAccount(tokenAccount);
+      await _storageService.saveAssociatedTokenAccountPublicKey(tokenAccount);
     } catch (e) {
       throw WalletStorageException(
         'Failed to restore associated token account: $e',

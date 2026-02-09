@@ -78,30 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           listen: false,
         ).login();
-
-        if (!mounted) return;
-        // If balance is zero, prompt user to fund their account.
-        if (walletProvider.walletBalance == 0 && walletProvider.solBalance == 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'To use your Zarply wallet you need to fund your account and fund your ZARP ATA account to begin transactions.',
-              ),
-              duration: Duration(seconds: 6),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        } else if (walletProvider.walletBalance == 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'To send and receive ZARP you need to fund your ZARP ATA account. Fund your account to begin transactions.',
-              ),
-              duration: Duration(seconds: 5),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
       if (mounted) {
