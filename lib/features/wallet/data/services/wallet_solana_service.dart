@@ -53,6 +53,8 @@ class WalletSolanaService {
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
+  static final String legacyZarpMint = dotenv.env['ZARP_MINT_ADDRESS_LEGACY'] ?? '';
+  static final String migrationWallet = dotenv.env['ZARP_MIGRATION_WALLET_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
   static bool get _isFaucetEnabled {
@@ -533,5 +535,186 @@ class WalletSolanaService {
     }
 
     return response.body;
+  }
+
+  /// Get legacy token account for a wallet address
+  Future<ProgramAccount?> getLegacyAssociatedTokenAccount(String walletAddress) async {
+    try {
+      if (legacyZarpMint.isEmpty) return null;
+
+      return await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(walletAddress),
+        mint: Ed25519HDPublicKey.fromBase58(legacyZarpMint),
+        commitment: Commitment.confirmed,
+      );
+    } catch (e) {
+      return null; // Account doesn't exist
+    }
+  }
+
+  /// Check if wallet has legacy account and migrate if needed
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
+    try {
+      final ProgramAccount? legacyAccount = await getLegacyAssociatedTokenAccount(wallet.address);
+
+      if (legacyAccount == null) {
+        return (
+          hasLegacyAccount: false,
+          needsMigration: false,
+          migrationComplete: false,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Check balance
+      final TokenAmountResult balance = await _client.rpcClient.getTokenAccountBalance(
+        legacyAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+
+      final int amount = int.parse(balance.value.amount);
+
+      if (amount == 0) {
+        // Balance is 0 - no migration needed
+        return (
+          hasLegacyAccount: true,
+          needsMigration: false,
+          migrationComplete: true,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Balance > 0 - drain it
+      final String drainSignature = await drainLegacyAccount(
+        wallet: wallet,
+        legacyTokenAccount: legacyAccount,
+      );
+
+      if (drainSignature.isEmpty) {
+        // Drain failed (likely transient) - try again later
+        return (
+          hasLegacyAccount: true,
+          needsMigration: true,
+          migrationComplete: false,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Get transaction timestamp
+      int? drainTimestamp;
+      try {
+        final TransactionDetails? drainTx = await getTransactionDetails(drainSignature);
+        drainTimestamp = drainTx?.blockTime;
+      } catch (e) {
+        // Ignore if we can't get timestamp
+      }
+
+      return (
+        hasLegacyAccount: true,
+        needsMigration: true,
+        migrationComplete: true,
+        migrationSignature: drainSignature,
+        migrationTimestamp: drainTimestamp,
+      );
+    } catch (e) {
+      throw WalletSolanaServiceException('Legacy migration check failed: $e');
+    }
+  }
+
+  /// Drain legacy account by sending all tokens to migration wallet
+  Future<String> drainLegacyAccount({
+    required Wallet wallet,
+    required ProgramAccount legacyTokenAccount,
+  }) async {
+    try {
+      if (migrationWallet.isEmpty) {
+        throw WalletSolanaServiceException('Migration wallet not configured');
+      }
+
+      // Get balance
+      final TokenAmountResult balance = await _client.rpcClient.getTokenAccountBalance(
+        legacyTokenAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+
+      final int amount = int.parse(balance.value.amount);
+      if (amount == 0) return '';
+
+      // Get destination token account
+      final ProgramAccount? destTokenAccount = await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(migrationWallet),
+        mint: Ed25519HDPublicKey.fromBase58(legacyZarpMint),
+        commitment: Commitment.confirmed,
+      );
+
+      if (destTokenAccount == null) {
+        throw WalletSolanaServiceException('Migration wallet token account not found');
+      }
+
+      // Create transfer instruction
+      final TokenInstruction instruction = TokenInstruction.transfer(
+        source: Ed25519HDPublicKey.fromBase58(legacyTokenAccount.pubkey),
+        destination: Ed25519HDPublicKey.fromBase58(destTokenAccount.pubkey),
+        owner: wallet.publicKey,
+        amount: amount,
+        tokenProgram: TokenProgramType.token2022Program,
+      );
+
+      // Build message
+      final Message message = Message(
+        instructions: <TokenInstruction>[
+          instruction,
+        ],
+      );
+
+      // Get blockhash
+      final LatestBlockhash bh = await _client.rpcClient
+          .getLatestBlockhash(
+            commitment: Commitment.confirmed,
+          )
+          .value;
+
+      // Sign transaction
+      final SignedTx signedTx = await signTransaction(
+        bh,
+        message,
+        <Ed25519HDKeyPair>[wallet],
+      );
+
+      // Send transaction
+      final String signature = await _client.rpcClient.sendTransaction(
+        signedTx.encode(),
+        preflightCommitment: Commitment.confirmed,
+      );
+
+      // Immediately mark this signature as a system transaction so it's filtered out
+      await _transactionStorageService.addSystemTransactionSignature(signature);
+
+      return signature;
+    } catch (e) {
+      if (_isInsufficientFundsError(e)) {
+        return '';
+      }
+      throw WalletSolanaServiceException('Failed to drain legacy account: $e');
+    }
+  }
+
+  bool _isInsufficientFundsError(Object e) {
+    final String message = e.toString().toLowerCase();
+    return message.contains('insufficient funds') ||
+        message.contains('custom program error: 0x1') ||
+        message.contains('instruction error');
   }
 }

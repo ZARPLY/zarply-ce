@@ -1,4 +1,5 @@
 import 'package:solana/dto.dart';
+import 'package:solana/solana.dart';
 
 import '../../../../core/services/transaction_parser_service.dart';
 
@@ -57,4 +58,19 @@ abstract class WalletRepository {
 
   /// Get associated token account from wallet address
   Future<ProgramAccount?> getAssociatedTokenAccount(String walletAddress);
+
+  /// Check and migrate legacy account if needed
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet);
+
+  /// Get legacy associated token account from wallet address
+  Future<ProgramAccount?> getLegacyAssociatedTokenAccount(String walletAddress);
 }

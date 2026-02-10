@@ -6,6 +6,7 @@ import 'package:solana/solana.dart';
 
 import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/transaction_parser_service.dart';
+import '../../../../core/services/transaction_storage_service.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 import '../../domain/repositories/wallet_repository.dart';
 
@@ -16,7 +17,12 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
   final WalletRepository _walletRepository = WalletRepositoryImpl();
+  final TransactionStorageService _transactionStorageService = TransactionStorageService();
   late final BalanceCacheService _balanceCacheService;
+
+  Timer? _legacyMonitorTimer;
+  bool _isMonitoringLegacy = false;
+  bool _disposed = false;
 
   ProgramAccount? tokenAccount;
   Wallet? wallet;
@@ -375,8 +381,90 @@ class WalletViewModel extends ChangeNotifier {
     (_walletRepository as WalletRepositoryImpl).cancelTransactions();
   }
 
+  /// Start continuous monitoring of legacy account
+  void startLegacyMonitoring() {
+    if (_isMonitoringLegacy || wallet == null || _disposed) return;
+
+    _isMonitoringLegacy = true;
+
+    // Check immediately
+    checkLegacyBalance();
+
+    // Then check every 30 seconds
+    _legacyMonitorTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) {
+        if (!_disposed) {
+          checkLegacyBalance();
+        }
+      },
+    );
+  }
+
+  /// Stop monitoring legacy account
+  void stopLegacyMonitoring() {
+    _legacyMonitorTimer?.cancel();
+    _legacyMonitorTimer = null;
+    _isMonitoringLegacy = false;
+  }
+
+  /// Check legacy account balance and drain if needed
+  Future<void> checkLegacyBalance() async {
+    if (wallet == null || _disposed) return;
+
+    try {
+      final ({
+        bool hasLegacyAccount,
+        bool needsMigration,
+        bool migrationComplete,
+        String? migrationSignature,
+        int? migrationTimestamp,
+      })
+      result = await _walletRepository.checkAndMigrateLegacyIfNeeded(wallet!);
+
+      if (_disposed) return; // Check again after async operation
+
+      if (result.hasLegacyAccount && result.migrationSignature != null) {
+        // Mark as system transaction
+        await _transactionStorageService.addSystemTransactionSignature(result.migrationSignature!);
+
+        if (_disposed) return; // Check again after async operation
+
+        // Reload transactions to update UI (system transactions will be filtered automatically)
+        await loadTransactions();
+      }
+    } catch (e) {
+      if (!_disposed) {
+        debugPrint('[WalletVM] Legacy balance check failed: $e');
+      }
+      // Don't fail if check fails
+    }
+  }
+
+  /// Check legacy migration if needed (for existing wallets on app start)
+  Future<void> checkLegacyMigrationIfNeeded() async {
+    if (wallet == null || _disposed) return;
+
+    try {
+      // Initial check
+      await checkLegacyBalance();
+
+      if (_disposed) return; // Check after async operation
+
+      // Start continuous monitoring
+      startLegacyMonitoring();
+    } catch (e) {
+      if (!_disposed) {
+        debugPrint('[WalletVM] Legacy migration check failed: $e');
+      }
+      // Don't fail the app if migration check fails
+    }
+  }
+
   @override
   void dispose() {
+    _disposed = true;
+    stopLegacyMonitoring();
     cancelOperations();
     super.dispose();
   }

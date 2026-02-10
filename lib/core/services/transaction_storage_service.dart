@@ -8,6 +8,7 @@ class TransactionStorageService {
   final String _lastTransactionKey = 'last_transaction_signature';
   final String _transactionCountKey = 'transaction_count';
   static const String _cachedWalletAddressKey = 'cached_wallet_address';
+  static const String _systemTransactionsKey = 'system_transaction_signatures';
 
   /// Store the wallet address that transactions belong to
   Future<void> storeCachedWalletAddress(String walletAddress) async {
@@ -155,6 +156,33 @@ class TransactionStorageService {
       await _secureStorage.delete(key: _cachedWalletAddressKey);
     } catch (e) {
       throw Exception('Failed to clear transaction cache: $e');
+    }
+  }
+
+  /// Add a system transaction signature (e.g., drain transactions) to filter list
+  Future<void> addSystemTransactionSignature(String signature) async {
+    try {
+      final Set<String> systemTxs = await getSystemTransactionSignatures();
+      systemTxs.add(signature);
+      final String encodedData = jsonEncode(systemTxs.toList());
+      await _secureStorage.write(
+        key: _systemTransactionsKey,
+        value: encodedData,
+      );
+    } catch (e) {
+      throw Exception('Failed to add system transaction signature: $e');
+    }
+  }
+
+  /// Get all system transaction signatures that should be filtered out
+  Future<Set<String>> getSystemTransactionSignatures() async {
+    try {
+      final String? encodedData = await _secureStorage.read(key: _systemTransactionsKey);
+      if (encodedData == null) return <String>{};
+      final List<dynamic> decodedData = jsonDecode(encodedData);
+      return decodedData.map((dynamic sig) => sig as String).toSet();
+    } catch (e) {
+      return <String>{};
     }
   }
 }
