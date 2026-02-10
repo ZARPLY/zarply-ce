@@ -76,6 +76,9 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
       // Check again after refreshing balances to catch any changes
       await _checkAndShowFundingDialog();
+
+      // Check for legacy account and drain if needed
+      await _viewModel.checkLegacyMigrationIfNeeded();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

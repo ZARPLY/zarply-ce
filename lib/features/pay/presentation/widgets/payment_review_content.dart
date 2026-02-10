@@ -47,7 +47,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     final Wallet? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
-      if (mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error: Wallet not found. Please try again.'),
@@ -68,12 +68,43 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       if (!mounted) return;
       Navigator.pop(context); // Close the modal
       context.go('/wallet'); // Navigate to wallet screen
-    } catch (e) {
+    } catch (e, _) {
       if (!mounted) return;
+
+      // Parse error message for better user feedback
+      String errorMessage = 'Payment failed';
+      final String errorString = e.toString().toLowerCase();
+
+      if (errorString.contains('insufficient funds') ||
+          errorString.contains('insufficient') ||
+          errorString.contains('custom program error: 0x1')) {
+        // Check if we have a specific balance error message
+        if (e.toString().contains('Insufficient ZARP balance')) {
+          errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('SolanaConnectionException: ', '');
+        } else {
+          errorMessage = 'Insufficient funds. Please check your ZARP balance and try again.';
+        }
+      } else if (errorString.contains('recipient does not have a token account')) {
+        errorMessage = 'Recipient does not have a ZARP token account. They need to receive ZARP first.';
+      } else if (errorString.contains('wallet not found')) {
+        errorMessage = 'Wallet not found. Please try again.';
+      } else if (errorString.contains('transaction not confirmed')) {
+        errorMessage = 'Transaction was sent but not confirmed. Please check your wallet.';
+      } else {
+        // Clean up the error message
+        errorMessage = e
+            .toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll('SolanaConnectionException: ', '')
+            .replaceAll('WalletSolanaServiceException: ', '')
+            .split('\n')[0]; // Take only the first line
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed: ${e.toString()}'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
         ),
       );
     }

@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
-import 'package:solana/dto.dart';
+import 'package:solana/dto.dart' hide Instruction;
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
@@ -53,6 +54,8 @@ class WalletSolanaService {
   final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
+  static final String legacyZarpMint = dotenv.env['ZARP_MINT_ADDRESS_LEGACY'] ?? '';
+  static final String migrationWallet = dotenv.env['ZARP_MIGRATION_WALLET_ADDRESS'] ?? '';
   static const int zarpDecimalFactor = 1000000000;
 
   static bool get _isFaucetEnabled {
@@ -212,11 +215,27 @@ class WalletSolanaService {
         );
       }
 
-      final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
-
-      if (recipientTokenAccount == null || senderTokenAccount == null) {
+      if (senderTokenAccount == null || recipientTokenAccount == null) {
         throw WalletSolanaServiceException(
           'RecipientTokenAccount or SenderTokenAccount is null',
+        );
+      }
+
+      // Derive the correct decimal factor from the mint's configured decimals
+      final TokenAmountResult senderTokenBalance = await _client.rpcClient.getTokenAccountBalance(
+        senderTokenAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+      final int decimals = senderTokenBalance.value.decimals;
+      final double factor = math.pow(10, decimals).toDouble();
+      final int tokenAmount = (zarpAmount * factor).round();
+
+      // Optional safety check: ensure the sender has enough raw tokens
+      final int currentRaw = int.parse(senderTokenBalance.value.amount);
+      if (currentRaw < tokenAmount) {
+        final double currentUi = currentRaw / factor;
+        throw WalletSolanaServiceException(
+          'Insufficient ZARP balance. You have ${currentUi.toStringAsFixed(6)} ZARP but need ${zarpAmount.toStringAsFixed(2)} ZARP.',
         );
       }
 
@@ -274,12 +293,20 @@ class WalletSolanaService {
     }
   }
 
+  /// Get raw token account balance result (for precise balance checks)
+  Future<TokenAmountResult> getTokenAccountBalanceRaw(String publicKey) async {
+    return await _client.rpcClient.getTokenAccountBalance(
+      publicKey,
+      commitment: Commitment.confirmed,
+    );
+  }
+
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
     int limit = 100,
     String? until,
     String? before,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
     try {
@@ -323,14 +350,14 @@ class WalletSolanaService {
 
         await _fetchTransactionsWithCircuitBreaker(
           signatures.map((TransactionSignatureInformation sig) => sig.signature).toList(),
-          onBatchLoaded: (List<TransactionDetails?> batch) {
+          onBatchLoaded: (List<TransactionDetails?> batch) async {
             if (isCancelled != null && isCancelled()) {
               return;
             }
 
             transactionStreamController.add(batch);
             if (onBatchLoaded != null) {
-              onBatchLoaded(batch);
+              await onBatchLoaded(batch);
             }
           },
           isCancelled: isCancelled,
@@ -435,7 +462,7 @@ class WalletSolanaService {
 
   Future<void> _fetchTransactionsWithCircuitBreaker(
     List<String> signatures, {
-    required Function(List<TransactionDetails?>) onBatchLoaded,
+    required Future<void> Function(List<TransactionDetails?>) onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
     try {
@@ -498,7 +525,7 @@ class WalletSolanaService {
             return;
           }
 
-          onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
+          await onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
           currentBatch.clear();
         }
       }
@@ -533,5 +560,201 @@ class WalletSolanaService {
     }
 
     return response.body;
+  }
+
+  /// Get legacy token account for a wallet address
+  Future<ProgramAccount?> getLegacyAssociatedTokenAccount(String walletAddress) async {
+    try {
+      if (legacyZarpMint.isEmpty) return null;
+
+      return await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(walletAddress),
+        mint: Ed25519HDPublicKey.fromBase58(legacyZarpMint),
+        commitment: Commitment.confirmed,
+      );
+    } catch (e) {
+      return null; // Account doesn't exist
+    }
+  }
+
+  /// Check if wallet has legacy account and migrate if needed
+  Future<
+    ({
+      bool hasLegacyAccount,
+      bool needsMigration,
+      bool migrationComplete,
+      String? migrationSignature,
+      int? migrationTimestamp,
+    })
+  >
+  checkAndMigrateLegacyIfNeeded(Wallet wallet) async {
+    try {
+      final ProgramAccount? legacyAccount = await getLegacyAssociatedTokenAccount(wallet.address);
+
+      if (legacyAccount == null) {
+        return (
+          hasLegacyAccount: false,
+          needsMigration: false,
+          migrationComplete: false,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Check balance
+      final TokenAmountResult balance = await _client.rpcClient.getTokenAccountBalance(
+        legacyAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+
+      final int amount = int.parse(balance.value.amount);
+
+      if (amount == 0) {
+        // Balance is 0 - no migration needed
+        return (
+          hasLegacyAccount: true,
+          needsMigration: false,
+          migrationComplete: true,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Balance > 0 - drain it
+      final String drainSignature = await drainLegacyAccount(
+        wallet: wallet,
+        legacyTokenAccount: legacyAccount,
+      );
+
+      if (drainSignature.isEmpty) {
+        // Drain failed (likely transient) - try again later
+        return (
+          hasLegacyAccount: true,
+          needsMigration: true,
+          migrationComplete: false,
+          migrationSignature: null,
+          migrationTimestamp: null,
+        );
+      }
+
+      // Get transaction timestamp
+      int? drainTimestamp;
+      try {
+        final TransactionDetails? drainTx = await getTransactionDetails(drainSignature);
+        drainTimestamp = drainTx?.blockTime;
+      } catch (e) {
+        // Ignore if we can't get timestamp
+      }
+
+      return (
+        hasLegacyAccount: true,
+        needsMigration: true,
+        migrationComplete: true,
+        migrationSignature: drainSignature,
+        migrationTimestamp: drainTimestamp,
+      );
+    } catch (e) {
+      throw WalletSolanaServiceException('Legacy migration check failed: $e');
+    }
+  }
+
+  /// Drain legacy account by sending all tokens to migration wallet
+  Future<String> drainLegacyAccount({
+    required Wallet wallet,
+    required ProgramAccount legacyTokenAccount,
+  }) async {
+    try {
+      if (migrationWallet.isEmpty) {
+        throw WalletSolanaServiceException('Migration wallet not configured');
+      }
+
+      // Get balance
+      final TokenAmountResult balance = await _client.rpcClient.getTokenAccountBalance(
+        legacyTokenAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+
+      final int amount = int.parse(balance.value.amount);
+      if (amount == 0) return '';
+
+      // Get destination token account
+      final ProgramAccount? destTokenAccount = await _client.getAssociatedTokenAccount(
+        owner: Ed25519HDPublicKey.fromBase58(migrationWallet),
+        mint: Ed25519HDPublicKey.fromBase58(legacyZarpMint),
+        commitment: Commitment.confirmed,
+      );
+
+      if (destTokenAccount == null) {
+        throw WalletSolanaServiceException('Migration wallet token account not found');
+      }
+
+      // Create transfer instruction
+      final TokenInstruction transferInstruction = TokenInstruction.transfer(
+        source: Ed25519HDPublicKey.fromBase58(legacyTokenAccount.pubkey),
+        destination: Ed25519HDPublicKey.fromBase58(destTokenAccount.pubkey),
+        owner: wallet.publicKey,
+        amount: amount,
+        tokenProgram: TokenProgramType.token2022Program,
+      );
+
+      // Create memo instruction for system swap contract
+      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+      const String systemSwapMemo = 'system swap contract';
+
+      final Instruction memoInstruction = Instruction(
+        programId: Ed25519HDPublicKey.fromBase58(memoProgramId),
+        accounts: <AccountMeta>[
+          AccountMeta(
+            pubKey: wallet.publicKey,
+            isSigner: true,
+            isWriteable: false,
+          ),
+        ],
+        data: ByteArray(utf8.encode(systemSwapMemo)),
+      );
+
+      // Build message with both transfer and memo instructions
+      final Message message = Message(
+        instructions: <Instruction>[
+          transferInstruction,
+          memoInstruction,
+        ],
+      );
+
+      // Get blockhash
+      final LatestBlockhash bh = await _client.rpcClient
+          .getLatestBlockhash(
+            commitment: Commitment.confirmed,
+          )
+          .value;
+
+      // Sign transaction
+      final SignedTx signedTx = await signTransaction(
+        bh,
+        message,
+        <Ed25519HDKeyPair>[wallet],
+      );
+
+      // Send transaction
+      final String signature = await _client.rpcClient.sendTransaction(
+        signedTx.encode(),
+        preflightCommitment: Commitment.confirmed,
+      );
+
+      // Transaction includes memo "system swap contract" - will be filtered by memo check
+      return signature;
+    } catch (e) {
+      if (_isInsufficientFundsError(e)) {
+        return '';
+      }
+      throw WalletSolanaServiceException('Failed to drain legacy account: $e');
+    }
+  }
+
+  bool _isInsufficientFundsError(Object e) {
+    final String message = e.toString().toLowerCase();
+    return message.contains('insufficient funds') ||
+        message.contains('custom program error: 0x1') ||
+        message.contains('instruction error');
   }
 }

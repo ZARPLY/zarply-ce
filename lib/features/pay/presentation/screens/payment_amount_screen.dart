@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
+import '../../../wallet/data/repositories/wallet_repository_impl.dart';
+import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../models/payment_amount_view_model.dart';
 import '../widgets/payment_review_content.dart';
 
@@ -34,29 +37,63 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
     super.dispose();
   }
 
-  void _showPaymentReviewModal(BuildContext context, String amount) {
-    final double walletBalance = AppInitializer.of(context).walletBalance;
-    showModalBottomSheet<void>(
+  Future<void> _showPaymentReviewModal(String amount) async {
+    // Refresh balance before showing modal to ensure accuracy
+    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    double walletBalance = AppInitializer.of(context).walletBalance;
+
+    // Try to get fresh balance if token account exists
+    if (walletProvider.userTokenAccount != null) {
+      try {
+        final WalletRepository walletRepository = WalletRepositoryImpl();
+        final double freshBalance = await walletRepository.getZarpBalance(
+          walletProvider.userTokenAccount!.pubkey,
+        );
+        walletBalance = freshBalance;
+      } catch (e) {
+        // Continue with cached balance
+      }
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (BuildContext context) => Container(
-        height: MediaQuery.of(context).size.height * 0.90,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: PaymentReviewContent(
-          amount: amount,
-          recipientAddress: widget.recipientAddress,
-          walletBalance: walletBalance,
-          onCancel: () => Navigator.pop(context),
-        ),
-      ),
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.90,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: PaymentReviewContent(
+            amount: amount,
+            recipientAddress: widget.recipientAddress,
+            walletBalance: walletBalance,
+            onCancel: () {
+              Navigator.pop(context);
+            },
+          ),
+        );
+      },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure PaymentProvider has the recipient address set when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+      if (paymentProvider.recipientAddress != widget.recipientAddress) {
+        paymentProvider.setRecipientAddress(widget.recipientAddress);
+      }
+    });
   }
 
   @override
@@ -140,10 +177,11 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                   const Spacer(),
                   ElevatedButton(
                     onPressed: viewModel.isFormValid
-                        ? () => _showPaymentReviewModal(
-                            context,
-                            viewModel.paymentAmountController.text,
-                          )
+                        ? () async {
+                            await _showPaymentReviewModal(
+                              viewModel.paymentAmountController.text,
+                            );
+                          }
                         : null,
                     style: ElevatedButton.styleFrom(
                       textStyle: const TextStyle(
