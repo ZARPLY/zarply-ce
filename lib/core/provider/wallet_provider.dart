@@ -173,12 +173,12 @@ class WalletProvider extends ChangeNotifier {
         walletAddress: _userTokenAccount!.pubkey,
         until: lastSignature,
         limit: 10,
-        onBatchLoaded: (List<TransactionDetails?> batch) {
+        onBatchLoaded: (List<TransactionDetails?> batch) async {
           if (batch.isEmpty) {
-            return;
+            return Future<void>.value();
           }
 
-          _processAndStoreTransactions(batch);
+          await _processAndStoreTransactions(batch);
         },
         isCancelled: () => _walletRepository.isCancelled,
       );
@@ -200,10 +200,12 @@ class WalletProvider extends ChangeNotifier {
       await _walletRepository.getNewerTransactions(
         walletAddress: _userTokenAccount!.pubkey,
         lastKnownSignature: lastSignature,
-        onBatchLoaded: (List<TransactionDetails?> batch) {
-          if (batch.isEmpty) return;
+        onBatchLoaded: (List<TransactionDetails?> batch) async {
+          if (batch.isEmpty) {
+            return Future<void>.value();
+          }
 
-          _processAndStoreTransactions(batch);
+          await _processAndStoreTransactions(batch);
         },
       );
     } catch (e) {

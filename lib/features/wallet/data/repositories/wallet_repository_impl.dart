@@ -48,15 +48,15 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<Map<String, List<TransactionDetails?>>> getNewerTransactions({
     required String walletAddress,
     String? lastKnownSignature,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
   }) async {
     final WalletSolanaService service = await _service;
     return service.getAccountTransactions(
       walletAddress: walletAddress,
       until: lastKnownSignature,
-      onBatchLoaded: (List<TransactionDetails?> batch) {
+      onBatchLoaded: (List<TransactionDetails?> batch) async {
         if (_isCancelled) return;
-        if (onBatchLoaded != null) onBatchLoaded(batch);
+        if (onBatchLoaded != null) await onBatchLoaded(batch);
       },
       isCancelled: () => _isCancelled,
     );
@@ -66,16 +66,16 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<Map<String, List<TransactionDetails?>>> getOlderTransactions({
     required String walletAddress,
     required String oldestSignature,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
   }) async {
     final WalletSolanaService service = await _service;
     return service.getAccountTransactions(
       walletAddress: walletAddress,
       before: oldestSignature,
       limit: 20,
-      onBatchLoaded: (List<TransactionDetails?> batch) {
+      onBatchLoaded: (List<TransactionDetails?> batch) async {
         if (_isCancelled) return;
-        if (onBatchLoaded != null) onBatchLoaded(batch);
+        if (onBatchLoaded != null) await onBatchLoaded(batch);
       },
       isCancelled: () => _isCancelled,
     );

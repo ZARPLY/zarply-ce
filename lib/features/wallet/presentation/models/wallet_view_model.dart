@@ -6,7 +6,6 @@ import 'package:solana/solana.dart';
 
 import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/transaction_parser_service.dart';
-import '../../../../core/services/transaction_storage_service.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 import '../../domain/repositories/wallet_repository.dart';
 
@@ -17,7 +16,6 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
   final WalletRepository _walletRepository = WalletRepositoryImpl();
-  final TransactionStorageService _transactionStorageService = TransactionStorageService();
   late final BalanceCacheService _balanceCacheService;
 
   Timer? _legacyMonitorTimer;
@@ -137,12 +135,12 @@ class WalletViewModel extends ChangeNotifier {
         await _walletRepository.getNewerTransactions(
           walletAddress: tokenAccount!.pubkey,
           lastKnownSignature: lastSignature,
-          onBatchLoaded: (List<TransactionDetails?> batch) {
+          onBatchLoaded: (List<TransactionDetails?> batch) async {
             if (_walletRepository.isCancelled) {
               return;
             }
 
-            _processNewTransactionBatch(batch, storedTransactions);
+            await _processNewTransactionBatch(batch, storedTransactions);
             loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
 
             transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
@@ -168,10 +166,32 @@ class WalletViewModel extends ChangeNotifier {
       walletAddress: tokenAccount!.pubkey,
     );
 
-    transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
+    // Filter out system swap transactions by checking memo
+    const String systemSwapMemo = 'system swap contract';
+    final Map<String, List<TransactionDetails?>> filteredTransactions = <String, List<TransactionDetails?>>{};
+
+    for (final String monthKey in storedTransactions.keys) {
+      final List<TransactionDetails?> filteredTxs = storedTransactions[monthKey]!.where((TransactionDetails? tx) {
+        if (tx == null) return false;
+
+        // Check if transaction has system swap memo
+        final String? memo = TransactionDetailsParser.extractMemo(tx);
+        if (memo != null && memo == systemSwapMemo) {
+          // Skip system swap transactions
+          return false;
+        }
+        return true;
+      }).toList();
+
+      if (filteredTxs.isNotEmpty) {
+        filteredTransactions[monthKey] = filteredTxs;
+      }
+    }
+
+    transactions = Map<String, List<TransactionDetails?>>.from(filteredTransactions);
     notifyListeners();
 
-    return storedTransactions;
+    return filteredTransactions;
   }
 
   Future<void> refreshTransactionsFromButton() async {
@@ -255,12 +275,12 @@ class WalletViewModel extends ChangeNotifier {
       await _walletRepository.getOlderTransactions(
         walletAddress: tokenAccount!.pubkey,
         oldestSignature: oldestLoadedSignature!,
-        onBatchLoaded: (List<TransactionDetails?> batch) {
+        onBatchLoaded: (List<TransactionDetails?> batch) async {
           if (_walletRepository.isCancelled) {
             return;
           }
 
-          _processNewTransactionBatch(
+          await _processNewTransactionBatch(
             batch,
             storedTransactions,
             isOlderTransactions: true,
@@ -317,13 +337,22 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  void _processNewTransactionBatch(
+  Future<void> _processNewTransactionBatch(
     List<TransactionDetails?> batch,
     Map<String, List<TransactionDetails?>> storedTransactions, {
     bool isOlderTransactions = false,
-  }) {
+  }) async {
+    const String systemSwapMemo = 'system swap contract';
+
     for (final TransactionDetails? tx in batch) {
       if (tx == null) continue;
+
+      // Check if transaction has system swap memo
+      final String? memo = TransactionDetailsParser.extractMemo(tx);
+      if (memo != null && memo == systemSwapMemo) {
+        // Skip system swap transactions
+        continue;
+      }
 
       final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
         tx.blockTime! * 1000,
@@ -342,7 +371,7 @@ class WalletViewModel extends ChangeNotifier {
     }
 
     if (tokenAccount != null) {
-      _walletRepository.storeTransactions(
+      await _walletRepository.storeTransactions(
         storedTransactions,
         walletAddress: tokenAccount!.pubkey,
       );
@@ -425,12 +454,8 @@ class WalletViewModel extends ChangeNotifier {
       if (_disposed) return; // Check again after async operation
 
       if (result.hasLegacyAccount && result.migrationSignature != null) {
-        // Mark as system transaction
-        await _transactionStorageService.addSystemTransactionSignature(result.migrationSignature!);
-
-        if (_disposed) return; // Check again after async operation
-
-        // Reload transactions to update UI (system transactions will be filtered automatically)
+        // Drain transaction includes memo "system swap contract" - will be filtered automatically
+        // Reload transactions to update UI (system swap transactions will be filtered by memo check)
         await loadTransactions();
       }
     } catch (e) {

@@ -1,7 +1,62 @@
+import 'dart:convert';
 import 'dart:developer';
+
+import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 
 class TransactionDetailsParser {
+  /// Extract memo from transaction if present
+  static String? extractMemo(TransactionDetails transaction) {
+    try {
+      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
+      final List<dynamic> instructions = (message['instructions'] as List<dynamic>?) ?? <dynamic>[];
+      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
+
+      // Memo program ID
+      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+
+      for (final dynamic instruction in instructions) {
+        if (instruction is Map<String, dynamic>) {
+          final int? programIdIndex = instruction['programIdIndex'] as int?;
+          if (programIdIndex != null && programIdIndex < accountKeys.length) {
+            final String programId = accountKeys[programIdIndex].toString();
+            if (programId == memoProgramId) {
+              // Extract memo data
+              final dynamic data = instruction['data'];
+              if (data != null) {
+                try {
+                  String memoData;
+                  if (data is String) {
+                    // Try to decode base58 if it's a string
+                    try {
+                      final List<int> decoded = base58decode(data);
+                      memoData = utf8.decode(decoded);
+                    } catch (e) {
+                      // If base58 decode fails, use as-is
+                      memoData = data;
+                    }
+                  } else if (data is List) {
+                    // If data is already a list of bytes, decode directly
+                    memoData = utf8.decode(data.cast<int>());
+                  } else {
+                    memoData = data.toString();
+                  }
+                  return memoData;
+                } catch (e) {
+                  // If decoding fails, return null
+                  return null;
+                }
+              }
+            }
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static TransactionTransferInfo? parseTransferDetails(
     TransactionDetails transaction,
     String accountOwner,

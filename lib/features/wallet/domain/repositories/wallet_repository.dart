@@ -14,14 +14,14 @@ abstract class WalletRepository {
   Future<Map<String, List<TransactionDetails?>>> getNewerTransactions({
     required String walletAddress,
     String? lastKnownSignature,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
   });
 
   /// Get older transactions for a wallet account
   Future<Map<String, List<TransactionDetails?>>> getOlderTransactions({
     required String walletAddress,
     required String oldestSignature,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
   });
 
   /// Store transactions in local storage

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
-import 'package:solana/dto.dart';
+import 'package:solana/dto.dart' hide Instruction;
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
@@ -281,7 +281,7 @@ class WalletSolanaService {
     int limit = 100,
     String? until,
     String? before,
-    Function(List<TransactionDetails?>)? onBatchLoaded,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
     try {
@@ -325,14 +325,14 @@ class WalletSolanaService {
 
         await _fetchTransactionsWithCircuitBreaker(
           signatures.map((TransactionSignatureInformation sig) => sig.signature).toList(),
-          onBatchLoaded: (List<TransactionDetails?> batch) {
+          onBatchLoaded: (List<TransactionDetails?> batch) async {
             if (isCancelled != null && isCancelled()) {
               return;
             }
 
             transactionStreamController.add(batch);
             if (onBatchLoaded != null) {
-              onBatchLoaded(batch);
+              await onBatchLoaded(batch);
             }
           },
           isCancelled: isCancelled,
@@ -437,7 +437,7 @@ class WalletSolanaService {
 
   Future<void> _fetchTransactionsWithCircuitBreaker(
     List<String> signatures, {
-    required Function(List<TransactionDetails?>) onBatchLoaded,
+    required Future<void> Function(List<TransactionDetails?>) onBatchLoaded,
     bool Function()? isCancelled,
   }) async {
     try {
@@ -500,7 +500,7 @@ class WalletSolanaService {
             return;
           }
 
-          onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
+          await onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
           currentBatch.clear();
         }
       }
@@ -650,6 +650,7 @@ class WalletSolanaService {
       );
 
       final int amount = int.parse(balance.value.amount);
+      final double amountUi = amount / zarpDecimalFactor;
       if (amount == 0) return '';
 
       // Get destination token account
@@ -663,8 +664,18 @@ class WalletSolanaService {
         throw WalletSolanaServiceException('Migration wallet token account not found');
       }
 
+      // Debug: Log transaction details
+      debugPrint('[DrainLegacyAccount] Preparing drain transaction:');
+      debugPrint('  Source (legacy account): ${legacyTokenAccount.pubkey}');
+      debugPrint('  Destination (migration wallet): ${destTokenAccount.pubkey}');
+      debugPrint('  Amount (raw): $amount');
+      debugPrint('  Amount (UI): $amountUi ZARP');
+      debugPrint('  Owner (wallet): ${wallet.address}');
+      debugPrint('  Legacy Mint: $legacyZarpMint');
+      debugPrint('  Migration Wallet: $migrationWallet');
+
       // Create transfer instruction
-      final TokenInstruction instruction = TokenInstruction.transfer(
+      final TokenInstruction transferInstruction = TokenInstruction.transfer(
         source: Ed25519HDPublicKey.fromBase58(legacyTokenAccount.pubkey),
         destination: Ed25519HDPublicKey.fromBase58(destTokenAccount.pubkey),
         owner: wallet.publicKey,
@@ -672,10 +683,32 @@ class WalletSolanaService {
         tokenProgram: TokenProgramType.token2022Program,
       );
 
-      // Build message
+      // Create memo instruction for system swap contract
+      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+      const String systemSwapMemo = 'system swap contract';
+
+      final Instruction memoInstruction = Instruction(
+        programId: Ed25519HDPublicKey.fromBase58(memoProgramId),
+        accounts: <AccountMeta>[
+          AccountMeta(
+            pubKey: wallet.publicKey,
+            isSigner: true,
+            isWriteable: false,
+          ),
+        ],
+        data: ByteArray(utf8.encode(systemSwapMemo)),
+      );
+
+      // Debug: Log memo being sent
+      debugPrint('  Memo instruction: "$systemSwapMemo"');
+      debugPrint('  Memo data (bytes): ${utf8.encode(systemSwapMemo)}');
+      debugPrint('  Memo program ID: $memoProgramId');
+
+      // Build message with both transfer and memo instructions
       final Message message = Message(
-        instructions: <TokenInstruction>[
-          instruction,
+        instructions: <Instruction>[
+          transferInstruction,
+          memoInstruction,
         ],
       );
 
@@ -693,15 +726,22 @@ class WalletSolanaService {
         <Ed25519HDKeyPair>[wallet],
       );
 
+      // Debug: Log transaction before sending
+      debugPrint('[DrainLegacyAccount] Sending transaction to network...');
+      debugPrint('  Transaction size: ${signedTx.encode().length} bytes');
+      debugPrint('  Instructions count: ${message.instructions.length}');
+
       // Send transaction
       final String signature = await _client.rpcClient.sendTransaction(
         signedTx.encode(),
         preflightCommitment: Commitment.confirmed,
       );
 
-      // Immediately mark this signature as a system transaction so it's filtered out
-      await _transactionStorageService.addSystemTransactionSignature(signature);
+      // Debug: Log transaction signature
+      debugPrint('[DrainLegacyAccount] Transaction sent successfully!');
+      debugPrint('  Signature: $signature');
 
+      // Transaction includes memo "system swap contract" - will be filtered by memo check
       return signature;
     } catch (e) {
       if (_isInsufficientFundsError(e)) {
