@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter/foundation.dart';
@@ -214,11 +215,27 @@ class WalletSolanaService {
         );
       }
 
-      final int tokenAmount = (zarpAmount * zarpDecimalFactor).round();
-
-      if (recipientTokenAccount == null || senderTokenAccount == null) {
+      if (senderTokenAccount == null || recipientTokenAccount == null) {
         throw WalletSolanaServiceException(
           'RecipientTokenAccount or SenderTokenAccount is null',
+        );
+      }
+
+      // Derive the correct decimal factor from the mint's configured decimals
+      final TokenAmountResult senderTokenBalance = await _client.rpcClient.getTokenAccountBalance(
+        senderTokenAccount.pubkey,
+        commitment: Commitment.confirmed,
+      );
+      final int decimals = senderTokenBalance.value.decimals;
+      final double factor = math.pow(10, decimals).toDouble();
+      final int tokenAmount = (zarpAmount * factor).round();
+
+      // Optional safety check: ensure the sender has enough raw tokens
+      final int currentRaw = int.parse(senderTokenBalance.value.amount);
+      if (currentRaw < tokenAmount) {
+        final double currentUi = currentRaw / factor;
+        throw WalletSolanaServiceException(
+          'Insufficient ZARP balance. You have ${currentUi.toStringAsFixed(6)} ZARP but need ${zarpAmount.toStringAsFixed(2)} ZARP.',
         );
       }
 
@@ -274,6 +291,14 @@ class WalletSolanaService {
       // ATA not created on-chain yet (e.g. mainnet new wallet) — treat as 0.
       return 0.0;
     }
+  }
+
+  /// Get raw token account balance result (for precise balance checks)
+  Future<TokenAmountResult> getTokenAccountBalanceRaw(String publicKey) async {
+    return await _client.rpcClient.getTokenAccountBalance(
+      publicKey,
+      commitment: Commitment.confirmed,
+    );
   }
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
@@ -650,7 +675,6 @@ class WalletSolanaService {
       );
 
       final int amount = int.parse(balance.value.amount);
-      final double amountUi = amount / zarpDecimalFactor;
       if (amount == 0) return '';
 
       // Get destination token account
@@ -663,16 +687,6 @@ class WalletSolanaService {
       if (destTokenAccount == null) {
         throw WalletSolanaServiceException('Migration wallet token account not found');
       }
-
-      // Debug: Log transaction details
-      debugPrint('[DrainLegacyAccount] Preparing drain transaction:');
-      debugPrint('  Source (legacy account): ${legacyTokenAccount.pubkey}');
-      debugPrint('  Destination (migration wallet): ${destTokenAccount.pubkey}');
-      debugPrint('  Amount (raw): $amount');
-      debugPrint('  Amount (UI): $amountUi ZARP');
-      debugPrint('  Owner (wallet): ${wallet.address}');
-      debugPrint('  Legacy Mint: $legacyZarpMint');
-      debugPrint('  Migration Wallet: $migrationWallet');
 
       // Create transfer instruction
       final TokenInstruction transferInstruction = TokenInstruction.transfer(
@@ -699,11 +713,6 @@ class WalletSolanaService {
         data: ByteArray(utf8.encode(systemSwapMemo)),
       );
 
-      // Debug: Log memo being sent
-      debugPrint('  Memo instruction: "$systemSwapMemo"');
-      debugPrint('  Memo data (bytes): ${utf8.encode(systemSwapMemo)}');
-      debugPrint('  Memo program ID: $memoProgramId');
-
       // Build message with both transfer and memo instructions
       final Message message = Message(
         instructions: <Instruction>[
@@ -726,20 +735,11 @@ class WalletSolanaService {
         <Ed25519HDKeyPair>[wallet],
       );
 
-      // Debug: Log transaction before sending
-      debugPrint('[DrainLegacyAccount] Sending transaction to network...');
-      debugPrint('  Transaction size: ${signedTx.encode().length} bytes');
-      debugPrint('  Instructions count: ${message.instructions.length}');
-
       // Send transaction
       final String signature = await _client.rpcClient.sendTransaction(
         signedTx.encode(),
         preflightCommitment: Commitment.confirmed,
       );
-
-      // Debug: Log transaction signature
-      debugPrint('[DrainLegacyAccount] Transaction sent successfully!');
-      debugPrint('  Signature: $signature');
 
       // Transaction includes memo "system swap contract" - will be filtered by memo check
       return signature;

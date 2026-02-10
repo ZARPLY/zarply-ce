@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import 'package:solana/solana.dart';
 import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/services/transaction_storage_service.dart';
+import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../data/repositories/payment_review_content_repository_impl.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
 
@@ -41,12 +43,59 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
       final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
       final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
 
+      // Ensure recipient address is set in provider
+      if (paymentProvider.recipientAddress != recipientAddress) {
+        debugPrint('[PaymentReview] Recipient address mismatch. Setting in provider...');
+        await paymentProvider.setRecipientAddress(recipientAddress);
+      }
+
       // Get recipient token account from provider
-      final ProgramAccount? recipientTokenAccount = paymentProvider.recipientTokenAccount;
+      ProgramAccount? recipientTokenAccount = paymentProvider.recipientTokenAccount;
 
       if (recipientTokenAccount == null) {
+        // Wait for token account to load if it's currently loading
+        if (paymentProvider.isLoadingTokenAccount) {
+          // Wait up to 10 seconds for token account to load
+          int waitCount = 0;
+          while (paymentProvider.isLoadingTokenAccount && waitCount < 20) {
+            await Future<void>.delayed(const Duration(milliseconds: 500));
+            waitCount++;
+          }
+          recipientTokenAccount = paymentProvider.recipientTokenAccount;
+        }
+
+        // Try to fetch the token account if it's still not set
+        if (recipientTokenAccount == null) {
+          await paymentProvider.setRecipientAddress(recipientAddress);
+          recipientTokenAccount = paymentProvider.recipientTokenAccount;
+        }
+
+        if (recipientTokenAccount == null) {
+          throw Exception(
+            'Recipient does not have a token account for this token. ${paymentProvider.tokenAccountError ?? "Please ensure the recipient has a token account."}',
+          );
+        }
+      }
+
+      final double zarpAmount = double.parse(amount) / 100;
+      // Check actual balance from blockchain before sending
+      // At this point, both sender and recipient token accounts are guaranteed non-null
+
+      // Check raw token balance directly to avoid rounding issues with UI amount
+      final WalletSolanaService service = await WalletSolanaService.create();
+      final TokenAmountResult tokenBalanceResult = await service.getTokenAccountBalanceRaw(
+        walletProvider.userTokenAccount!.pubkey,
+      );
+
+      final BigInt rawTokenBalance = BigInt.parse(tokenBalanceResult.value.amount);
+      final int decimals = tokenBalanceResult.value.decimals;
+      final double factor = math.pow(10, decimals).toDouble();
+      final int requiredRawTokens = (zarpAmount * factor).round();
+      final double actualBalance = rawTokenBalance.toDouble() / factor;
+
+      if (rawTokenBalance < BigInt.from(requiredRawTokens)) {
         throw Exception(
-          'Recipient does not have a token account for this token',
+          'Insufficient ZARP balance. You have ${actualBalance.toStringAsFixed(2)} ZARP but need ${zarpAmount.toStringAsFixed(2)} ZARP.',
         );
       }
 
@@ -54,7 +103,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         wallet: wallet,
         senderTokenAccount: walletProvider.userTokenAccount,
         recipientTokenAccount: recipientTokenAccount,
-        amount: double.parse(amount) / 100,
+        amount: zarpAmount,
       );
 
       final TransactionDetails? txDetails = await _repository.getTransactionDetails(txSignature);
@@ -78,12 +127,11 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
       );
       final double newBalance = currentBalance - (double.parse(amount) / 100);
       await _repository.updateZarpBalance(newBalance);
-
-      unawaited(walletProvider.onPaymentCompleted());
+      await walletProvider.onPaymentCompleted();
 
       _hasPaymentBeenMade = true;
       notifyListeners();
-    } catch (e) {
+    } catch (e, _) {
       _hasPaymentBeenMade = false;
       notifyListeners();
       rethrow; // Re-throw the error to be handled by the UI
