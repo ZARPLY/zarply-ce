@@ -141,7 +141,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
               style: TextStyle(color: Colors.black),
             ),
             content: const Text(
-              'Your SOL account requires at least 0.003 SOL (plus a small buffer) for rent exemption and transaction fees. '
+              'Your SOL account requires at least 0.003 SOL for rent exemption and transaction fees. '
               'Please transfer SOL to your wallet address to continue.',
               style: TextStyle(color: Colors.black),
             ),
