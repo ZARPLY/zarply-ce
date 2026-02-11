@@ -341,7 +341,7 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
                   ],
                   if (_insufficientSol) ...<Widget>[
                     Text(
-                      'Insufficient SOL for fees (need ≥ 0.001 SOL, '
+                      'Insufficient SOL for fees (need ≥ 0.003 SOL, '
                       'have ${_walletSolBalance.toStringAsPrecision(3)}).',
                       style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,

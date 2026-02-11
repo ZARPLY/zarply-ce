@@ -121,8 +121,9 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   Future<void> _checkAndShowFundingDialog() async {
     // Check if wallet needs funding on mainnet
     if (_isMainnet && _viewModel.wallet != null && mounted) {
-      // Check if SOL balance is insufficient (less than 0.001 SOL needed for transactions)
-      if (_viewModel.solBalance < 0.001) {
+      // Check if SOL balance is insufficient (less than ~0.003 SOL needed for transactions)
+      const double minSolForFees = 0.003;
+      if (_viewModel.solBalance < minSolForFees) {
         final DateTime now = DateTime.now();
         if (_lastDialogShownTime != null && now.difference(_lastDialogShownTime!).inSeconds < 30) {
           return;
@@ -140,7 +141,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
               style: TextStyle(color: Colors.black),
             ),
             content: const Text(
-              'Your SOL account requires funding before transactions can be processed. Please transfer SOL to your wallet address to continue.',
+              'Your SOL account requires at least 0.003 SOL (plus a small buffer) for rent exemption and transaction fees. '
+              'Please transfer SOL to your wallet address to continue.',
               style: TextStyle(color: Colors.black),
             ),
             actions: <Widget>[
