@@ -22,6 +22,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   late WalletViewModel _viewModel;
   final WalletStorageService _walletStorageService = WalletStorageService();
   DateTime? _lastDialogShownTime;
+  static bool _didInitialSystemRefresh = false;
 
   @override
   void initState() {
@@ -36,6 +37,17 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
     // Load fresh data on initialization
     _initializeData();
+
+    // Fire a one-time, background "system refresh" after the first frame.
+    // This uses the normal refresh path but does NOT show the pull-to-refresh
+    // indicator, so it is invisible to the user.
+    if (!_didInitialSystemRefresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _didInitialSystemRefresh = true;
+        _viewModel.refreshTransactions();
+      });
+    }
   }
 
   bool get _isMainnet {

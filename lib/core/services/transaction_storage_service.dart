@@ -2,16 +2,12 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:solana/dto.dart';
 
-import 'transaction_parser_service.dart';
-
 class TransactionStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String _transactionsKey = 'wallet_transactions';
   final String _lastTransactionKey = 'last_transaction_signature';
   final String _transactionCountKey = 'transaction_count';
   static const String _cachedWalletAddressKey = 'cached_wallet_address';
-  static const String _systemTransactionsKey = 'system_transaction_signatures';
-  static const String _drainTransactionsKey = 'drain_transactions';
 
   /// Store the wallet address that transactions belong to
   Future<void> storeCachedWalletAddress(String walletAddress) async {
@@ -159,126 +155,6 @@ class TransactionStorageService {
       await _secureStorage.delete(key: _cachedWalletAddressKey);
     } catch (e) {
       throw Exception('Failed to clear transaction cache: $e');
-    }
-  }
-
-  /// Add a system transaction signature (e.g., drain transactions) to filter list
-  Future<void> addSystemTransactionSignature(String signature) async {
-    try {
-      final Set<String> systemTxs = await getSystemTransactionSignatures();
-      systemTxs.add(signature);
-      final String encodedData = jsonEncode(systemTxs.toList());
-      await _secureStorage.write(
-        key: _systemTransactionsKey,
-        value: encodedData,
-      );
-    } catch (e) {
-      throw Exception('Failed to add system transaction signature: $e');
-    }
-  }
-
-  /// Get all system transaction signatures that should be filtered out
-  Future<Set<String>> getSystemTransactionSignatures() async {
-    try {
-      final String? encodedData = await _secureStorage.read(key: _systemTransactionsKey);
-      if (encodedData == null) return <String>{};
-      final List<dynamic> decodedData = jsonDecode(encodedData);
-      return decodedData.map((dynamic sig) => sig as String).toSet();
-    } catch (e) {
-      return <String>{};
-    }
-  }
-
-  /// Store drain transaction info for matching with receive transactions
-  Future<void> storeDrainTransaction({
-    required String signature,
-    required double amount,
-    required int timestamp,
-  }) async {
-    try {
-      final List<Map<String, dynamic>> drainTxs = await getDrainTransactions();
-      drainTxs.add(<String, dynamic>{
-        'signature': signature,
-        'amount': amount,
-        'timestamp': timestamp,
-      });
-      final String encodedData = jsonEncode(drainTxs);
-      await _secureStorage.write(
-        key: _drainTransactionsKey,
-        value: encodedData,
-      );
-    } catch (e) {
-      throw Exception('Failed to store drain transaction: $e');
-    }
-  }
-
-  /// Get all stored drain transactions
-  Future<List<Map<String, dynamic>>> getDrainTransactions() async {
-    try {
-      final String? encodedData = await _secureStorage.read(key: _drainTransactionsKey);
-      if (encodedData == null) return <Map<String, dynamic>>[];
-      final List<dynamic> decodedData = jsonDecode(encodedData);
-      return decodedData.map((dynamic tx) => tx as Map<String, dynamic>).toList();
-    } catch (e) {
-      return <Map<String, dynamic>>[];
-    }
-  }
-
-  /// Find matching receive transaction for a drain transaction
-  /// Returns the signature of the matching receive transaction if found
-  Future<String?> findMatchingReceiveTransaction({
-    required double drainAmount,
-    required int drainTimestamp,
-    required List<TransactionDetails> transactions,
-    required String tokenAccountAddress,
-  }) async {
-    try {
-      // Look for transactions within 5 minutes of the drain
-      const int timeWindowSeconds = 5 * 60; // 5 minutes
-      final int timeWindowStart = drainTimestamp - timeWindowSeconds;
-      final int timeWindowEnd = drainTimestamp + timeWindowSeconds;
-
-      // Tolerance for amount matching (0.01 ZARP)
-      const double amountTolerance = 0.01;
-
-      for (final TransactionDetails tx in transactions) {
-        if (tx.blockTime == null) continue;
-
-        final int txTimestamp = tx.blockTime!;
-        if (txTimestamp < timeWindowStart || txTimestamp > timeWindowEnd) continue;
-
-        // Parse transaction to get amount
-        final TransactionTransferInfo? transferInfo = TransactionDetailsParser.parseTransferDetails(
-          tx,
-          tokenAccountAddress,
-        );
-
-        if (transferInfo == null) continue;
-
-        // Check if this is a receive transaction (positive amount)
-        if (transferInfo.amount <= 0) continue;
-
-        // Check if amount matches (within tolerance)
-        final double amountDiff = (transferInfo.amount - drainAmount).abs();
-        if (amountDiff <= amountTolerance) {
-          // Extract signature from transaction
-          try {
-            final dynamic txJson = tx.transaction.toJson();
-            if (txJson is Map<String, dynamic> && txJson['signatures'] != null) {
-              final List<dynamic> sigs = txJson['signatures'] as List<dynamic>;
-              if (sigs.isNotEmpty) {
-                return sigs[0].toString();
-              }
-            }
-          } catch (e) {
-            // Ignore signature extraction errors
-          }
-        }
-      }
-
-      return null;
-    } catch (e) {
-      return null;
     }
   }
 }
