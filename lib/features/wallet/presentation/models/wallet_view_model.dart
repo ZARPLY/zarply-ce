@@ -48,6 +48,7 @@ class WalletViewModel extends ChangeNotifier {
 
   String? _migrationLegacyAta;
   String? _migrationWalletAddress;
+  ProgramAccount? _userLegacyAta;
 
   Future<void> _ensureMigrationLegacyAta() async {
     if (_migrationLegacyAta != null && _migrationWalletAddress != null) return;
@@ -68,6 +69,19 @@ class WalletViewModel extends ChangeNotifier {
       }
     } catch (_) {
       // If we can't resolve the migration ATA, just skip filtering; app should still work.
+    }
+  }
+
+  Future<void> _ensureUserLegacyAta() async {
+    if (_userLegacyAta != null || wallet == null) return;
+
+    try {
+      final ProgramAccount? legacyAccount = await _walletRepository.getLegacyAssociatedTokenAccount(wallet!.address);
+      if (legacyAccount != null) {
+        _userLegacyAta = legacyAccount;
+      }
+    } catch (_) {
+      // If we can't resolve the user's legacy ATA, we just won't show legacy-only history.
     }
   }
 
@@ -131,6 +145,9 @@ class WalletViewModel extends ChangeNotifier {
 
     final Map<String, List<TransactionDetails?>> storedTransactions = await loadStoredTransactions();
 
+    // Make sure we know about the user's legacy ATA (if any) so we can pull in legacy history.
+    await _ensureUserLegacyAta();
+
     if (storedTransactions.isNotEmpty) {
       transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
 
@@ -178,6 +195,33 @@ class WalletViewModel extends ChangeNotifier {
         );
       } catch (e) {
         throw Exception('Error loading transactions: $e');
+      }
+
+      // Also fetch legacy-account transactions (old ZARP ATA) and merge them into the same history,
+      // while still applying the same migration/faucet filters inside _processNewTransactionBatch.
+      if (_userLegacyAta != null) {
+        try {
+          await _walletRepository.getNewerTransactions(
+            walletAddress: _userLegacyAta!.pubkey,
+            lastKnownSignature: null,
+            onBatchLoaded: (List<TransactionDetails?> batch) async {
+              if (_walletRepository.isCancelled) {
+                return;
+              }
+
+              await _processNewTransactionBatch(batch, storedTransactions);
+              loadedTransactions += batch.where((TransactionDetails? tx) => tx != null).length;
+
+              transactions = Map<String, List<TransactionDetails?>>.from(storedTransactions);
+
+              _updateOldestSignature(storedTransactions);
+              isLoadingTransactions = false;
+              notifyListeners();
+            },
+          );
+        } catch (_) {
+          // If legacy fetch fails, we still have new-account history; don't break the app.
+        }
       }
     }
   }
