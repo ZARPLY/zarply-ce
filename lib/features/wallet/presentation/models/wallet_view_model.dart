@@ -9,6 +9,8 @@ import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/transaction_parser_service.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 
+/// View model for the wallet screen: balances, merged transaction history (new + legacy ZARP),
+/// month-by-month visibility, and legacy migration monitoring.
 class WalletViewModel extends ChangeNotifier {
   WalletViewModel() {
     _balanceCacheService = BalanceCacheService(
@@ -37,6 +39,8 @@ class WalletViewModel extends ChangeNotifier {
 
   bool hasMoreTransactionsToLoad = false;
   String? oldestLoadedSignature;
+
+  /// Oldest month (YYYY-MM) currently shown in the list; newer months are hidden until "Load more".
   String? _visibleOldestMonth;
 
   GlobalKey<RefreshIndicatorState>? refreshIndicatorKey;
@@ -50,6 +54,8 @@ class WalletViewModel extends ChangeNotifier {
   String? _migrationWalletAddress;
   ProgramAccount? _userLegacyAta;
 
+  /// Resolves the migration/faucet wallet address and its legacy ATA from env.
+  /// Used to filter out system transactions (faucet credits, migration drains) from the list.
   Future<void> _ensureMigrationLegacyAta() async {
     if (_migrationLegacyAta != null && _migrationWalletAddress != null) return;
 
@@ -68,10 +74,11 @@ class WalletViewModel extends ChangeNotifier {
         _migrationLegacyAta = migrationAccount.pubkey;
       }
     } catch (_) {
-      // If we can't resolve the migration ATA, just skip filtering; app should still work.
+      // Skip filtering if resolution fails; list still works.
     }
   }
 
+  /// Resolves the current user's legacy ZARP ATA so we can fetch and merge legacy history.
   Future<void> _ensureUserLegacyAta() async {
     if (_userLegacyAta != null || wallet == null) return;
 
@@ -81,10 +88,11 @@ class WalletViewModel extends ChangeNotifier {
         _userLegacyAta = legacyAccount;
       }
     } catch (_) {
-      // If we can't resolve the user's legacy ATA, we just won't show legacy-only history.
+      // No legacy ATA; we only show new-account history.
     }
   }
 
+  /// Returns the first signature of [tx], or null if missing/malformed. Used for deduplication.
   String? _getTxSignature(TransactionDetails? tx) {
     if (tx == null) return null;
     try {
@@ -93,40 +101,34 @@ class WalletViewModel extends ChangeNotifier {
         return sigs[0] as String?;
       }
     } catch (_) {
-      // Ignore malformed transactions; they just won't participate in de-duplication.
+      // Malformed tx: skip dedup so it can still be shown.
     }
     return null;
   }
 
+  /// True if [tx] should be hidden: involves migration/faucet wallet or migration legacy ATA.
   bool _shouldHideSystemTransaction(TransactionDetails tx) {
-    // Hide any tx that involves the migration/faucet wallet (new ZARP credits, etc.)
     if (_migrationWalletAddress != null &&
         TransactionDetailsParser.isWalletInTransaction(tx, _migrationWalletAddress!)) {
       return true;
     }
-
-    // Hide system migration drain transactions.
     if (_migrationLegacyAta != null &&
         TransactionDetailsParser.isMigrationLegacyTransaction(tx, _migrationLegacyAta!)) {
       return true;
     }
-
     return false;
   }
 
+  /// If [tx] has a signature not in [signatures], adds it and returns true. Otherwise false. Used for dedup.
   bool _trackIfNewSignature(TransactionDetails? tx, Set<String> signatures) {
     final String? sig = _getTxSignature(tx);
-    if (sig == null) {
-      // If we cannot read a signature, treat it as unique so it can still be shown.
-      return true;
-    }
-    if (signatures.contains(sig)) {
-      return false;
-    }
+    if (sig == null) return true;
+    if (signatures.contains(sig)) return false;
     signatures.add(sig);
     return true;
   }
 
+  /// Loads ZARP and SOL balances from cache only; falls back to refresh on failure.
   Future<void> loadCachedBalances() async {
     if (tokenAccount == null || wallet == null) return;
 
@@ -143,6 +145,7 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
+  /// Refreshes ZARP and SOL balances from the network.
   Future<void> refreshBalances() async {
     if (tokenAccount == null || wallet == null) return;
 
@@ -154,6 +157,7 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
 
+  /// Forces a full network refresh of ZARP and SOL balances.
   Future<void> forceRefreshBalances() async {
     if (tokenAccount == null || wallet == null) return;
 
@@ -166,6 +170,7 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
 
+  /// Runs [loader] and updates [walletAmount], [solBalance], then notifies listeners.
   Future<void> _loadBalances(
     Future<({double solBalance, double zarpBalance})> Function() loader,
   ) async {
@@ -175,6 +180,7 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads transactions from local storage, then optionally fetches newer and legacy history from the network.
   Future<void> loadTransactions() async {
     if (tokenAccount == null) {
       throw Exception('TokenAccount is null, cannot load transactions');
@@ -182,7 +188,6 @@ class WalletViewModel extends ChangeNotifier {
 
     final Map<String, List<TransactionDetails?>> storedTransactions = await loadStoredTransactions();
 
-    // Make sure we know about the user's legacy ATA (if any) so we can pull in legacy history.
     await _ensureUserLegacyAta();
 
     if (storedTransactions.isNotEmpty) {
@@ -194,11 +199,7 @@ class WalletViewModel extends ChangeNotifier {
       isLoadingTransactions = false;
       notifyListeners();
 
-      // If we already have transactions loaded (from the limited fetch during access),
-      // we don't need to fetch them again immediately
-      if (!isRefreshing && transactions.isNotEmpty) {
-        return;
-      }
+      if (!isRefreshing && transactions.isNotEmpty) return;
     }
 
     _walletRepository.resetCancellation();
@@ -234,8 +235,6 @@ class WalletViewModel extends ChangeNotifier {
         throw Exception('Error loading transactions: $e');
       }
 
-      // Also fetch legacy-account transactions (old ZARP ATA) and merge them into the same history,
-      // while still applying the same migration/faucet filters inside _processNewTransactionBatch.
       if (_userLegacyAta != null) {
         try {
           await _walletRepository.getNewerTransactions(
@@ -256,14 +255,12 @@ class WalletViewModel extends ChangeNotifier {
               notifyListeners();
             },
           );
-        } catch (_) {
-          // If legacy fetch fails, we still have new-account history; don't break the app.
-        }
+        } catch (_) {}
       }
     }
   }
 
-  // Load transactions from the repository
+  /// Reads transactions from local storage, applies system filters and dedup, then returns the filtered map.
   Future<Map<String, List<TransactionDetails?>>> loadStoredTransactions() async {
     if (tokenAccount == null) {
       return <String, List<TransactionDetails?>>{};
@@ -277,7 +274,6 @@ class WalletViewModel extends ChangeNotifier {
 
     final Map<String, List<TransactionDetails?>> filteredTransactions = <String, List<TransactionDetails?>>{};
 
-    // Global signature set across all months to remove duplicates on first load/refresh.
     final Set<String> seenSignatures = <String>{};
 
     int originalCount = 0;
@@ -287,12 +283,7 @@ class WalletViewModel extends ChangeNotifier {
         originalCount++;
         if (tx == null) continue;
 
-        if (_shouldHideSystemTransaction(tx)) {
-          continue;
-        }
-
-        // Drop any duplicate transactions by signature (e.g. previously stored or
-        // fetched from both new and legacy ATAs).
+        if (_shouldHideSystemTransaction(tx)) continue;
         if (!_trackIfNewSignature(tx, seenSignatures)) {
           continue;
         }
@@ -305,7 +296,6 @@ class WalletViewModel extends ChangeNotifier {
       }
     }
 
-    // If we filtered anything out, write the cleaned set back to storage so they won't reappear.
     final int filteredCount = filteredTransactions.values.fold<int>(
       0,
       (int sum, List<TransactionDetails?> list) => sum + list.length,
@@ -323,10 +313,12 @@ class WalletViewModel extends ChangeNotifier {
     return filteredTransactions;
   }
 
+  /// Triggers the pull-to-refresh indicator and thus [refreshTransactions].
   Future<void> refreshTransactionsFromButton() async {
     unawaited(refreshIndicatorKey?.currentState?.show());
   }
 
+  /// Refreshes balances and transactions (used by RefreshIndicator and by the one-time background refresh).
   Future<void> refreshTransactions() async {
     if (isRefreshing) return;
 
@@ -344,6 +336,7 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
+  /// Parses sender/recipient/amount for [transaction], trying new ZARP ATA first then legacy ATA.
   TransactionTransferInfo? parseTransferDetails(
     TransactionDetails? transaction,
   ) {
@@ -351,7 +344,6 @@ class WalletViewModel extends ChangeNotifier {
 
     TransactionTransferInfo? info;
 
-    // 1) Try to interpret the transaction from the perspective of the new ZARP ATA.
     if (tokenAccount != null) {
       info = _walletRepository.parseTransferDetails(
         transaction,
@@ -359,7 +351,6 @@ class WalletViewModel extends ChangeNotifier {
       );
     }
 
-    // 2) If that fails and we have a legacy ATA, try from the perspective of the legacy ATA.
     if (info == null && _userLegacyAta != null) {
       info = _walletRepository.parseTransferDetails(
         transaction,
@@ -370,11 +361,10 @@ class WalletViewModel extends ChangeNotifier {
     return info;
   }
 
+  /// Builds the list for the transaction list UI: month headers and items, limited by [_visibleOldestMonth].
   List<dynamic> getSortedTransactionItems() {
     final List<dynamic> transactionItems = <dynamic>[];
 
-    // Initialize visible window to the current month (if present),
-    // otherwise the newest month we have loaded.
     if (_visibleOldestMonth == null && transactions.isNotEmpty) {
       final DateTime now = DateTime.now();
       final String currentMonthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
@@ -391,7 +381,6 @@ class WalletViewModel extends ChangeNotifier {
     final List<String> sortedMonths = transactions.keys.toList()..sort((String a, String b) => b.compareTo(a));
 
     for (final String monthKey in sortedMonths) {
-      // Only show months that are >= the current visibility threshold.
       if (_visibleOldestMonth != null && monthKey.compareTo(_visibleOldestMonth!) < 0) {
         continue;
       }
@@ -420,6 +409,7 @@ class WalletViewModel extends ChangeNotifier {
     return transactionItems;
   }
 
+  /// Fetches older transactions from the network, then reveals one more month in the list.
   Future<void> loadMoreTransactions() async {
     if (tokenAccount == null || isLoadingMore || !hasMoreTransactionsToLoad) {
       return;
@@ -469,14 +459,13 @@ class WalletViewModel extends ChangeNotifier {
         updateHasMoreTransactions();
       }
 
-      // After loading more data, expand the visible window by one
-      // additional calendar month if there are older months available.
       _expandVisibleMonthsByOne();
 
       notifyListeners();
     }
   }
 
+  /// Updates [loadedTransactions] and [hasMoreTransactionsToLoad] (including when older months are still hidden).
   void updateHasMoreTransactions() {
     int loadedCount = 0;
     for (final List<TransactionDetails?> txList in transactions.values) {
@@ -486,8 +475,6 @@ class WalletViewModel extends ChangeNotifier {
     loadedTransactions = loadedCount;
     hasMoreTransactionsToLoad = loadedTransactions < totalSignatures;
 
-    // Even if we've loaded all known transactions from the network, keep
-    // "Load more" enabled while there are still hidden older months in memory.
     if (!hasMoreTransactionsToLoad && _visibleOldestMonth != null && transactions.isNotEmpty) {
       final String globalOldest = _getGlobalOldestMonthKey();
       if (globalOldest.compareTo(_visibleOldestMonth!) < 0) {
@@ -498,20 +485,17 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Oldest month key (YYYY-MM) present in [transactions], or empty string if none.
   String _getGlobalOldestMonthKey() {
-    if (transactions.isEmpty) {
-      return '';
-    }
-    final List<String> keys = transactions.keys.toList()..sort(); // oldest first
+    if (transactions.isEmpty) return '';
+    final List<String> keys = transactions.keys.toList()..sort();
     return keys.first;
   }
 
+  /// Reveals one older month in the list; on first call sets [_visibleOldestMonth] to current/newest month.
   void _expandVisibleMonthsByOne() {
-    if (transactions.isEmpty) {
-      return;
-    }
+    if (transactions.isEmpty) return;
 
-    // If not initialized yet, start with the current/newest month.
     if (_visibleOldestMonth == null) {
       final DateTime now = DateTime.now();
       final String currentMonthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
@@ -526,19 +510,16 @@ class WalletViewModel extends ChangeNotifier {
       return;
     }
 
-    final List<String> sorted = transactions.keys.toList()..sort(); // oldest first
+    final List<String> sorted = transactions.keys.toList()..sort();
     final int currentIndex = sorted.indexOf(_visibleOldestMonth!);
-
-    // If we don't find it, or we're already at the oldest, show everything.
     if (currentIndex <= 0) {
       _visibleOldestMonth = sorted.first;
       return;
     }
-
-    // Step one month older in the loaded list.
     _visibleOldestMonth = sorted[currentIndex - 1];
   }
 
+  /// Fetches total transaction count from the network and updates [totalSignatures]; uses stored count on failure.
   Future<void> updateTransactionCount() async {
     if (tokenAccount == null) return;
 
@@ -557,6 +538,7 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
+  /// Filters and deduplicates [batch], merges into [storedTransactions] by month, then persists to storage.
   Future<void> _processNewTransactionBatch(
     List<TransactionDetails?> batch,
     Map<String, List<TransactionDetails?>> storedTransactions, {
@@ -564,8 +546,6 @@ class WalletViewModel extends ChangeNotifier {
   }) async {
     await _ensureMigrationLegacyAta();
 
-    // Collect existing signatures across all already-stored transactions so we can
-    // avoid inserting duplicates when new batches arrive (from new or legacy ATAs).
     final Set<String> existingSignatures = <String>{};
     for (final List<TransactionDetails?> monthList in storedTransactions.values) {
       for (final TransactionDetails? existingTx in monthList) {
@@ -576,12 +556,7 @@ class WalletViewModel extends ChangeNotifier {
     for (final TransactionDetails? tx in batch) {
       if (tx == null) continue;
 
-      if (_shouldHideSystemTransaction(tx)) {
-        continue;
-      }
-
-      // Skip duplicates by signature (can happen when fetching overlapping ranges
-      // or from both new and legacy ATAs).
+      if (_shouldHideSystemTransaction(tx)) continue;
       if (!_trackIfNewSignature(tx, existingSignatures)) {
         continue;
       }
@@ -610,13 +585,14 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  /// Update the oldest signature based on the current transactions
+  /// Recomputes [oldestLoadedSignature] from [transactions] (e.g. after external updates).
   void updateOldestSignature() {
     if (transactions.isNotEmpty) {
       _updateOldestSignature(transactions);
     }
   }
 
+  /// Sets [oldestLoadedSignature] to the signature of the chronologically oldest tx in [storedTransactions].
   void _updateOldestSignature(
     Map<String, List<TransactionDetails?>> storedTransactions,
   ) {
@@ -637,12 +613,12 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  /// Cancel ongoing operations to prevent memory leaks
+  /// Cancels in-flight transaction fetches.
   void cancelOperations() {
     _walletRepository.cancelTransactions();
   }
 
-  /// Start continuous monitoring of legacy account
+  /// Starts periodic checks of the legacy ZARP account (every 30s) and drains if needed.
   void startLegacyMonitoring() {
     if (_isMonitoringLegacy || wallet == null || _disposed) return;
 
@@ -662,14 +638,14 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
 
-  /// Stop monitoring legacy account
+  /// Stops the legacy-account monitoring timer.
   void stopLegacyMonitoring() {
     _legacyMonitorTimer?.cancel();
     _legacyMonitorTimer = null;
     _isMonitoringLegacy = false;
   }
 
-  /// Check legacy account balance and drain if needed
+  /// Checks legacy ZARP balance and runs migration drain if needed; reloads transactions when a drain occurs.
   Future<void> checkLegacyBalance() async {
     if (wallet == null || _disposed) return;
 
@@ -686,8 +662,6 @@ class WalletViewModel extends ChangeNotifier {
       if (_disposed) return; // Check again after async operation
 
       if (result.hasLegacyAccount && result.migrationSignature != null) {
-        // Drain transaction includes memo "system swap contract" - will be filtered automatically
-        // Reload transactions to update UI (system swap transactions will be filtered by memo check)
         await loadTransactions();
       }
     } catch (e) {
@@ -698,17 +672,13 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
-  /// Check legacy migration if needed (for existing wallets on app start)
+  /// One-time legacy check on app start, then starts [startLegacyMonitoring].
   Future<void> checkLegacyMigrationIfNeeded() async {
     if (wallet == null || _disposed) return;
 
     try {
-      // Initial check
       await checkLegacyBalance();
-
-      if (_disposed) return; // Check after async operation
-
-      // Start continuous monitoring
+      if (_disposed) return;
       startLegacyMonitoring();
     } catch (e) {
       if (!_disposed) {
