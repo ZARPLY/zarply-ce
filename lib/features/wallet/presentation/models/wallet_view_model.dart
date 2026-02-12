@@ -97,6 +97,7 @@ class WalletViewModel extends ChangeNotifier {
     }
     return null;
   }
+
   Future<void> loadCachedBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
