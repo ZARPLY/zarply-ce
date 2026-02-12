@@ -85,6 +85,18 @@ class WalletViewModel extends ChangeNotifier {
     }
   }
 
+  String? _getTxSignature(TransactionDetails? tx) {
+    if (tx == null) return null;
+    try {
+      final dynamic sigs = tx.transaction.toJson()['signatures'];
+      if (sigs is List && sigs.isNotEmpty) {
+        return sigs[0] as String?;
+      }
+    } catch (_) {
+      // Ignore malformed transactions; they just won't participate in de-duplication.
+    }
+    return null;
+  }
   Future<void> loadCachedBalances() async {
     if (tokenAccount != null && wallet != null) {
       try {
@@ -240,6 +252,9 @@ class WalletViewModel extends ChangeNotifier {
 
     final Map<String, List<TransactionDetails?>> filteredTransactions = <String, List<TransactionDetails?>>{};
 
+    // Global signature set across all months to remove duplicates on first load/refresh.
+    final Set<String> seenSignatures = <String>{};
+
     int originalCount = 0;
     for (final String monthKey in storedTransactions.keys) {
       final List<TransactionDetails?> filteredTxs = <TransactionDetails?>[];
@@ -253,10 +268,20 @@ class WalletViewModel extends ChangeNotifier {
           continue;
         }
 
+        // Hide system migration drain transactions.
         if (_migrationLegacyAta != null &&
             TransactionDetailsParser.isMigrationLegacyTransaction(tx, _migrationLegacyAta!)) {
-          // Skip system migration drain transactions
           continue;
+        }
+
+        // Drop any duplicate transactions by signature (e.g. previously stored or
+        // fetched from both new and legacy ATAs).
+        final String? sig = _getTxSignature(tx);
+        if (sig != null && seenSignatures.contains(sig)) {
+          continue;
+        }
+        if (sig != null) {
+          seenSignatures.add(sig);
         }
 
         filteredTxs.add(tx);
@@ -309,12 +334,27 @@ class WalletViewModel extends ChangeNotifier {
   TransactionTransferInfo? parseTransferDetails(
     TransactionDetails? transaction,
   ) {
-    if (transaction == null || tokenAccount == null) return null;
+    if (transaction == null) return null;
 
-    return _walletRepository.parseTransferDetails(
-      transaction,
-      tokenAccount!.pubkey,
-    );
+    TransactionTransferInfo? info;
+
+    // 1) Try to interpret the transaction from the perspective of the new ZARP ATA.
+    if (tokenAccount != null) {
+      info = _walletRepository.parseTransferDetails(
+        transaction,
+        tokenAccount!.pubkey,
+      );
+    }
+
+    // 2) If that fails and we have a legacy ATA, try from the perspective of the legacy ATA.
+    if (info == null && _userLegacyAta != null) {
+      info = _walletRepository.parseTransferDetails(
+        transaction,
+        _userLegacyAta!.pubkey,
+      );
+    }
+
+    return info;
   }
 
   List<dynamic> getSortedTransactionItems() {
@@ -435,6 +475,18 @@ class WalletViewModel extends ChangeNotifier {
   }) async {
     await _ensureMigrationLegacyAta();
 
+    // Collect existing signatures across all already-stored transactions so we can
+    // avoid inserting duplicates when new batches arrive (from new or legacy ATAs).
+    final Set<String> existingSignatures = <String>{};
+    for (final List<TransactionDetails?> monthList in storedTransactions.values) {
+      for (final TransactionDetails? existingTx in monthList) {
+        final String? sig = _getTxSignature(existingTx);
+        if (sig != null) {
+          existingSignatures.add(sig);
+        }
+      }
+    }
+
     for (final TransactionDetails? tx in batch) {
       if (tx == null) continue;
 
@@ -448,6 +500,16 @@ class WalletViewModel extends ChangeNotifier {
           TransactionDetailsParser.isMigrationLegacyTransaction(tx, _migrationLegacyAta!)) {
         // Skip system migration drain transactions
         continue;
+      }
+
+      // Skip duplicates by signature (can happen when fetching overlapping ranges
+      // or from both new and legacy ATAs).
+      final String? sig = _getTxSignature(tx);
+      if (sig != null && existingSignatures.contains(sig)) {
+        continue;
+      }
+      if (sig != null) {
+        existingSignatures.add(sig);
       }
 
       final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
