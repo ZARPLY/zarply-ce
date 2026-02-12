@@ -60,8 +60,9 @@ class WalletViewModel extends ChangeNotifier {
     try {
       _migrationWalletAddress = migrationWalletAddress;
 
-      final ProgramAccount? migrationAccount =
-          await _walletRepository.getLegacyAssociatedTokenAccount(migrationWalletAddress);
+      final ProgramAccount? migrationAccount = await _walletRepository.getLegacyAssociatedTokenAccount(
+        migrationWalletAddress,
+      );
       if (migrationAccount != null) {
         _migrationLegacyAta = migrationAccount.pubkey;
       }
