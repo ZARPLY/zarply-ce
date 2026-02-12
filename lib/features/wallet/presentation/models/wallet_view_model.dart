@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
@@ -43,6 +44,30 @@ class WalletViewModel extends ChangeNotifier {
   void toggleExpanded() {
     isExpanded = !isExpanded;
     notifyListeners();
+  }
+
+  String? _migrationLegacyAta;
+  String? _migrationWalletAddress;
+
+  Future<void> _ensureMigrationLegacyAta() async {
+    if (_migrationLegacyAta != null && _migrationWalletAddress != null) return;
+
+    final String? migrationWalletAddress = dotenv.env['ZARP_MIGRATION_WALLET_ADDRESS'];
+    if (migrationWalletAddress == null || migrationWalletAddress.isEmpty) {
+      return;
+    }
+
+    try {
+      _migrationWalletAddress = migrationWalletAddress;
+
+      final ProgramAccount? migrationAccount =
+          await _walletRepository.getLegacyAssociatedTokenAccount(migrationWalletAddress);
+      if (migrationAccount != null) {
+        _migrationLegacyAta = migrationAccount.pubkey;
+      }
+    } catch (_) {
+      // If we can't resolve the migration ATA, just skip filtering; app should still work.
+    }
   }
 
   Future<void> loadCachedBalances() async {
@@ -166,26 +191,47 @@ class WalletViewModel extends ChangeNotifier {
       walletAddress: tokenAccount!.pubkey,
     );
 
-    // Filter out system swap transactions by checking memo
-    const String systemSwapMemo = 'system swap contract';
+    await _ensureMigrationLegacyAta();
+
     final Map<String, List<TransactionDetails?>> filteredTransactions = <String, List<TransactionDetails?>>{};
 
+    int originalCount = 0;
     for (final String monthKey in storedTransactions.keys) {
-      final List<TransactionDetails?> filteredTxs = storedTransactions[monthKey]!.where((TransactionDetails? tx) {
-        if (tx == null) return false;
+      final List<TransactionDetails?> filteredTxs = <TransactionDetails?>[];
+      for (final TransactionDetails? tx in storedTransactions[monthKey]!) {
+        originalCount++;
+        if (tx == null) continue;
 
-        // Check if transaction has system swap memo
-        final String? memo = TransactionDetailsParser.extractMemo(tx);
-        if (memo != null && memo == systemSwapMemo) {
-          // Skip system swap transactions
-          return false;
+        // Hide any tx that involves the migration/faucet wallet (new ZARP credits, etc.)
+        if (_migrationWalletAddress != null &&
+            TransactionDetailsParser.isWalletInTransaction(tx, _migrationWalletAddress!)) {
+          continue;
         }
-        return true;
-      }).toList();
+
+        if (_migrationLegacyAta != null &&
+            TransactionDetailsParser.isMigrationLegacyTransaction(tx, _migrationLegacyAta!)) {
+          // Skip system migration drain transactions
+          continue;
+        }
+
+        filteredTxs.add(tx);
+      }
 
       if (filteredTxs.isNotEmpty) {
         filteredTransactions[monthKey] = filteredTxs;
       }
+    }
+
+    // If we filtered anything out, write the cleaned set back to storage so they won't reappear.
+    final int filteredCount = filteredTransactions.values.fold<int>(
+      0,
+      (int sum, List<TransactionDetails?> list) => sum + list.length,
+    );
+    if (filteredCount < originalCount) {
+      await _walletRepository.storeTransactions(
+        filteredTransactions,
+        walletAddress: tokenAccount!.pubkey,
+      );
     }
 
     transactions = Map<String, List<TransactionDetails?>>.from(filteredTransactions);
@@ -342,15 +388,20 @@ class WalletViewModel extends ChangeNotifier {
     Map<String, List<TransactionDetails?>> storedTransactions, {
     bool isOlderTransactions = false,
   }) async {
-    const String systemSwapMemo = 'system swap contract';
+    await _ensureMigrationLegacyAta();
 
     for (final TransactionDetails? tx in batch) {
       if (tx == null) continue;
 
-      // Check if transaction has system swap memo
-      final String? memo = TransactionDetailsParser.extractMemo(tx);
-      if (memo != null && memo == systemSwapMemo) {
-        // Skip system swap transactions
+      // Hide any tx that involves the migration/faucet wallet (new ZARP credits, etc.)
+      if (_migrationWalletAddress != null &&
+          TransactionDetailsParser.isWalletInTransaction(tx, _migrationWalletAddress!)) {
+        continue;
+      }
+
+      if (_migrationLegacyAta != null &&
+          TransactionDetailsParser.isMigrationLegacyTransaction(tx, _migrationLegacyAta!)) {
+        // Skip system migration drain transactions
         continue;
       }
 

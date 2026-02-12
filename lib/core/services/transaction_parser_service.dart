@@ -1,62 +1,8 @@
-import 'dart:convert';
 import 'dart:developer';
 
-import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 
 class TransactionDetailsParser {
-  /// Extract memo from transaction if present
-  static String? extractMemo(TransactionDetails transaction) {
-    try {
-      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
-      final List<dynamic> instructions = (message['instructions'] as List<dynamic>?) ?? <dynamic>[];
-      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
-
-      // Memo program ID
-      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
-
-      for (final dynamic instruction in instructions) {
-        if (instruction is Map<String, dynamic>) {
-          final int? programIdIndex = instruction['programIdIndex'] as int?;
-          if (programIdIndex != null && programIdIndex < accountKeys.length) {
-            final String programId = accountKeys[programIdIndex].toString();
-            if (programId == memoProgramId) {
-              // Extract memo data
-              final dynamic data = instruction['data'];
-              if (data != null) {
-                try {
-                  String memoData;
-                  if (data is String) {
-                    // Try to decode base58 if it's a string
-                    try {
-                      final List<int> decoded = base58decode(data);
-                      memoData = utf8.decode(decoded);
-                    } catch (e) {
-                      // If base58 decode fails, use as-is
-                      memoData = data;
-                    }
-                  } else if (data is List) {
-                    // If data is already a list of bytes, decode directly
-                    memoData = utf8.decode(data.cast<int>());
-                  } else {
-                    memoData = data.toString();
-                  }
-                  return memoData;
-                } catch (e) {
-                  // If decoding fails, return null
-                  return null;
-                }
-              }
-            }
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   static TransactionTransferInfo? parseTransferDetails(
     TransactionDetails transaction,
     String accountOwner,
@@ -132,6 +78,61 @@ class TransactionDetailsParser {
     } catch (e) {
       log('Error parsing transaction details: $e');
       return null;
+    }
+  }
+
+  /// Returns true if the transaction involves the migration legacy ATA
+  /// (used to hide system migration drain transactions without memos).
+  static bool isMigrationLegacyTransaction(
+    TransactionDetails transaction,
+    String migrationLegacyAta,
+  ) {
+    if (migrationLegacyAta.isEmpty) return false;
+    try {
+      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
+      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
+
+      final Set<int> tokenAccountIndices = <int>{};
+      for (final TokenBalance balance in transaction.meta!.preTokenBalances) {
+        tokenAccountIndices.add(balance.accountIndex);
+      }
+      for (final TokenBalance balance in transaction.meta!.postTokenBalances) {
+        tokenAccountIndices.add(balance.accountIndex);
+      }
+
+      for (final int index in tokenAccountIndices) {
+        if (index >= 0 && index < accountKeys.length) {
+          final String account = accountKeys[index].toString();
+          if (account == migrationLegacyAta) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Returns true if the given wallet address appears in the transaction's account keys.
+  /// Used to hide any transactions that involve the migration/faucet wallet (e.g. new ZARP credits).
+  static bool isWalletInTransaction(
+    TransactionDetails transaction,
+    String walletAddress,
+  ) {
+    if (walletAddress.isEmpty) return false;
+    try {
+      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
+      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
+
+      for (final dynamic key in accountKeys) {
+        if (key.toString() == walletAddress) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }

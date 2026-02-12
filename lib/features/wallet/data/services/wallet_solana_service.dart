@@ -697,28 +697,9 @@ class WalletSolanaService {
         tokenProgram: TokenProgramType.token2022Program,
       );
 
-      // Create memo instruction for system swap contract
-      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
-      const String systemSwapMemo = 'system swap contract';
-
-      final Instruction memoInstruction = Instruction(
-        programId: Ed25519HDPublicKey.fromBase58(memoProgramId),
-        accounts: <AccountMeta>[
-          AccountMeta(
-            pubKey: wallet.publicKey,
-            isSigner: true,
-            isWriteable: false,
-          ),
-        ],
-        data: ByteArray(utf8.encode(systemSwapMemo)),
-      );
-
-      // Build message with both transfer and memo instructions
+      // Build message with transfer instruction only
       final Message message = Message(
-        instructions: <Instruction>[
-          transferInstruction,
-          memoInstruction,
-        ],
+        instructions: <Instruction>[transferInstruction],
       );
 
       // Get blockhash
@@ -741,7 +722,6 @@ class WalletSolanaService {
         preflightCommitment: Commitment.confirmed,
       );
 
-      // Transaction includes memo "system swap contract" - will be filtered by memo check
       return signature;
     } catch (e) {
       if (_isInsufficientFundsError(e)) {
