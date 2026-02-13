@@ -88,9 +88,10 @@ class TransactionDetailsParser {
     String migrationLegacyAta,
   ) {
     if (migrationLegacyAta.isEmpty) return false;
+    final Transaction tx = transaction.transaction;
+    if (tx is! ParsedTransaction) return false;
     try {
-      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
-      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
+      final List<AccountKey> accountKeys = tx.message.accountKeys;
 
       final Set<int> tokenAccountIndices = <int>{};
       for (final TokenBalance balance in transaction.meta!.preTokenBalances) {
@@ -102,8 +103,7 @@ class TransactionDetailsParser {
 
       for (final int index in tokenAccountIndices) {
         if (index >= 0 && index < accountKeys.length) {
-          final String account = accountKeys[index].toString();
-          if (account == migrationLegacyAta) {
+          if (accountKeys[index].pubkey == migrationLegacyAta) {
             return true;
           }
         }
