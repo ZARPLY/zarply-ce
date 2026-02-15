@@ -174,7 +174,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<Map<String, List<TransactionDetails?>>> _fetchInitialMainAndLegacy({
     Future<void> Function(Map<String, List<TransactionDetails?>>)? onMainFetched,
   }) async {
-    const int initialPageSize = 25;
+    const int initialPageSize = 10;
     Map<String, List<TransactionDetails?>> merged = await _walletRepository.getStoredTransactions(
       walletAddress: tokenAccount!.pubkey,
     );
@@ -567,7 +567,7 @@ class WalletViewModel extends ChangeNotifier {
         walletAddress: tokenAccount!.pubkey,
       );
 
-      const int loadMoreLimit = 100;
+      const int loadMoreLimit = 10;
       bool hasMoreMain = false;
       bool hasMoreLegacy = false;
       String? currentOldestMain = oldestSignatures.mainSignature;
