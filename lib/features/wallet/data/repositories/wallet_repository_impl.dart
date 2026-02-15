@@ -32,6 +32,14 @@ class WalletRepositoryImpl implements WalletRepository {
 
   bool get isCancelled => _isCancelled;
 
+  Future<void> _onBatchLoaded(
+    List<TransactionDetails?> batch,
+    Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
+  ) async {
+    if (_isCancelled) return;
+    if (onBatchLoaded != null) await onBatchLoaded(batch);
+  }
+
   @override
   Future<double> getZarpBalance(String address) async {
     final WalletSolanaService service = await _service;
@@ -49,16 +57,15 @@ class WalletRepositoryImpl implements WalletRepository {
     required String walletAddress,
     String? lastKnownSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
+    bool isLegacy = false,
   }) async {
     final WalletSolanaService service = await _service;
     return service.getAccountTransactions(
       walletAddress: walletAddress,
       until: lastKnownSignature,
-      onBatchLoaded: (List<TransactionDetails?> batch) async {
-        if (_isCancelled) return;
-        if (onBatchLoaded != null) await onBatchLoaded(batch);
-      },
+      onBatchLoaded: (List<TransactionDetails?> batch) => _onBatchLoaded(batch, onBatchLoaded),
       isCancelled: () => _isCancelled,
+      isLegacy: isLegacy,
     );
   }
 
@@ -67,18 +74,52 @@ class WalletRepositoryImpl implements WalletRepository {
     required String walletAddress,
     required String oldestSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
+    int limit = 100,
   }) async {
     final WalletSolanaService service = await _service;
     return service.getAccountTransactions(
       walletAddress: walletAddress,
       before: oldestSignature,
-      limit: 20,
-      onBatchLoaded: (List<TransactionDetails?> batch) async {
-        if (_isCancelled) return;
-        if (onBatchLoaded != null) await onBatchLoaded(batch);
-      },
+      limit: limit,
+      onBatchLoaded: (List<TransactionDetails?> batch) => _onBatchLoaded(batch, onBatchLoaded),
       isCancelled: () => _isCancelled,
     );
+  }
+
+  /// Fetches the first [n] transactions for [walletAddress] and returns them
+  /// as a single list, newest first. The underlying service returns transactions
+  /// grouped by month; this method flattens and reorders by month so the
+  /// combined list is chronological (most recent first).
+  @override
+  Future<List<TransactionDetails?>> getFirstNTransactions(
+    String walletAddress,
+    int n, {
+    bool Function()? isCancelled,
+    bool isLegacy = false,
+  }) async {
+    final WalletSolanaService service = await _service;
+    final Map<String, List<TransactionDetails?>> grouped = await service.getAccountTransactions(
+      walletAddress: walletAddress,
+      limit: n,
+      onBatchLoaded: null,
+      isCancelled: isCancelled,
+      isLegacy: isLegacy,
+    );
+    if (grouped.isEmpty) return <TransactionDetails?>[];
+    // Month keys sort descending so we iterate newest months first.
+    final List<String> monthKeys = grouped.keys.toList()..sort((String a, String b) => b.compareTo(a));
+    final List<TransactionDetails?> result = <TransactionDetails?>[];
+    for (final String key in monthKeys) {
+      for (final TransactionDetails? transaction in grouped[key]!) {
+        result.add(transaction);
+      }
+    }
+    return result;
+  }
+
+  Future<void> _storeIfNotCancelled(Future<void> Function() action) {
+    if (_isCancelled) return Future<void>.value();
+    return action();
   }
 
   @override
@@ -86,12 +127,18 @@ class WalletRepositoryImpl implements WalletRepository {
     Map<String, List<TransactionDetails?>> transactions, {
     required String walletAddress,
   }) {
-    if (_isCancelled) {
-      return Future<void>.value();
-    }
-    return _transactionStorageService.storeTransactions(
-      transactions,
-      walletAddress: walletAddress,
+    return _storeIfNotCancelled(
+      () => _transactionStorageService.storeTransactions(transactions, walletAddress: walletAddress),
+    );
+  }
+
+  @override
+  Future<void> mergeAndStoreTransactions(
+    List<TransactionDetails?> newTransactions, {
+    required String walletAddress,
+  }) {
+    return _storeIfNotCancelled(
+      () => _transactionStorageService.mergeAndStoreTransactions(newTransactions, walletAddress: walletAddress),
     );
   }
 
@@ -105,18 +152,40 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<String?> getLastTransactionSignature({required String walletAddress}) {
+  Future<String?> getLastTransactionSignature({
+    required String walletAddress,
+    bool isLegacy = false,
+  }) {
     return _transactionStorageService.getLastTransactionSignature(
       walletAddress: walletAddress,
+      isLegacy: isLegacy,
     );
   }
 
   @override
-  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress}) {
+  Future<void> storeLastTransactionSignature(
+    String signature, {
+    required String walletAddress,
+    bool isLegacy = false,
+  }) {
     return _transactionStorageService.storeLastTransactionSignature(
       signature,
       walletAddress: walletAddress,
+      isLegacy: isLegacy,
     );
+  }
+
+  @override
+  Future<void> storeOldestLoadedSignatures({String? mainSignature, String? legacySignature}) {
+    return _transactionStorageService.storeOldestLoadedSignatures(
+      mainSignature: mainSignature,
+      legacySignature: legacySignature,
+    );
+  }
+
+  @override
+  Future<({String? mainSignature, String? legacySignature})> getOldestLoadedSignatures() {
+    return _transactionStorageService.getOldestLoadedSignatures();
   }
 
   @override

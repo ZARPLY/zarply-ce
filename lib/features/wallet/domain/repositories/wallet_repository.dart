@@ -10,11 +10,12 @@ abstract class WalletRepository {
   /// Get SOL balance for a given address
   Future<double> getSolBalance(String address);
 
-  /// Get newer transactions for a wallet account
+  /// Get newer transactions for a wallet account (main or legacy ATA).
   Future<Map<String, List<TransactionDetails?>>> getNewerTransactions({
     required String walletAddress,
     String? lastKnownSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
+    bool isLegacy = false,
   });
 
   /// Get older transactions for a wallet account
@@ -22,6 +23,15 @@ abstract class WalletRepository {
     required String walletAddress,
     required String oldestSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
+    int limit = 100,
+  });
+
+  /// Get the first [n] (newest) transactions for an account. Used for initial load.
+  Future<List<TransactionDetails?>> getFirstNTransactions(
+    String walletAddress,
+    int n, {
+    bool Function()? isCancelled,
+    bool isLegacy = false,
   });
 
   /// Store transactions in local storage
@@ -30,16 +40,35 @@ abstract class WalletRepository {
     required String walletAddress,
   });
 
-  /// Get stored transactions from local storage
+  /// Merge [newTransactions] into stored data (by month, at front) and persist.
+  Future<void> mergeAndStoreTransactions(
+    List<TransactionDetails?> newTransactions, {
+    required String walletAddress,
+  });
+
+  /// Get stored transactions from local storage (single source of truth for display).
   Future<Map<String, List<TransactionDetails?>>> getStoredTransactions({
     required String walletAddress,
   });
 
-  /// Get the signature of the last transaction
-  Future<String?> getLastTransactionSignature({required String walletAddress});
+  /// Get the signature of the last transaction (main or legacy account).
+  Future<String?> getLastTransactionSignature({
+    required String walletAddress,
+    bool isLegacy = false,
+  });
 
-  /// Store the signature of the last transaction
-  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress});
+  /// Store the signature of the last transaction (main or legacy account).
+  Future<void> storeLastTransactionSignature(
+    String signature, {
+    required String walletAddress,
+    bool isLegacy = false,
+  });
+
+  /// Store oldest loaded signatures (per account) for load-more pagination.
+  Future<void> storeOldestLoadedSignatures({String? mainSignature, String? legacySignature});
+
+  /// Get stored oldest loaded signatures for main and legacy.
+  Future<({String? mainSignature, String? legacySignature})> getOldestLoadedSignatures();
 
   /// Parse transfer details from a transaction
   TransactionTransferInfo? parseTransferDetails(

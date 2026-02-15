@@ -45,6 +45,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Runs [future] with a 30s timeout and ignores errors (e.g. account not funded yet).
+  Future<void> _runWithTimeout(Future<void> future) async {
+    try {
+      await future.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => null,
+      );
+    } catch (_) {}
+  }
+
   Future<void> _performLogin() async {
     _viewModel.setIsLoading(value: true);
     final bool success = await _viewModel.validatePassword();
@@ -59,19 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
           await walletProvider.initialize();
         }
 
-        // Refresh transactions and balances; do not block login on failure (e.g. account not funded yet).
-        try {
-          await walletProvider.refreshTransactions().timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => null,
-          );
-        } catch (_) {}
-        try {
-          await walletProvider.fetchAndCacheBalances().timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => null,
-          );
-        } catch (_) {}
+        // Refresh transactions and balances; do not block login on failure.
+        await _runWithTimeout(walletProvider.refreshTransactions());
+        await _runWithTimeout(walletProvider.fetchAndCacheBalances());
 
         if (!mounted) return;
         await Provider.of<AuthProvider>(

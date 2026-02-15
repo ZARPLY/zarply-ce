@@ -69,11 +69,11 @@ class PaymentAmountViewModel extends ChangeNotifier {
 
       // Iterate through transactions to find the most recent payment to this recipient
       for (final List<TransactionDetails?> monthTransactions in transactions.values) {
-        for (final TransactionDetails? tx in monthTransactions) {
-          if (tx == null) continue;
+        for (final TransactionDetails? transaction in monthTransactions) {
+          if (transaction == null) continue;
 
           final TransactionTransferInfo? transferInfo = TransactionDetailsParser.parseTransferDetails(
-            tx,
+            transaction,
             currentWalletAddress,
           );
 

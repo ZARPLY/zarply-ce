@@ -9,10 +9,10 @@ abstract class PaymentReviewContentRepository {
     required double amount,
   });
 
-  Future<TransactionDetails?> getTransactionDetails(String txSignature);
+  Future<TransactionDetails?> getTransactionDetails(String transactionSignature);
 
   Future<void> storeTransactionDetails(
-    TransactionDetails txDetails, {
+    TransactionDetails transactionDetails, {
     required String walletAddress,
   });
 

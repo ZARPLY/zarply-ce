@@ -70,7 +70,6 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       context.go('/wallet'); // Navigate to wallet screen
     } catch (e, _) {
       if (!mounted) return;
-
       // Parse error message for better user feedback
       String errorMessage = 'Payment failed';
       final String errorString = e.toString().toLowerCase();
@@ -97,7 +96,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
             .replaceAll('Exception: ', '')
             .replaceAll('SolanaConnectionException: ', '')
             .replaceAll('WalletSolanaServiceException: ', '')
-            .split('\n')[0]; // Take only the first line
+            .split('\n')[0];
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,7 +111,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
 
   @override
   Widget build(BuildContext context) {
-    final double zarpAmount = (double.tryParse(widget.amount) ?? 0) / 100;
+    final double zarpAmount = Formatters.centsToRands(widget.amount);
     final bool insufficientTokens = zarpAmount > widget.walletBalance;
 
     const double minSolNeeded = 0.001;
@@ -186,8 +185,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
               const SizedBox(height: 12),
               if (insufficientTokens) ...<Widget>[
                 Text(
-                  'Insufficient ZARP balance '
-                  '(Balance: ${Formatters.formatAmount(widget.walletBalance)})',
+                  'Insufficient ZARP balance ${Formatters.formatBalanceLabel(widget.walletBalance)}',
                   style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),

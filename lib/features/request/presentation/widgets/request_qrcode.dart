@@ -101,7 +101,7 @@ class _RequestQRCodeState extends State<RequestQRCode> {
                         const SizedBox(height: 32),
                         Text(
                           Formatters.formatAmount(
-                            double.parse(widget.paymentRequest.amount) / 100,
+                            Formatters.centsToRands(widget.paymentRequest.amount),
                           ),
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),

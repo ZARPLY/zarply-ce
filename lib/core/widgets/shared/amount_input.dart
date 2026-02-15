@@ -32,7 +32,7 @@ class _AmountInputState extends State<AmountInput> {
     _displayController = TextEditingController();
     if (widget.controller.text.isNotEmpty) {
       _displayController.text = Formatters.formatAmount(
-        double.parse(widget.controller.text) / 100,
+        Formatters.centsToRands(widget.controller.text),
       ).replaceAll('R', '').trim();
     }
     _displayController.addListener(() => setState(() {}));

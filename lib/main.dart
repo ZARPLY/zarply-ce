@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/provider/auth_provider.dart';
@@ -12,6 +13,7 @@ import 'core/provider/payment_provider.dart';
 import 'core/provider/wallet_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/wallet/presentation/models/wallet_view_model.dart';
 
 Future<void> checkFirstInstall() async {
   const FlutterSecureStorage secureStorage = FlutterSecureStorage();
@@ -54,10 +56,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: <ChangeNotifierProvider<dynamic>>[
+      providers: <SingleChildWidget>[
         ChangeNotifierProvider<WalletProvider>.value(value: walletProvider),
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<PaymentProvider>.value(value: paymentProvider),
+        ChangeNotifierProxyProvider<WalletProvider, WalletViewModel>(
+          create: (BuildContext context) {
+            final WalletProvider wp = Provider.of<WalletProvider>(context, listen: false);
+            return WalletViewModel()
+              ..wallet = wp.wallet
+              ..tokenAccount = wp.userTokenAccount;
+          },
+          update: (BuildContext context, WalletProvider wp, WalletViewModel? previous) =>
+              (previous ?? WalletViewModel())
+                ..wallet = wp.wallet
+                ..tokenAccount = wp.userTokenAccount,
+        ),
       ],
       child: Builder(
         builder: (BuildContext context) {

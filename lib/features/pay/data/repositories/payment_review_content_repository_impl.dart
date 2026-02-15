@@ -37,32 +37,18 @@ class PaymentReviewContentRepositoryImpl implements PaymentReviewContentReposito
   }
 
   @override
-  Future<TransactionDetails?> getTransactionDetails(String txSignature) async {
+  Future<TransactionDetails?> getTransactionDetails(String transactionSignature) async {
     final WalletSolanaService service = await _service;
-    return await service.getTransactionDetails(txSignature);
+    return await service.getTransactionDetails(transactionSignature);
   }
 
   @override
   Future<void> storeTransactionDetails(
-    TransactionDetails txDetails, {
+    TransactionDetails transactionDetails, {
     required String walletAddress,
   }) async {
-    final Map<String, List<TransactionDetails?>> stored = await _transactionStorageService.getStoredTransactions(
-      walletAddress: walletAddress,
-    );
-
-    final DateTime txDate = DateTime.fromMillisecondsSinceEpoch(
-      txDetails.blockTime! * 1000,
-    );
-    final String monthKey = '${txDate.year}-${txDate.month.toString().padLeft(2, '0')}';
-
-    if (!stored.containsKey(monthKey)) {
-      stored[monthKey] = <TransactionDetails?>[];
-    }
-    stored[monthKey]!.insert(0, txDetails);
-
-    await _transactionStorageService.storeTransactions(
-      stored,
+    await _transactionStorageService.mergeAndStoreTransactions(
+      <TransactionDetails>[transactionDetails],
       walletAddress: walletAddress,
     );
   }
