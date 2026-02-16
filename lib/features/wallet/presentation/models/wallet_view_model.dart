@@ -177,13 +177,13 @@ class WalletViewModel extends ChangeNotifier {
       walletAddress: tokenAccount!.pubkey,
     );
 
-    final Future<List<TransactionDetails?>> mainFuture = _walletRepository.getFirstNTransactions(
+    final Future<List<TransactionDetails?>> mainFuture = _walletRepository.getInitialTransactions(
       tokenAccount!.pubkey,
       initialPageSize,
       isCancelled: () => _walletRepository.isCancelled,
     );
     final Future<List<TransactionDetails?>> legacyFuture = _userLegacyAta != null
-        ? _walletRepository.getFirstNTransactions(
+        ? _walletRepository.getInitialTransactions(
             _userLegacyAta!.pubkey,
             initialPageSize,
             isCancelled: () => _walletRepository.isCancelled,
@@ -470,11 +470,6 @@ class WalletViewModel extends ChangeNotifier {
       flat.addAll(list);
     }
     return _oldestSignatureFromList(flat);
-  }
-
-  /// Refreshes balances and transactions (e.g. from the refresh button).
-  Future<void> refreshTransactionsFromButton() async {
-    await refreshTransactions();
   }
 
   /// Refreshes balances and transactions.

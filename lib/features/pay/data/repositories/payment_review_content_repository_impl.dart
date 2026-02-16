@@ -3,6 +3,7 @@ import 'package:solana/solana.dart';
 
 import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
+import '../../../wallet/data/repositories/wallet_repository_impl.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
 
@@ -14,7 +15,9 @@ class PaymentReviewContentRepositoryImpl implements PaymentReviewContentReposito
        _transactionStorageService = transactionStorageService ?? TransactionStorageService();
   final WalletSolanaService? _walletSolanaService;
   final TransactionStorageService _transactionStorageService;
-  final BalanceCacheService _balanceCacheService = BalanceCacheService();
+  final BalanceCacheService _balanceCacheService = BalanceCacheService(
+    walletRepository: WalletRepositoryImpl(),
+  );
 
   Future<WalletSolanaService> get _service async {
     return _walletSolanaService ?? await WalletSolanaService.create();

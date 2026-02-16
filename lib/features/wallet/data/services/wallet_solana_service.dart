@@ -10,7 +10,6 @@ import 'package:solana/dto.dart' hide Instruction;
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
-import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/rpc_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
 import '../../../../core/utils/formatters.dart';
@@ -51,7 +50,6 @@ class WalletSolanaService {
   }
 
   final SolanaClient _client;
-  final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static final String legacyZarpMint = dotenv.env['ZARP_MINT_ADDRESS_LEGACY'] ?? '';
@@ -208,7 +206,7 @@ class WalletSolanaService {
     required double zarpAmount,
   }) async {
     try {
-      final double solBalance = await _balanceCacheService.getSolBalance(senderWallet.address);
+      final double solBalance = await getSolBalance(senderWallet.address);
       if (solBalance < 0.001) {
         throw WalletSolanaServiceException(
           'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
@@ -333,12 +331,9 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      // RPC can return duplicate signatures (e.g. with before/until). Dedupe to avoid fetching same transaction twice.
-      final List<String> uniqueSignatures = <String>[];
-      final Set<String> seen = <String>{};
-      for (final TransactionSignatureInformation signatureInfo in signatures) {
-        if (seen.add(signatureInfo.signature)) uniqueSignatures.add(signatureInfo.signature);
-      }
+      final List<String> uniqueSignatures = Set<String>.from(
+        signatures.map((TransactionSignatureInformation s) => s.signature),
+      ).toList();
 
       final StreamController<List<TransactionDetails?>> transactionStreamController =
           StreamController<List<TransactionDetails?>>();
@@ -421,7 +416,7 @@ class WalletSolanaService {
       headers: <String, String>{
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(<String, Object?>{
+      body: jsonEncode(<String, dynamic>{
         'pubkey': wallet.address,
       }),
     );
@@ -475,7 +470,6 @@ class WalletSolanaService {
     try {
       const int maxRetries = 3;
       const Duration throttleDelay = Duration(milliseconds: 200);
-      const Duration rateLimitWaitTime = Duration(seconds: 11);
       const Duration initialWaitTime = Duration(seconds: 2);
       const Duration maxWaitTime = Duration(seconds: 60);
 
@@ -501,15 +495,15 @@ class WalletSolanaService {
             );
           } catch (e) {
             retryCount++;
-            final bool isRateLimited = e.toString().contains('Too many requests');
-            final Duration delay = isRateLimited
-                ? rateLimitWaitTime
-                : (retryCount < maxRetries
-                      ? Duration(seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)))
-                      : maxWaitTime);
-
+            final Duration delay = retryCount < maxRetries
+                ? Duration(
+                    seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
+                  )
+                : maxWaitTime;
             if (retryCount < maxRetries) {
-              await Future<void>.delayed(delay > maxWaitTime ? maxWaitTime : delay);
+              await Future<void>.delayed(
+                delay > maxWaitTime ? maxWaitTime : delay,
+              );
             }
           }
         }
@@ -540,7 +534,7 @@ class WalletSolanaService {
       headers: <String, String>{
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(<String, Object?>{
+      body: jsonEncode(<String, dynamic>{
         'pubkey': wallet.address,
         'sol_only': true,
       }),

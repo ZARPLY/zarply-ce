@@ -295,7 +295,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                   key: _refreshIndicatorKey,
                                   color: Colors.blue,
                                   backgroundColor: Colors.white,
-                                  onRefresh: () => viewModel.refreshTransactionsFromButton(),
+                                  onRefresh: () => viewModel.refreshTransactions(),
                                   child: TransactionsList(viewModel: viewModel),
                                 ),
                               ),

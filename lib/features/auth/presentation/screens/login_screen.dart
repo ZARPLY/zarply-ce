@@ -47,12 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Runs [future] with a 30s timeout and ignores errors (e.g. account not funded yet).
   Future<void> _runWithTimeout(Future<void> future) async {
-    try {
-      await future.timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => null,
-      );
-    } catch (_) {}
+    await future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => null,
+    );
   }
 
   Future<void> _performLogin() async {

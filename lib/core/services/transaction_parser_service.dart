@@ -6,36 +6,29 @@ import '../utils/formatters.dart';
 
 class TransactionDetailsParser {
   /// Returns [transaction].transaction as [ParsedTransaction], or parses via [ParsedTransaction.fromJson] when possible.
-  static ParsedTransaction? asParsedTransaction(Transaction transaction) {
+  static ParsedTransaction? isParsedTransaction(Transaction transaction) {
     if (transaction is ParsedTransaction) return transaction;
-    try {
-      final Object? json = transaction.toJson();
-      if (json is Map) {
-        return ParsedTransaction.fromJson(Map<String, dynamic>.from(json));
-      }
-    } catch (_) {
-      // Raw or unsupported format
-    }
-    return null;
+    final dynamic json = transaction.toJson();
+    return ParsedTransaction.fromJson(json);
   }
 
-  /// Returns the first signature (transaction id) of [details], or null if not a parsed transaction.
-  static String? getFirstSignature(TransactionDetails details) {
-    final ParsedTransaction? parsed = asParsedTransaction(details.transaction);
+  /// Returns the first signature (transaction id) of [transactionDetails], or null if not a parsed transaction.
+  static String? getFirstSignature(TransactionDetails transactionDetails) {
+    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
     if (parsed == null || parsed.signatures.isEmpty) return null;
     return parsed.signatures.first;
   }
 
   static TransactionTransferInfo? parseTransferDetails(
-    TransactionDetails transaction,
+    TransactionDetails transactionDertails,
     String accountOwner,
   ) {
     try {
-      if (transaction.meta!.preTokenBalances.isEmpty && transaction.meta!.postTokenBalances.isEmpty) {
+      if (transactionDertails.meta!.preTokenBalances.isEmpty && transactionDertails.meta!.postTokenBalances.isEmpty) {
         return null;
       }
 
-      final ParsedTransaction? parsed = asParsedTransaction(transaction.transaction);
+      final ParsedTransaction? parsed = isParsedTransaction(transactionDertails.transaction);
       if (parsed == null) return null;
 
       final List<AccountKey> accountKeys = parsed.message.accountKeys;
@@ -54,7 +47,7 @@ class TransactionDetailsParser {
         return null;
       }
 
-      for (final TokenBalance tokenBalance in transaction.meta!.preTokenBalances) {
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.preTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           preBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -63,7 +56,7 @@ class TransactionDetailsParser {
         }
       }
 
-      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           postBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -76,7 +69,7 @@ class TransactionDetailsParser {
       final bool isRecipient = amount > 0;
 
       String otherTokenAccountPubkey = '';
-      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex != userTokenAccountIndex) {
           final int otherTokenAccountKeyIndex = tokenBalance.accountIndex;
           if (otherTokenAccountKeyIndex >= 0 && otherTokenAccountKeyIndex < accountKeys.length) {
@@ -87,12 +80,12 @@ class TransactionDetailsParser {
       }
 
       bool isExternalFunding = false;
-      if (accountKeys.length > 4 && isRecipient && transaction.meta!.postTokenBalances.length > 1) {
+      if (accountKeys.length > 4 && isRecipient && transactionDertails.meta!.postTokenBalances.length > 1) {
         isExternalFunding = true;
       }
 
-      final DateTime? date = transaction.blockTime != null
-          ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
+      final DateTime? date = transactionDertails.blockTime != null
+          ? DateTime.fromMillisecondsSinceEpoch(transactionDertails.blockTime! * 1000)
           : null;
 
       return TransactionTransferInfo(
@@ -111,20 +104,20 @@ class TransactionDetailsParser {
   /// Returns true if the transaction involves the migration legacy ATA
 
   static bool isMigrationLegacyTransaction(
-    TransactionDetails transaction,
+    TransactionDetails transactionDetails,
     String migrationLegacyAta,
   ) {
     if (migrationLegacyAta.isEmpty) return false;
-    final ParsedTransaction? parsed = asParsedTransaction(transaction.transaction);
+    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
     if (parsed == null) return false;
     try {
       final List<AccountKey> accountKeys = parsed.message.accountKeys;
 
       final Set<int> tokenAccountIndices = <int>{};
-      for (final TokenBalance balance in transaction.meta!.preTokenBalances) {
+      for (final TokenBalance balance in transactionDetails.meta!.preTokenBalances) {
         tokenAccountIndices.add(balance.accountIndex);
       }
-      for (final TokenBalance balance in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance balance in transactionDetails.meta!.postTokenBalances) {
         tokenAccountIndices.add(balance.accountIndex);
       }
 
@@ -144,11 +137,11 @@ class TransactionDetailsParser {
   /// Returns true if the given wallet address appears in the transaction's account keys.
   /// Used to hide any transactions that involve the migration/faucet wallet
   static bool isWalletInTransaction(
-    TransactionDetails transaction,
+    TransactionDetails transactionDetails,
     String walletAddress,
   ) {
     if (walletAddress.isEmpty) return false;
-    final ParsedTransaction? parsed = asParsedTransaction(transaction.transaction);
+    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
     if (parsed == null) return false;
     for (final AccountKey key in parsed.message.accountKeys) {
       if (key.pubkey == walletAddress) return true;

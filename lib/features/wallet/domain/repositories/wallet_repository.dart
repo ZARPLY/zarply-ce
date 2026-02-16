@@ -26,10 +26,10 @@ abstract class WalletRepository {
     int limit = 100,
   });
 
-  /// Get the first [n] (newest) transactions for an account. Used for initial load.
-  Future<List<TransactionDetails?>> getFirstNTransactions(
+  /// Get the first [limit] (newest) transactions for an account. Used for initial load.
+  Future<List<TransactionDetails?>> getInitialTransactions(
     String walletAddress,
-    int n, {
+    int limit, {
     bool Function()? isCancelled,
     bool isLegacy = false,
   });

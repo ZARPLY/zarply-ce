@@ -86,21 +86,21 @@ class WalletRepositoryImpl implements WalletRepository {
     );
   }
 
-  /// Fetches the first [n] transactions for [walletAddress] and returns them
+  /// Fetches the first [limit] transactions for [walletAddress] and returns them
   /// as a single list, newest first. The underlying service returns transactions
   /// grouped by month; this method flattens and reorders by month so the
   /// combined list is chronological (most recent first).
   @override
-  Future<List<TransactionDetails?>> getFirstNTransactions(
+  Future<List<TransactionDetails?>> getInitialTransactions(
     String walletAddress,
-    int n, {
+    int limit, {
     bool Function()? isCancelled,
     bool isLegacy = false,
   }) async {
     final WalletSolanaService service = await _service;
     final Map<String, List<TransactionDetails?>> grouped = await service.getAccountTransactions(
       walletAddress: walletAddress,
-      limit: n,
+      limit: limit,
       onBatchLoaded: null,
       isCancelled: isCancelled,
       isLegacy: isLegacy,

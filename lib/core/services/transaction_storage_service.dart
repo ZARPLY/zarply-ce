@@ -50,9 +50,9 @@ class TransactionStorageService {
     try {
       final String encodedData = jsonEncode(
         transactions.map(
-          (String key, List<TransactionDetails?> value) => MapEntry<String, List<Map<String, Object?>?>>(
+          (String key, List<TransactionDetails?> value) => MapEntry<String, List<Map<String, dynamic>?>>(
             key,
-            value.map((TransactionDetails? transaction) => transaction?.toJson() as Map<String, Object?>?).toList(),
+            value.map((TransactionDetails? transaction) => transaction?.toJson() as Map<String, dynamic>).toList(),
           ),
         ),
       );
@@ -76,16 +76,16 @@ class TransactionStorageService {
     final Map<String, List<TransactionDetails?>> stored = await getStoredTransactions(
       walletAddress: walletAddress,
     );
-    for (final TransactionDetails? transaction in newTransactions) {
-      if (transaction == null) continue;
+    for (final TransactionDetails? transactionDetails in newTransactions) {
+      if (transactionDetails == null) continue;
       final DateTime transactionDate = DateTime.fromMillisecondsSinceEpoch(
-        transaction.blockTime! * 1000,
+        transactionDetails.blockTime! * 1000,
       );
       final String monthKey = Formatters.monthKeyFromDate(transactionDate);
       if (!stored.containsKey(monthKey)) {
         stored[monthKey] = <TransactionDetails?>[];
       }
-      stored[monthKey]!.insert(0, transaction);
+      stored[monthKey]!.insert(0, transactionDetails);
     }
     await storeTransactions(stored, walletAddress: walletAddress);
   }
@@ -104,11 +104,11 @@ class TransactionStorageService {
       final String? encodedData = await _secureStorage.read(key: _transactionsKey);
       if (encodedData == null) return <String, List<TransactionDetails?>>{};
 
-      final Map<String, Object?> decodedData = jsonDecode(encodedData) as Map<String, Object?>;
+      final Map<String, dynamic> decodedData = jsonDecode(encodedData) as Map<String, dynamic>;
       return decodedData.map(
         (String key, Object? value) => MapEntry<String, List<TransactionDetails?>>(
           key,
-          (value as List<Object?>)
+          (value as List<dynamic>)
               .map(
                 (Object? rawTransaction) => rawTransaction == null
                     ? null
