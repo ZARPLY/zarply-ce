@@ -182,7 +182,6 @@ class WalletProvider extends ChangeNotifier {
       final WalletBalances balances = await _balanceCacheService.getBothBalances(
         zarpAddress: _userTokenAccount!.pubkey,
         solAddress: _wallet!.address,
-        forceRefresh: true,
       );
       _zarpBalance = balances.zarpBalance;
       _solBalance = balances.solBalance;
@@ -233,7 +232,6 @@ class WalletProvider extends ChangeNotifier {
       final WalletBalances balances = await _balanceCacheService.getBothBalances(
         zarpAddress: _userTokenAccount!.pubkey,
         solAddress: _wallet!.address,
-        forceRefresh: true,
       );
       _zarpBalance = balances.zarpBalance;
       _solBalance = balances.solBalance;

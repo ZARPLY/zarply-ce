@@ -117,7 +117,7 @@ class WalletViewModel extends ChangeNotifier {
     return result;
   }
 
-  /// Loads ZARP and SOL balances from cache only; falls back to refresh on failure.
+  /// Loads ZARP and SOL balances from the network; falls back to refresh on failure.
   Future<void> loadCachedBalances() async {
     if (tokenAccount == null || wallet == null) return;
     try {
@@ -125,7 +125,6 @@ class WalletViewModel extends ChangeNotifier {
         () => _balanceCacheService.getBothBalances(
           zarpAddress: tokenAccount!.pubkey,
           solAddress: wallet!.address,
-          forceRefresh: false,
         ),
       );
     } catch (_) {
@@ -144,14 +143,13 @@ class WalletViewModel extends ChangeNotifier {
     );
   }
 
-  /// Forces a full network refresh of ZARP and SOL balances.
+  /// Forces a full network refresh of ZARP and SOL balances and saves to storage.
   Future<void> forceRefreshBalances() async {
     if (tokenAccount == null || wallet == null) return;
     await _loadBalances(
-      () => _balanceCacheService.getBothBalances(
+      () => _balanceCacheService.refreshBalances(
         zarpAddress: tokenAccount!.pubkey,
         solAddress: wallet!.address,
-        forceRefresh: true,
       ),
     );
   }

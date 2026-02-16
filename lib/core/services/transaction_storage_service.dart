@@ -110,10 +110,10 @@ class TransactionStorageService {
           key,
           (value as List<Object?>)
               .map(
-                (Object? item) => item == null
+                (Object? rawTransaction) => rawTransaction == null
                     ? null
                     : TransactionDetails.fromJson(
-                        item as Map<String, dynamic>,
+                        rawTransaction as Map<String, dynamic>,
                       ),
               )
               .toList(),
