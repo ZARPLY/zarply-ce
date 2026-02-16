@@ -12,6 +12,12 @@ class WalletBalances {
     );
   }
 
+  /// Minimum SOL required for rent exemption and transaction fees.
+  static const double minSolForFees = 0.003;
+
   final double solBalance;
   final double zarpBalance;
+
+  /// True if SOL balance is sufficient for fees.
+  bool get hasEnoughSolForFees => solBalance >= minSolForFees;
 }

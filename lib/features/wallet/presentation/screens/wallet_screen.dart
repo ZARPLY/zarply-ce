@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/models/wallet_balances.dart';
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../data/services/wallet_storage_service.dart';
@@ -114,8 +115,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   Future<void> _checkAndShowFundingDialog() async {
     // Check if wallet needs funding on mainnet
     if (_isMainnet && _viewModel.wallet != null && mounted) {
-      // Check if SOL balance is insufficient (less than 0.001 SOL needed for transactions)
-      if (_viewModel.solBalance < 0.001) {
+      // Check if SOL balance is insufficient (less than min needed for fees)
+      if (_viewModel.solBalance < WalletBalances.minSolForFees) {
         final DateTime now = DateTime.now();
         if (_lastDialogShownTime != null && now.difference(_lastDialogShownTime!).inSeconds < 30) {
           return;
@@ -133,7 +134,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
               style: TextStyle(color: Colors.black),
             ),
             content: const Text(
-              'Your SOL account requires funding before transactions can be processed. Please transfer SOL to your wallet address to continue.',
+              'Your SOL account requires at least 0.003 SOL for rent exemption and transaction fees. '
+              'Please transfer SOL to your wallet address to continue.',
               style: TextStyle(color: Colors.black),
             ),
             actions: <Widget>[
