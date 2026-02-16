@@ -21,6 +21,7 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver {
   late WalletViewModel _viewModel;
   final WalletStorageService _walletStorageService = WalletStorageService();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   DateTime? _lastDialogShownTime;
 
   @override
@@ -28,13 +29,11 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _viewModel = WalletViewModel();
+    _viewModel = Provider.of<WalletViewModel>(context, listen: false);
+    _viewModel.wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
+    _viewModel.tokenAccount = Provider.of<WalletProvider>(context, listen: false).userTokenAccount;
 
-    final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
-    _viewModel.wallet = walletProvider.wallet;
-    _viewModel.tokenAccount = walletProvider.userTokenAccount;
-
-    // Load fresh data on initialization
+    // Load fresh data on initialization (single load; user can pull-to-refresh for more).
     _initializeData();
   }
 
@@ -86,12 +85,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
             content: Text('Error loading wallet data: $e'),
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _viewModel.isLoadingTransactions = false;
-        });
       }
     }
   }
@@ -153,7 +146,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                 ),
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
-                  _lastDialogShownTime = DateTime.now();
                   // Clear the first-time flag if it was set (for first-time users)
                   _walletStorageService.clearFirstTimeUserFlag();
                 },
@@ -170,7 +162,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _viewModel.dispose();
     super.dispose();
   }
 
@@ -260,19 +251,24 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                           ),
                                         ),
                                       ),
-                                      GestureDetector(
-                                        onTap: () => viewModel.refreshTransactionsFromButton(),
-                                        child: Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFEBECEF),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.refresh,
-                                            color: Colors.blue,
-                                            size: 20,
+                                      AbsorbPointer(
+                                        absorbing: viewModel.isRefreshing,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            _refreshIndicatorKey.currentState?.show();
+                                          },
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFFEBECEF),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.refresh,
+                                              color: viewModel.isRefreshing ? Colors.grey : Colors.blue,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -288,7 +284,21 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                               ],
                             ),
                             Expanded(
-                              child: TransactionsList(viewModel: viewModel),
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  progressIndicatorTheme: const ProgressIndicatorThemeData(
+                                    color: Colors.blue,
+                                    circularTrackColor: Colors.white,
+                                  ),
+                                ),
+                                child: RefreshIndicator(
+                                  key: _refreshIndicatorKey,
+                                  color: Colors.blue,
+                                  backgroundColor: Colors.white,
+                                  onRefresh: () => viewModel.refreshTransactions(),
+                                  child: TransactionsList(viewModel: viewModel),
+                                ),
+                              ),
                             ),
                           ],
                         ),

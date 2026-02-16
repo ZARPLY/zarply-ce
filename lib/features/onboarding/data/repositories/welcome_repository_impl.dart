@@ -1,5 +1,4 @@
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter/foundation.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -40,7 +39,6 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
           tokenAccount = await service.createAssociatedTokenAccount(wallet);
           await service.requestZARP(wallet);
         } catch (e) {
-          debugPrint('[WelcomeRepo] Devnet ATA/faucet failed, using derived ATA: $e');
           tokenAccount = await service.deriveAssociatedTokenAddress(wallet);
         }
       }
@@ -51,9 +49,7 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
         tokenAccount: tokenAccount,
         errorMessage: null,
       );
-    } catch (e, stackTrace) {
-      debugPrint('[WelcomeRepo] createWallet error: $e');
-      debugPrint('[WelcomeRepo] stackTrace: $stackTrace');
+    } catch (e) {
       return (
         recoveryPhrase: null,
         wallet: null,

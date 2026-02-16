@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:solana/base58.dart';
@@ -11,9 +10,9 @@ import 'package:solana/dto.dart' hide Instruction;
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
-import '../../../../core/services/balance_cache_service.dart';
 import '../../../../core/services/rpc_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
+import '../../../../core/utils/formatters.dart';
 
 class WalletSolanaServiceException implements Exception {
   WalletSolanaServiceException(this.message);
@@ -51,7 +50,6 @@ class WalletSolanaService {
   }
 
   final SolanaClient _client;
-  final BalanceCacheService _balanceCacheService = BalanceCacheService();
   final TransactionStorageService _transactionStorageService = TransactionStorageService();
   static final String zarpMint = dotenv.env['ZARP_MINT_ADDRESS'] ?? '';
   static final String legacyZarpMint = dotenv.env['ZARP_MINT_ADDRESS_LEGACY'] ?? '';
@@ -126,7 +124,7 @@ class WalletSolanaService {
       try {
         await _requestSOL(wallet);
       } catch (e) {
-        debugPrint('SOL faucet request failed: $e');
+        // SOL faucet request failed; continue without SOL
       }
     }
 
@@ -208,7 +206,7 @@ class WalletSolanaService {
     required double zarpAmount,
   }) async {
     try {
-      final double solBalance = await _balanceCacheService.getSolBalance(senderWallet.address);
+      final double solBalance = await getSolBalance(senderWallet.address);
       if (solBalance < 0.001) {
         throw WalletSolanaServiceException(
           'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
@@ -255,14 +253,14 @@ class WalletSolanaService {
 
       final LatestBlockhash bh = await _client.rpcClient.getLatestBlockhash(commitment: Commitment.confirmed).value;
 
-      final SignedTx tx = await signTransaction(
+      final SignedTx signedTransaction = await signTransaction(
         bh,
         message,
         <Ed25519HDKeyPair>[senderWallet],
       );
 
       final String transaction = await _client.rpcClient.sendTransaction(
-        tx.encode(),
+        signedTransaction.encode(),
         preflightCommitment: Commitment.confirmed,
       );
 
@@ -278,9 +276,7 @@ class WalletSolanaService {
         publicKey,
         commitment: Commitment.confirmed,
       );
-      // Prefer the UI amount string reported by Solana so that we respect the
-      // mint's configured decimals instead of assuming a fixed factor. This
-      // ensures that values such as 3510.009999 are displayed as 3510.00.
+
       final String? uiAmountString = balance.value.uiAmountString;
       if (uiAmountString != null) {
         return double.parse(uiAmountString);
@@ -303,11 +299,12 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 100,
+    int limit = 25,
     String? until,
     String? before,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
     bool Function()? isCancelled,
+    bool isLegacy = false,
   }) async {
     try {
       final List<TransactionSignatureInformation> signatures = await _client.rpcClient.getSignaturesForAddress(
@@ -322,16 +319,21 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (signatures.isNotEmpty && before == null) {
+      if (before == null) {
         await _transactionStorageService.storeLastTransactionSignature(
           signatures.first.signature,
           walletAddress: walletAddress,
+          isLegacy: isLegacy,
         );
       }
 
       if (isCancelled != null && isCancelled()) {
         return <String, List<TransactionDetails?>>{};
       }
+
+      final List<String> uniqueSignatures = Set<String>.from(
+        signatures.map((TransactionSignatureInformation s) => s.signature),
+      ).toList();
 
       final StreamController<List<TransactionDetails?>> transactionStreamController =
           StreamController<List<TransactionDetails?>>();
@@ -349,7 +351,7 @@ class WalletSolanaService {
         ).asFuture<void>();
 
         await _fetchTransactionsWithCircuitBreaker(
-          signatures.map((TransactionSignatureInformation sig) => sig.signature).toList(),
+          uniqueSignatures,
           onBatchLoaded: (List<TransactionDetails?> batch) async {
             if (isCancelled != null && isCancelled()) {
               return;
@@ -385,7 +387,7 @@ class WalletSolanaService {
             ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
             : DateTime.now();
 
-        final String monthKey = '${transactionDate.year}-${transactionDate.month.toString().padLeft(2, '0')}';
+        final String monthKey = Formatters.monthKeyFromDate(transactionDate);
 
         if (!groupedTransactions.containsKey(monthKey)) {
           groupedTransactions[monthKey] = <TransactionDetails?>[];
@@ -467,31 +469,24 @@ class WalletSolanaService {
   }) async {
     try {
       const int maxRetries = 3;
-      const Duration rateLimitWaitTime = Duration(seconds: 11);
+      const Duration throttleDelay = Duration(milliseconds: 200);
       const Duration initialWaitTime = Duration(seconds: 2);
       const Duration maxWaitTime = Duration(seconds: 60);
 
       final List<TransactionDetails?> currentBatch = <TransactionDetails?>[];
 
       for (int i = 0; i < signatures.length; i++) {
-        if (isCancelled != null && isCancelled()) {
-          return;
-        }
+        if (isCancelled != null && isCancelled()) return;
+
+        // Throttle between calls to avoid RPC rate limits
+        if (i > 0) await Future<void>.delayed(throttleDelay);
 
         final String signature = signatures[i];
         TransactionDetails? transactionDetails;
         int retryCount = 0;
-        bool isRateLimited = false;
 
         while (retryCount < maxRetries && transactionDetails == null) {
-          if (isCancelled != null && isCancelled()) {
-            break;
-          }
-
-          if (isRateLimited) {
-            await Future<void>.delayed(rateLimitWaitTime);
-            isRateLimited = false;
-          }
+          if (isCancelled != null && isCancelled()) break;
 
           try {
             transactionDetails = await _client.rpcClient.getTransaction(
@@ -499,21 +494,16 @@ class WalletSolanaService {
               commitment: Commitment.confirmed,
             );
           } catch (e) {
-            if (e.toString().contains('Too many requests for a specific RPC call')) {
-              isRateLimited = true;
-              retryCount++;
-            } else {
-              retryCount++;
-
-              // For non-rate-limit errors, use exponential backoff
-              if (retryCount < maxRetries) {
-                final Duration retryDelay = Duration(
-                  seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
-                );
-                await Future<void>.delayed(
-                  retryDelay > maxWaitTime ? maxWaitTime : retryDelay,
-                );
-              }
+            retryCount++;
+            final Duration delay = retryCount < maxRetries
+                ? Duration(
+                    seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
+                  )
+                : maxWaitTime;
+            if (retryCount < maxRetries) {
+              await Future<void>.delayed(
+                delay > maxWaitTime ? maxWaitTime : delay,
+              );
             }
           }
         }
@@ -521,10 +511,7 @@ class WalletSolanaService {
         currentBatch.add(transactionDetails);
 
         if (currentBatch.length == 10 || i == signatures.length - 1) {
-          if (isCancelled != null && isCancelled()) {
-            return;
-          }
-
+          if (isCancelled != null && isCancelled()) return;
           await onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
           currentBatch.clear();
         }
@@ -640,8 +627,8 @@ class WalletSolanaService {
       // Get transaction timestamp
       int? drainTimestamp;
       try {
-        final TransactionDetails? drainTx = await getTransactionDetails(drainSignature);
-        drainTimestamp = drainTx?.blockTime;
+        final TransactionDetails? drainTransaction = await getTransactionDetails(drainSignature);
+        drainTimestamp = drainTransaction?.blockTime;
       } catch (e) {
         // Ignore if we can't get timestamp
       }
@@ -697,28 +684,9 @@ class WalletSolanaService {
         tokenProgram: TokenProgramType.token2022Program,
       );
 
-      // Create memo instruction for system swap contract
-      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
-      const String systemSwapMemo = 'system swap contract';
-
-      final Instruction memoInstruction = Instruction(
-        programId: Ed25519HDPublicKey.fromBase58(memoProgramId),
-        accounts: <AccountMeta>[
-          AccountMeta(
-            pubKey: wallet.publicKey,
-            isSigner: true,
-            isWriteable: false,
-          ),
-        ],
-        data: ByteArray(utf8.encode(systemSwapMemo)),
-      );
-
-      // Build message with both transfer and memo instructions
+      // Build message with transfer instruction only
       final Message message = Message(
-        instructions: <Instruction>[
-          transferInstruction,
-          memoInstruction,
-        ],
+        instructions: <Instruction>[transferInstruction],
       );
 
       // Get blockhash
@@ -729,7 +697,7 @@ class WalletSolanaService {
           .value;
 
       // Sign transaction
-      final SignedTx signedTx = await signTransaction(
+      final SignedTx signedTransaction = await signTransaction(
         bh,
         message,
         <Ed25519HDKeyPair>[wallet],
@@ -737,11 +705,10 @@ class WalletSolanaService {
 
       // Send transaction
       final String signature = await _client.rpcClient.sendTransaction(
-        signedTx.encode(),
+        signedTransaction.encode(),
         preflightCommitment: Commitment.confirmed,
       );
 
-      // Transaction includes memo "system swap contract" - will be filtered by memo check
       return signature;
     } catch (e) {
       if (_isInsufficientFundsError(e)) {

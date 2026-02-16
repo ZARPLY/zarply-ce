@@ -8,7 +8,9 @@ import 'package:solana/solana.dart';
 
 import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/services/transaction_parser_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../wallet/data/services/wallet_solana_service.dart';
 import '../../data/repositories/payment_review_content_repository_impl.dart';
 import '../../domain/repositories/payment_review_content_repository.dart';
@@ -45,7 +47,6 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
 
       // Ensure recipient address is set in provider
       if (paymentProvider.recipientAddress != recipientAddress) {
-        debugPrint('[PaymentReview] Recipient address mismatch. Setting in provider...');
         await paymentProvider.setRecipientAddress(recipientAddress);
       }
 
@@ -77,7 +78,7 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         }
       }
 
-      final double zarpAmount = double.parse(amount) / 100;
+      final double zarpAmount = Formatters.centsToRands(amount);
       // Check actual balance from blockchain before sending
       // At this point, both sender and recipient token accounts are guaranteed non-null
 
@@ -99,33 +100,36 @@ class PaymentReviewContentViewModel extends ChangeNotifier {
         );
       }
 
-      final String txSignature = await _repository.makeTransaction(
+      final String transactionSignature = await _repository.makeTransaction(
         wallet: wallet,
         senderTokenAccount: walletProvider.userTokenAccount,
         recipientTokenAccount: recipientTokenAccount,
         amount: zarpAmount,
       );
 
-      final TransactionDetails? txDetails = await _repository.getTransactionDetails(txSignature);
+      final TransactionDetails? transactionDetails = await _repository.getTransactionDetails(transactionSignature);
 
-      if (txDetails == null) {
+      if (transactionDetails == null) {
         throw Exception('Transaction not confirmed after multiple attempts');
       }
 
       await _repository.storeTransactionDetails(
-        txDetails,
+        transactionDetails,
         walletAddress: walletProvider.userTokenAccount!.pubkey,
       );
 
+      final String firstSignature =
+          TransactionDetailsParser.getFirstSignature(transactionDetails) ??
+          (throw StateError('Transaction has no signature'));
       await _transactionStorageService.storeLastTransactionSignature(
-        txDetails.transaction.toJson()['signatures'][0],
+        firstSignature,
         walletAddress: walletProvider.userTokenAccount!.pubkey,
       );
 
       final double currentBalance = await _repository.getZarpBalance(
         walletProvider.userTokenAccount!.pubkey,
       );
-      final double newBalance = currentBalance - (double.parse(amount) / 100);
+      final double newBalance = currentBalance - Formatters.centsToRands(amount);
       await _repository.updateZarpBalance(newBalance);
       await walletProvider.onPaymentCompleted();
 

@@ -2,16 +2,19 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:solana/dto.dart';
 
-import 'transaction_parser_service.dart';
+import '../utils/formatters.dart';
 
 class TransactionStorageService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  /// Single source of truth for display. Month-keyed filtered transactions.
   final String _transactionsKey = 'wallet_transactions';
   final String _lastTransactionKey = 'last_transaction_signature';
+  final String _lastTransactionLegacyKey = 'last_transaction_signature_legacy';
   final String _transactionCountKey = 'transaction_count';
+  final String _oldestLoadedSigMainKey = 'oldest_loaded_signature_main';
+  final String _oldestLoadedSigLegacyKey = 'oldest_loaded_signature_legacy';
   static const String _cachedWalletAddressKey = 'cached_wallet_address';
-  static const String _systemTransactionsKey = 'system_transaction_signatures';
-  static const String _drainTransactionsKey = 'drain_transactions';
 
   /// Store the wallet address that transactions belong to
   Future<void> storeCachedWalletAddress(String walletAddress) async {
@@ -49,7 +52,7 @@ class TransactionStorageService {
         transactions.map(
           (String key, List<TransactionDetails?> value) => MapEntry<String, List<Map<String, dynamic>?>>(
             key,
-            value.map((TransactionDetails? tx) => tx?.toJson()).toList(),
+            value.map((TransactionDetails? transaction) => transaction?.toJson()).toList(),
           ),
         ),
       );
@@ -59,21 +62,41 @@ class TransactionStorageService {
         value: encodedData,
       );
 
-      // Store the wallet address for future validation
       await storeCachedWalletAddress(walletAddress);
     } catch (e) {
       throw Exception('Failed to store transactions: $e');
     }
   }
 
+  /// Merges [newTransactions] into stored data (by month, at front) and persists.
+  Future<void> mergeAndStoreTransactions(
+    List<TransactionDetails?> newTransactions, {
+    required String walletAddress,
+  }) async {
+    final Map<String, List<TransactionDetails?>> stored = await getStoredTransactions(
+      walletAddress: walletAddress,
+    );
+    for (final TransactionDetails? transactionDetails in newTransactions) {
+      if (transactionDetails == null) continue;
+      final DateTime transactionDate = DateTime.fromMillisecondsSinceEpoch(
+        transactionDetails.blockTime! * 1000,
+      );
+      final String monthKey = Formatters.monthKeyFromDate(transactionDate);
+      if (!stored.containsKey(monthKey)) {
+        stored[monthKey] = <TransactionDetails?>[];
+      }
+      stored[monthKey]!.insert(0, transactionDetails);
+    }
+    await storeTransactions(stored, walletAddress: walletAddress);
+  }
+
+  /// Returns the merged-list (only source of truth for display).
   Future<Map<String, List<TransactionDetails?>>> getStoredTransactions({
     required String walletAddress,
   }) async {
     try {
-      // Check if cached wallet matches current wallet
       final bool walletMatch = await isCachedWalletMatch(walletAddress);
       if (!walletMatch) {
-        // Clear cache if wallet doesn't match
         await clearTransactionCache();
         return <String, List<TransactionDetails?>>{};
       }
@@ -83,14 +106,14 @@ class TransactionStorageService {
 
       final Map<String, dynamic> decodedData = jsonDecode(encodedData);
       return decodedData.map(
-        (String key, dynamic value) => MapEntry<String, List<TransactionDetails?>>(
+        (String key, Object? value) => MapEntry<String, List<TransactionDetails?>>(
           key,
           (value as List<dynamic>)
               .map(
-                (dynamic tx) => tx == null
+                (Object? rawTransaction) => rawTransaction == null
                     ? null
                     : TransactionDetails.fromJson(
-                        tx as Map<String, dynamic>,
+                        rawTransaction as Map<String, dynamic>,
                       ),
               )
               .toList(),
@@ -101,30 +124,31 @@ class TransactionStorageService {
     }
   }
 
-  Future<void> storeLastTransactionSignature(String signature, {required String walletAddress}) async {
+  Future<void> storeLastTransactionSignature(
+    String signature, {
+    required String walletAddress,
+    bool isLegacy = false,
+  }) async {
     try {
-      await _secureStorage.write(
-        key: _lastTransactionKey,
-        value: signature,
-      );
-      // Update cached wallet address when storing signature
-      await storeCachedWalletAddress(walletAddress);
+      final String key = isLegacy ? _lastTransactionLegacyKey : _lastTransactionKey;
+      await _secureStorage.write(key: key, value: signature);
+      if (!isLegacy) await storeCachedWalletAddress(walletAddress);
     } catch (e) {
       throw Exception('Failed to store last transaction signature: $e');
     }
   }
 
-  Future<String?> getLastTransactionSignature({required String walletAddress}) async {
+  Future<String?> getLastTransactionSignature({
+    required String walletAddress,
+    bool isLegacy = false,
+  }) async {
     try {
-      // Check if cached wallet matches current wallet
-      final bool walletMatch = await isCachedWalletMatch(walletAddress);
-      if (!walletMatch) {
-        // Clear cache if wallet doesn't match
+      final String key = isLegacy ? _lastTransactionLegacyKey : _lastTransactionKey;
+      if (!isLegacy && !await isCachedWalletMatch(walletAddress)) {
         await clearTransactionCache();
         return null;
       }
-
-      return await _secureStorage.read(key: _lastTransactionKey);
+      return await _secureStorage.read(key: key);
     } catch (e) {
       throw Exception('Failed to get last transaction signature: $e');
     }
@@ -150,135 +174,46 @@ class TransactionStorageService {
     }
   }
 
-  /// Clear all transaction cache data
+  /// Store oldest loaded signatures (per account) for "load more" pagination.
+  Future<void> storeOldestLoadedSignatures({
+    String? mainSignature,
+    String? legacySignature,
+  }) async {
+    try {
+      if (mainSignature != null) {
+        await _secureStorage.write(key: _oldestLoadedSigMainKey, value: mainSignature);
+      }
+      if (legacySignature != null) {
+        await _secureStorage.write(key: _oldestLoadedSigLegacyKey, value: legacySignature);
+      }
+    } catch (e) {
+      throw Exception('Failed to store oldest loaded signatures: $e');
+    }
+  }
+
+  /// Retrieve oldest loaded signatures for main and legacy accounts.
+  Future<({String? mainSignature, String? legacySignature})> getOldestLoadedSignatures() async {
+    try {
+      final String? main = await _secureStorage.read(key: _oldestLoadedSigMainKey);
+      final String? legacy = await _secureStorage.read(key: _oldestLoadedSigLegacyKey);
+      return (mainSignature: main, legacySignature: legacy);
+    } catch (e) {
+      throw Exception('Failed to get oldest loaded signatures: $e');
+    }
+  }
+
+  /// Clear all transaction cache data.
   Future<void> clearTransactionCache() async {
     try {
       await _secureStorage.delete(key: _transactionsKey);
       await _secureStorage.delete(key: _lastTransactionKey);
+      await _secureStorage.delete(key: _lastTransactionLegacyKey);
       await _secureStorage.delete(key: _transactionCountKey);
+      await _secureStorage.delete(key: _oldestLoadedSigMainKey);
+      await _secureStorage.delete(key: _oldestLoadedSigLegacyKey);
       await _secureStorage.delete(key: _cachedWalletAddressKey);
     } catch (e) {
       throw Exception('Failed to clear transaction cache: $e');
-    }
-  }
-
-  /// Add a system transaction signature (e.g., drain transactions) to filter list
-  Future<void> addSystemTransactionSignature(String signature) async {
-    try {
-      final Set<String> systemTxs = await getSystemTransactionSignatures();
-      systemTxs.add(signature);
-      final String encodedData = jsonEncode(systemTxs.toList());
-      await _secureStorage.write(
-        key: _systemTransactionsKey,
-        value: encodedData,
-      );
-    } catch (e) {
-      throw Exception('Failed to add system transaction signature: $e');
-    }
-  }
-
-  /// Get all system transaction signatures that should be filtered out
-  Future<Set<String>> getSystemTransactionSignatures() async {
-    try {
-      final String? encodedData = await _secureStorage.read(key: _systemTransactionsKey);
-      if (encodedData == null) return <String>{};
-      final List<dynamic> decodedData = jsonDecode(encodedData);
-      return decodedData.map((dynamic sig) => sig as String).toSet();
-    } catch (e) {
-      return <String>{};
-    }
-  }
-
-  /// Store drain transaction info for matching with receive transactions
-  Future<void> storeDrainTransaction({
-    required String signature,
-    required double amount,
-    required int timestamp,
-  }) async {
-    try {
-      final List<Map<String, dynamic>> drainTxs = await getDrainTransactions();
-      drainTxs.add(<String, dynamic>{
-        'signature': signature,
-        'amount': amount,
-        'timestamp': timestamp,
-      });
-      final String encodedData = jsonEncode(drainTxs);
-      await _secureStorage.write(
-        key: _drainTransactionsKey,
-        value: encodedData,
-      );
-    } catch (e) {
-      throw Exception('Failed to store drain transaction: $e');
-    }
-  }
-
-  /// Get all stored drain transactions
-  Future<List<Map<String, dynamic>>> getDrainTransactions() async {
-    try {
-      final String? encodedData = await _secureStorage.read(key: _drainTransactionsKey);
-      if (encodedData == null) return <Map<String, dynamic>>[];
-      final List<dynamic> decodedData = jsonDecode(encodedData);
-      return decodedData.map((dynamic tx) => tx as Map<String, dynamic>).toList();
-    } catch (e) {
-      return <Map<String, dynamic>>[];
-    }
-  }
-
-  /// Find matching receive transaction for a drain transaction
-  /// Returns the signature of the matching receive transaction if found
-  Future<String?> findMatchingReceiveTransaction({
-    required double drainAmount,
-    required int drainTimestamp,
-    required List<TransactionDetails> transactions,
-    required String tokenAccountAddress,
-  }) async {
-    try {
-      // Look for transactions within 5 minutes of the drain
-      const int timeWindowSeconds = 5 * 60; // 5 minutes
-      final int timeWindowStart = drainTimestamp - timeWindowSeconds;
-      final int timeWindowEnd = drainTimestamp + timeWindowSeconds;
-
-      // Tolerance for amount matching (0.01 ZARP)
-      const double amountTolerance = 0.01;
-
-      for (final TransactionDetails tx in transactions) {
-        if (tx.blockTime == null) continue;
-
-        final int txTimestamp = tx.blockTime!;
-        if (txTimestamp < timeWindowStart || txTimestamp > timeWindowEnd) continue;
-
-        // Parse transaction to get amount
-        final TransactionTransferInfo? transferInfo = TransactionDetailsParser.parseTransferDetails(
-          tx,
-          tokenAccountAddress,
-        );
-
-        if (transferInfo == null) continue;
-
-        // Check if this is a receive transaction (positive amount)
-        if (transferInfo.amount <= 0) continue;
-
-        // Check if amount matches (within tolerance)
-        final double amountDiff = (transferInfo.amount - drainAmount).abs();
-        if (amountDiff <= amountTolerance) {
-          // Extract signature from transaction
-          try {
-            final dynamic txJson = tx.transaction.toJson();
-            if (txJson is Map<String, dynamic> && txJson['signatures'] != null) {
-              final List<dynamic> sigs = txJson['signatures'] as List<dynamic>;
-              if (sigs.isNotEmpty) {
-                return sigs[0].toString();
-              }
-            }
-          } catch (e) {
-            // Ignore signature extraction errors
-          }
-        }
-      }
-
-      return null;
-    } catch (e) {
-      return null;
     }
   }
 }

@@ -1,80 +1,42 @@
-import 'dart:convert';
 import 'dart:developer';
 
-import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 
+import '../utils/formatters.dart';
+
 class TransactionDetailsParser {
-  /// Extract memo from transaction if present
-  static String? extractMemo(TransactionDetails transaction) {
-    try {
-      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
-      final List<dynamic> instructions = (message['instructions'] as List<dynamic>?) ?? <dynamic>[];
-      final List<dynamic> accountKeys = (message['accountKeys'] as List<dynamic>?) ?? <dynamic>[];
+  /// Returns [transaction].transaction as [ParsedTransaction], or parses via [ParsedTransaction.fromJson] when possible.
+  static ParsedTransaction toParsedTransaction(Transaction transaction) {
+    if (transaction is ParsedTransaction) return transaction;
+    final dynamic json = transaction.toJson();
+    return ParsedTransaction.fromJson(json);
+  }
 
-      // Memo program ID
-      const String memoProgramId = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
-
-      for (final dynamic instruction in instructions) {
-        if (instruction is Map<String, dynamic>) {
-          final int? programIdIndex = instruction['programIdIndex'] as int?;
-          if (programIdIndex != null && programIdIndex < accountKeys.length) {
-            final String programId = accountKeys[programIdIndex].toString();
-            if (programId == memoProgramId) {
-              // Extract memo data
-              final dynamic data = instruction['data'];
-              if (data != null) {
-                try {
-                  String memoData;
-                  if (data is String) {
-                    // Try to decode base58 if it's a string
-                    try {
-                      final List<int> decoded = base58decode(data);
-                      memoData = utf8.decode(decoded);
-                    } catch (e) {
-                      // If base58 decode fails, use as-is
-                      memoData = data;
-                    }
-                  } else if (data is List) {
-                    // If data is already a list of bytes, decode directly
-                    memoData = utf8.decode(data.cast<int>());
-                  } else {
-                    memoData = data.toString();
-                  }
-                  return memoData;
-                } catch (e) {
-                  // If decoding fails, return null
-                  return null;
-                }
-              }
-            }
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+  /// Returns the first signature (transaction id) of [transactionDetails], or null if not a parsed transaction.
+  static String? getFirstSignature(TransactionDetails transactionDetails) {
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
+    if (parsed.signatures.isEmpty) return null;
+    return parsed.signatures.first;
   }
 
   static TransactionTransferInfo? parseTransferDetails(
-    TransactionDetails transaction,
+    TransactionDetails transactionDertails,
     String accountOwner,
   ) {
     try {
-      if (transaction.meta!.preTokenBalances.isEmpty && transaction.meta!.postTokenBalances.isEmpty) {
+      if (transactionDertails.meta!.preTokenBalances.isEmpty && transactionDertails.meta!.postTokenBalances.isEmpty) {
         return null;
       }
 
-      final Map<String, dynamic> message = transaction.transaction.toJson()['message'];
-      final List<dynamic> accountKeys = message['accountKeys'];
+      final ParsedTransaction parsed = toParsedTransaction(transactionDertails.transaction);
 
+      final List<AccountKey> accountKeys = parsed.message.accountKeys;
       int userTokenAccountIndex = -1;
       double preBalance = 0;
       double postBalance = 0;
 
       for (int i = 0; i < accountKeys.length; i++) {
-        if (accountKeys[i] == accountOwner) {
+        if (accountKeys[i].pubkey == accountOwner) {
           userTokenAccountIndex = i;
           break;
         }
@@ -84,7 +46,7 @@ class TransactionDetailsParser {
         return null;
       }
 
-      for (final TokenBalance tokenBalance in transaction.meta!.preTokenBalances) {
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.preTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           preBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -93,7 +55,7 @@ class TransactionDetailsParser {
         }
       }
 
-      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex == userTokenAccountIndex) {
           postBalance = double.parse(
             tokenBalance.uiTokenAmount.uiAmountString ?? '0',
@@ -105,26 +67,29 @@ class TransactionDetailsParser {
       final double amount = postBalance - preBalance;
       final bool isRecipient = amount > 0;
 
-      String otherParty = '';
-      for (final TokenBalance tokenBalance in transaction.meta!.postTokenBalances) {
+      String otherTokenAccountPubkey = '';
+      for (final TokenBalance tokenBalance in transactionDertails.meta!.postTokenBalances) {
         if (tokenBalance.accountIndex != userTokenAccountIndex) {
-          otherParty = accountKeys[tokenBalance.accountIndex];
+          final int otherTokenAccountKeyIndex = tokenBalance.accountIndex;
+          if (otherTokenAccountKeyIndex >= 0 && otherTokenAccountKeyIndex < accountKeys.length) {
+            otherTokenAccountPubkey = accountKeys[otherTokenAccountKeyIndex].pubkey;
+          }
           break;
         }
       }
 
       bool isExternalFunding = false;
-      if (accountKeys.length > 4 && isRecipient && transaction.meta!.postTokenBalances.length > 1) {
+      if (accountKeys.length > 4 && isRecipient && transactionDertails.meta!.postTokenBalances.length > 1) {
         isExternalFunding = true;
       }
 
-      final DateTime? date = transaction.blockTime != null
-          ? DateTime.fromMillisecondsSinceEpoch(transaction.blockTime! * 1000)
+      final DateTime? date = transactionDertails.blockTime != null
+          ? DateTime.fromMillisecondsSinceEpoch(transactionDertails.blockTime! * 1000)
           : null;
 
       return TransactionTransferInfo(
-        sender: isRecipient ? otherParty : 'myself',
-        recipient: isRecipient ? 'myself' : otherParty,
+        sender: isRecipient ? otherTokenAccountPubkey : 'myself',
+        recipient: isRecipient ? 'myself' : otherTokenAccountPubkey,
         amount: amount,
         timestamp: date,
         isExternalFunding: isExternalFunding,
@@ -133,6 +98,52 @@ class TransactionDetailsParser {
       log('Error parsing transaction details: $e');
       return null;
     }
+  }
+
+  /// Returns true if the transaction involves the migration legacy ATA
+
+  static bool isMigrationLegacyTransaction(
+    TransactionDetails transactionDetails,
+    String migrationLegacyAta,
+  ) {
+    if (migrationLegacyAta.isEmpty) return false;
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
+    try {
+      final List<AccountKey> accountKeys = parsed.message.accountKeys;
+
+      final Set<int> tokenAccountIndices = <int>{};
+      for (final TokenBalance balance in transactionDetails.meta!.preTokenBalances) {
+        tokenAccountIndices.add(balance.accountIndex);
+      }
+      for (final TokenBalance balance in transactionDetails.meta!.postTokenBalances) {
+        tokenAccountIndices.add(balance.accountIndex);
+      }
+
+      for (final int index in tokenAccountIndices) {
+        if (index >= 0 && index < accountKeys.length) {
+          if (accountKeys[index].pubkey == migrationLegacyAta) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Returns true if the given wallet address appears in the transaction's account keys.
+  /// Used to hide any transactions that involve the migration/faucet wallet
+  static bool isWalletInTransaction(
+    TransactionDetails transactionDetails,
+    String walletAddress,
+  ) {
+    if (walletAddress.isEmpty) return false;
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
+    for (final AccountKey key in parsed.message.accountKeys) {
+      if (key.pubkey == walletAddress) return true;
+    }
+    return false;
   }
 }
 
@@ -150,11 +161,5 @@ class TransactionTransferInfo {
   final DateTime? timestamp;
   final bool isExternalFunding;
 
-  String get formattedAmount => formatAmount(amount);
-}
-
-String formatAmount(double amount) {
-  final String sign = amount >= 0 ? '' : '-';
-  final double absoluteAmount = amount.abs();
-  return '${sign}R${absoluteAmount.toStringAsFixed(2)}';
+  String get formattedAmount => Formatters.formatAmount(amount);
 }

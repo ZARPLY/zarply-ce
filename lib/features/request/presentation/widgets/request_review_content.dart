@@ -66,7 +66,7 @@ class _RequestReviewContentState extends State<RequestReviewContent> {
                   const SizedBox(height: 48),
                   Text(
                     Formatters.formatAmount(
-                      double.parse(widget.paymentRequest.amount) / 100,
+                      Formatters.centsToRands(widget.paymentRequest.amount),
                     ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),

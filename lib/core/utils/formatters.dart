@@ -23,6 +23,21 @@ class Formatters {
     return currencyFormat.format(amount);
   }
 
+  /// Converts amount in cents (string) to rands (double). Uses 0 if input is invalid.
+  static double centsToRands(String cents) {
+    return (double.tryParse(cents) ?? 0) / 100;
+  }
+
+  /// Returns a balance label string for UI (e.g. "(Balance: R123.45)").
+  static String formatBalanceLabel(double balance) {
+    return '(Balance: ${formatAmount(balance)})';
+  }
+
+  /// Returns a sortable key for the given date (e.g. "2025-02").
+  static String monthKeyFromDate(DateTime date) {
+    return DateFormat('yyyy-MM').format(date);
+  }
+
   static String formatMonthHeader(String monthKey) {
     final List<String> parts = monthKey.split('-');
     final String year = parts[0];

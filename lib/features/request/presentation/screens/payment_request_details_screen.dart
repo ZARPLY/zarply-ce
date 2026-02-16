@@ -42,7 +42,7 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
     super.dispose();
   }
 
-  double get _amountInZarp => (double.tryParse(widget.amount) ?? 0) / 100;
+  double get _amountInZarp => Formatters.centsToRands(widget.amount);
   double get _walletZarpBalance => AppInitializer.of(context).walletBalance;
   double get _walletSolBalance => AppInitializer.of(context).solBalance;
 
@@ -237,7 +237,7 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
 
   @override
   Widget build(BuildContext context) {
-    final double amountInRands = double.parse(widget.amount) / 100;
+    final double amountInRands = Formatters.centsToRands(widget.amount);
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final Wallet? wallet = walletProvider.wallet;
 
@@ -332,8 +332,7 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
                   ],
                   if (_insufficientTokens) ...<Widget>[
                     Text(
-                      'Insufficient ZARP balance '
-                      '(Balance: ${Formatters.formatAmount(_walletZarpBalance)})',
+                      'Insufficient ZARP balance ${Formatters.formatBalanceLabel(_walletZarpBalance)}',
                       style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
