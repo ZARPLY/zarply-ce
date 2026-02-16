@@ -59,8 +59,7 @@ class WalletProvider extends ChangeNotifier {
   ProgramAccount? _userTokenAccount;
   String? _recoveryPhrase;
 
-  double _zarpBalance = WalletBalances.empty().zarpBalance;
-  double _solBalance = WalletBalances.empty().solBalance;
+  WalletBalances _balances = WalletBalances.empty();
 
   Wallet? get wallet => _wallet;
 
@@ -72,8 +71,8 @@ class WalletProvider extends ChangeNotifier {
 
   bool get hasRecoveryPhrase => _recoveryPhrase != null;
 
-  double get walletBalance => _zarpBalance;
-  double get solBalance => _solBalance;
+  double get walletBalance => _balances.zarpBalance;
+  double get solBalance => _balances.solBalance;
 
   void setRecoveryPhrase(String phrase) {
     _recoveryPhrase = phrase;
@@ -90,8 +89,7 @@ class WalletProvider extends ChangeNotifier {
 
     if (_wallet == null) {
       _userTokenAccount = null;
-      _zarpBalance = WalletBalances.empty().zarpBalance;
-      _solBalance = WalletBalances.empty().solBalance;
+      _balances = WalletBalances.empty();
       _isReady = true;
       notifyListeners();
       return false;
@@ -104,29 +102,24 @@ class WalletProvider extends ChangeNotifier {
       // Mainnet: ATA may only be derived (not created on-chain). Use stored ATA pubkey if present.
       _userTokenAccount ??= await _programAccountFromStoredAta();
 
-      if (_userTokenAccount == null) {
-        _zarpBalance = WalletBalances.empty().zarpBalance;
-      } else {
+      double zarp = WalletBalances.empty().zarpBalance;
+      if (_userTokenAccount != null) {
         try {
-          _zarpBalance = await service.getZarpBalance(_userTokenAccount!.pubkey);
-        } catch (_) {
-          _zarpBalance = WalletBalances.empty().zarpBalance;
-        }
+          zarp = await service.getZarpBalance(_userTokenAccount!.pubkey);
+        } catch (_) {}
       }
-
+      double sol = WalletBalances.empty().solBalance;
       try {
-        _solBalance = await service.getSolBalance(_wallet!.address);
-      } catch (_) {
-        _solBalance = WalletBalances.empty().solBalance;
-      }
+        sol = await service.getSolBalance(_wallet!.address);
+      } catch (_) {}
+      _balances = WalletBalances(zarpBalance: zarp, solBalance: sol);
 
       _isReady = true;
       notifyListeners();
       return true;
     } catch (e) {
       // Wallet exists in storage; don't clear it. Use safe defaults so user can resume onboarding.
-      _zarpBalance = WalletBalances.empty().zarpBalance;
-      _solBalance = WalletBalances.empty().solBalance;
+      _balances = WalletBalances.empty();
       _userTokenAccount ??= await _programAccountFromStoredAta();
       _isReady = true;
       notifyListeners();
@@ -179,17 +172,14 @@ class WalletProvider extends ChangeNotifier {
     if (_wallet == null || _userTokenAccount == null) return;
 
     try {
-      final WalletBalances balances = await _balanceCacheService.getBothBalances(
+      _balances = await _balanceCacheService.getBothBalances(
         zarpAddress: _userTokenAccount!.pubkey,
         solAddress: _wallet!.address,
       );
-      _zarpBalance = balances.zarpBalance;
-      _solBalance = balances.solBalance;
       notifyListeners();
     } catch (_) {
       // Account may not exist yet (e.g. unfunded mainnet wallet). Use 0 so login still succeeds.
-      _zarpBalance = WalletBalances.empty().zarpBalance;
-      _solBalance = WalletBalances.empty().solBalance;
+      _balances = WalletBalances.empty();
       notifyListeners();
     }
   }
@@ -231,8 +221,7 @@ class WalletProvider extends ChangeNotifier {
     if (_wallet != null && _userTokenAccount != null) {
       await fetchAndCacheBalances();
     } else {
-      _zarpBalance = WalletBalances.empty().zarpBalance;
-      _solBalance = WalletBalances.empty().solBalance;
+      _balances = WalletBalances.empty();
       notifyListeners();
     }
   }
@@ -241,8 +230,7 @@ class WalletProvider extends ChangeNotifier {
     _wallet = null;
     _userTokenAccount = null;
     _recoveryPhrase = null;
-    _zarpBalance = WalletBalances.empty().zarpBalance;
-    _solBalance = WalletBalances.empty().solBalance;
+    _balances = WalletBalances.empty();
     _isReady = false;
     _bootDone = false;
     notifyListeners();

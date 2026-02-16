@@ -6,7 +6,7 @@ import '../utils/formatters.dart';
 
 class TransactionDetailsParser {
   /// Returns [transaction].transaction as [ParsedTransaction], or parses via [ParsedTransaction.fromJson] when possible.
-  static ParsedTransaction? isParsedTransaction(Transaction transaction) {
+  static ParsedTransaction toParsedTransaction(Transaction transaction) {
     if (transaction is ParsedTransaction) return transaction;
     final dynamic json = transaction.toJson();
     return ParsedTransaction.fromJson(json);
@@ -14,8 +14,8 @@ class TransactionDetailsParser {
 
   /// Returns the first signature (transaction id) of [transactionDetails], or null if not a parsed transaction.
   static String? getFirstSignature(TransactionDetails transactionDetails) {
-    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
-    if (parsed == null || parsed.signatures.isEmpty) return null;
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
+    if (parsed.signatures.isEmpty) return null;
     return parsed.signatures.first;
   }
 
@@ -28,8 +28,7 @@ class TransactionDetailsParser {
         return null;
       }
 
-      final ParsedTransaction? parsed = isParsedTransaction(transactionDertails.transaction);
-      if (parsed == null) return null;
+      final ParsedTransaction parsed = toParsedTransaction(transactionDertails.transaction);
 
       final List<AccountKey> accountKeys = parsed.message.accountKeys;
       int userTokenAccountIndex = -1;
@@ -108,8 +107,7 @@ class TransactionDetailsParser {
     String migrationLegacyAta,
   ) {
     if (migrationLegacyAta.isEmpty) return false;
-    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
-    if (parsed == null) return false;
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
     try {
       final List<AccountKey> accountKeys = parsed.message.accountKeys;
 
@@ -141,8 +139,7 @@ class TransactionDetailsParser {
     String walletAddress,
   ) {
     if (walletAddress.isEmpty) return false;
-    final ParsedTransaction? parsed = isParsedTransaction(transactionDetails.transaction);
-    if (parsed == null) return false;
+    final ParsedTransaction parsed = toParsedTransaction(transactionDetails.transaction);
     for (final AccountKey key in parsed.message.accountKeys) {
       if (key.pubkey == walletAddress) return true;
     }

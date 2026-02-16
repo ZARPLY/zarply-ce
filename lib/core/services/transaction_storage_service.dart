@@ -52,7 +52,7 @@ class TransactionStorageService {
         transactions.map(
           (String key, List<TransactionDetails?> value) => MapEntry<String, List<Map<String, dynamic>?>>(
             key,
-            value.map((TransactionDetails? transaction) => transaction?.toJson() as Map<String, dynamic>).toList(),
+            value.map((TransactionDetails? transaction) => transaction?.toJson()).toList(),
           ),
         ),
       );
@@ -104,7 +104,7 @@ class TransactionStorageService {
       final String? encodedData = await _secureStorage.read(key: _transactionsKey);
       if (encodedData == null) return <String, List<TransactionDetails?>>{};
 
-      final Map<String, dynamic> decodedData = jsonDecode(encodedData) as Map<String, dynamic>;
+      final Map<String, dynamic> decodedData = jsonDecode(encodedData);
       return decodedData.map(
         (String key, Object? value) => MapEntry<String, List<TransactionDetails?>>(
           key,
