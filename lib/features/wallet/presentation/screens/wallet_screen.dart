@@ -94,9 +94,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     try {
       // Load transactions from network and store them locally
       await _viewModel.loadTransactions();
-
-      // Update transaction count and oldest signature
-      await _viewModel.updateTransactionCount();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +106,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   }
 
   Future<void> _refreshBalances() async {
-    await _viewModel.loadCachedBalances();
+    await _viewModel.refreshBalances();
   }
 
   Future<void> _checkAndShowFundingDialog() async {
@@ -171,8 +168,9 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      _refreshBalances();
-      _loadTransactionsFromRepository();
+      // Avoid overlapping startup/resume refreshes.
+      if (_viewModel.isRefreshing) return;
+      _viewModel.refreshTransactions();
       // Check funding status when app resumes (after balances refresh)
       Future<void>.delayed(const Duration(milliseconds: 500), _checkAndShowFundingDialog);
     }

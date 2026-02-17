@@ -44,6 +44,10 @@ class WalletViewModel extends ChangeNotifier {
   /// Oldest month (YYYY-MM) currently shown in the list; newer months are hidden until "Load more".
   String? _visibleOldestMonth;
 
+  Future<void>? _pendingLoadCachedBalances;
+  Future<void>? _pendingRefreshBalances;
+  Future<void>? _pendingLoadTransactions;
+
   void toggleExpanded() {
     isExpanded = !isExpanded;
     notifyListeners();
@@ -120,27 +124,45 @@ class WalletViewModel extends ChangeNotifier {
   /// Loads ZARP and SOL balances from the network; falls back to refresh on failure.
   Future<void> loadCachedBalances() async {
     if (tokenAccount == null || wallet == null) return;
-    try {
-      await _loadBalances(
-        () => _balanceCacheService.getBothBalances(
-          zarpAddress: tokenAccount!.pubkey,
-          solAddress: wallet!.address,
-        ),
-      );
-    } catch (_) {
-      await refreshBalances();
-    }
+    final Future<void>? pending = _pendingLoadCachedBalances;
+    if (pending != null) return pending;
+
+    _pendingLoadCachedBalances = () async {
+      try {
+        await _loadBalances(
+          () => _balanceCacheService.getBothBalances(
+            zarpAddress: tokenAccount!.pubkey,
+            solAddress: wallet!.address,
+          ),
+        );
+      } catch (_) {
+        await refreshBalances();
+      } finally {
+        _pendingLoadCachedBalances = null;
+      }
+    }();
+    return _pendingLoadCachedBalances!;
   }
 
   /// Refreshes ZARP and SOL balances from the network.
   Future<void> refreshBalances() async {
     if (tokenAccount == null || wallet == null) return;
-    await _loadBalances(
-      () => _balanceCacheService.refreshBalances(
-        zarpAddress: tokenAccount!.pubkey,
-        solAddress: wallet!.address,
-      ),
-    );
+    final Future<void>? pending = _pendingRefreshBalances;
+    if (pending != null) return pending;
+
+    _pendingRefreshBalances = () async {
+      try {
+        await _loadBalances(
+          () => _balanceCacheService.refreshBalances(
+            zarpAddress: tokenAccount!.pubkey,
+            solAddress: wallet!.address,
+          ),
+        );
+      } finally {
+        _pendingRefreshBalances = null;
+      }
+    }();
+    return _pendingRefreshBalances!;
   }
 
   /// Forces a full network refresh of ZARP and SOL balances and saves to storage.
@@ -168,7 +190,7 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Fetches first N main and first N legacy in parallel, merges and stores. Optionally notifies after main so UI updates early.
+  /// Fetches first number main and first number legacy in parallel, merges and stores. Optionally notifies after main so UI updates early.
   Future<Map<String, List<TransactionDetails?>>> _fetchInitialMainAndLegacy({
     Future<void> Function(Map<String, List<TransactionDetails?>>)? onMainFetched,
   }) async {
@@ -230,8 +252,9 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   /// Fetches newer transactions for main and legacy in parallel, then merges once and updates UI.
-  Future<void> _fetchNewerAndMergeParallel() async {
-    if (tokenAccount == null) return;
+
+  Future<bool> _fetchNewerAndMergeParallel() async {
+    if (tokenAccount == null) return false;
 
     final List<Future<String?>> lastSigFutures = <Future<String?>>[
       _walletRepository.getLastTransactionSignature(
@@ -275,7 +298,7 @@ class WalletViewModel extends ChangeNotifier {
 
     final List<TransactionDetails?> mainList = _groupedMapToList(mainMap);
     final List<TransactionDetails?> legacyList = _groupedMapToList(legacyMap);
-    if (mainList.isEmpty && legacyList.isEmpty) return;
+    if (mainList.isEmpty && legacyList.isEmpty) return false;
 
     Map<String, List<TransactionDetails?>> stored = await _walletRepository.getStoredTransactions(
       walletAddress: tokenAccount!.pubkey,
@@ -297,79 +320,91 @@ class WalletViewModel extends ChangeNotifier {
       );
     }
     await _applyMergedToUi(stored);
+    return true;
   }
 
   /// Loads transactions: show from storage first, then quick path (new transactions), then initial 10+10 or refresh as needed.
   Future<void> loadTransactions() async {
-    if (tokenAccount == null) {
-      throw Exception('TokenAccount is null, cannot load transactions');
-    }
+    final Future<void>? pending = _pendingLoadTransactions;
+    if (pending != null) return pending;
 
-    await _ensureUserLegacyAta();
-    await _ensureMigrationLegacyAta();
+    _pendingLoadTransactions = () async {
+      if (tokenAccount == null) {
+        throw Exception('TokenAccount is null, cannot load transactions');
+      }
 
-    Map<String, List<TransactionDetails?>> merged = await _walletRepository.getStoredTransactions(
-      walletAddress: tokenAccount!.pubkey,
-    );
+      await _ensureUserLegacyAta();
+      await _ensureMigrationLegacyAta();
 
-    if (merged.isNotEmpty) {
-      await _applyMergedToUi(merged);
-      if (!isRefreshing) {
-        final ({String? mainSignature, String? legacySignature}) cursors = await _walletRepository
-            .getOldestLoadedSignatures();
-        final bool hasMainCursor = cursors.mainSignature != null;
-        final bool hasLegacyCursor = cursors.legacySignature != null;
-        final bool canSkipFullFetch = _userLegacyAta == null ? hasMainCursor : (hasMainCursor && hasLegacyCursor);
-        if (canSkipFullFetch) {
+      Map<String, List<TransactionDetails?>> merged = await _walletRepository.getStoredTransactions(
+        walletAddress: tokenAccount!.pubkey,
+      );
+
+      if (merged.isNotEmpty) {
+        await _applyMergedToUi(merged);
+        if (!isRefreshing) {
+          final ({String? mainSignature, String? legacySignature}) cursors = await _walletRepository
+              .getOldestLoadedSignatures();
+          final bool hasMainCursor = cursors.mainSignature != null;
+          final bool hasLegacyCursor = cursors.legacySignature != null;
+          final bool canSkipFullFetch = _userLegacyAta == null ? hasMainCursor : (hasMainCursor && hasLegacyCursor);
+          if (canSkipFullFetch) {
+            _startNewerPollTimer();
+            notifyListeners();
+            return;
+          }
+        }
+        notifyListeners();
+      }
+
+      _walletRepository.resetCancellation();
+
+      try {
+        await _fetchNewerAndMergeParallel();
+        if (_walletRepository.isCancelled) {
           _startNewerPollTimer();
           notifyListeners();
           return;
         }
-      }
-      notifyListeners();
-    }
 
-    _walletRepository.resetCancellation();
+        final ({String? mainSignature, String? legacySignature}) cursors = await _walletRepository
+            .getOldestLoadedSignatures();
+        final int storedCount = merged.values.fold<int>(
+          0,
+          (int s, List<TransactionDetails?> list) => s + list.length,
+        );
+        final bool needBackfill = storedCount < 10 && cursors.mainSignature == null && cursors.legacySignature == null;
 
-    try {
-      await _fetchNewerAndMergeParallel();
-      if (_walletRepository.isCancelled) {
+        if (isRefreshing && !needBackfill) {
+          merged = await _walletRepository.getStoredTransactions(walletAddress: tokenAccount!.pubkey);
+          await _applyMergedToUi(merged);
+        } else {
+          merged = await _fetchInitialMainAndLegacy(
+            onMainFetched: merged.isEmpty ? _applyMergedToUi : null,
+          );
+          await _applyMergedToUi(merged);
+          hasMoreTransactionsToLoad = true;
+        }
         _startNewerPollTimer();
         notifyListeners();
-        return;
+        await updateTransactionCount();
+      } catch (e) {
+        throw Exception('Error loading transactions: $e');
+      } finally {
+        _pendingLoadTransactions = null;
+        notifyListeners();
       }
+    }();
 
-      final ({String? mainSignature, String? legacySignature}) cursors = await _walletRepository
-          .getOldestLoadedSignatures();
-      final int storedCount = merged.values.fold<int>(0, (int s, List<TransactionDetails?> list) => s + list.length);
-      final bool needBackfill = storedCount < 10 && cursors.mainSignature == null && cursors.legacySignature == null;
-
-      if (isRefreshing && !needBackfill) {
-        merged = await _walletRepository.getStoredTransactions(walletAddress: tokenAccount!.pubkey);
-        await _applyMergedToUi(merged);
-      } else {
-        merged = await _fetchInitialMainAndLegacy(
-          onMainFetched: merged.isEmpty ? _applyMergedToUi : null,
-        );
-        await _applyMergedToUi(merged);
-        hasMoreTransactionsToLoad = true;
-      }
-      _startNewerPollTimer();
-      notifyListeners();
-      await updateTransactionCount();
-    } catch (e) {
-      throw Exception('Error loading transactions: $e');
-    } finally {
-      notifyListeners();
-    }
+    return _pendingLoadTransactions!;
   }
 
-  /// Polls for newer transactions and refreshes balance every 2s so new payments appear quickly.
+  /// Polls for newer transactions and refreshes balance every 5s so new payments appear quickly.
   void _startNewerPollTimer() {
     _newerPollTimer?.cancel();
     if (_disposed || tokenAccount == null) return;
     _newerPollTimer = Timer.periodic(
-      const Duration(seconds: 2),
+      const Duration(seconds: 5),
       (_) => _pollNewerTransactions(),
     );
   }
@@ -378,8 +413,8 @@ class WalletViewModel extends ChangeNotifier {
     if (_disposed || tokenAccount == null || _newerPollInProgress) return;
     _newerPollInProgress = true;
     try {
-      await _fetchNewerAndMergeParallel();
-      if (!_disposed && tokenAccount != null && wallet != null) {
+      final bool didMergeNewTransactions = await _fetchNewerAndMergeParallel();
+      if (didMergeNewTransactions && !_disposed && tokenAccount != null && wallet != null) {
         await refreshBalances();
       }
     } catch (_) {
@@ -560,7 +595,7 @@ class WalletViewModel extends ChangeNotifier {
         walletAddress: tokenAccount!.pubkey,
       );
 
-      const int loadMoreLimit = 10;
+      const int loadMoreLimit = 5;
       bool hasMoreMain = false;
       bool hasMoreLegacy = false;
       String? currentOldestMain = oldestSignatures.mainSignature;

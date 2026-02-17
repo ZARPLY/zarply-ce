@@ -61,6 +61,8 @@ class WalletProvider extends ChangeNotifier {
 
   WalletBalances _balances = WalletBalances.empty();
 
+  Future<bool>? _pendingInitialize;
+
   Wallet? get wallet => _wallet;
 
   ProgramAccount? get userTokenAccount => _userTokenAccount;
@@ -85,6 +87,14 @@ class WalletProvider extends ChangeNotifier {
   }
 
   Future<bool> initialize() async {
+    final Future<bool>? pending = _pendingInitialize;
+    if (pending != null) return pending;
+
+    _pendingInitialize = _initializeInternal();
+    return _pendingInitialize!;
+  }
+
+  Future<bool> _initializeInternal() async {
     _wallet = await _walletStorageService.retrieveWallet();
 
     if (_wallet == null) {
@@ -92,6 +102,7 @@ class WalletProvider extends ChangeNotifier {
       _balances = WalletBalances.empty();
       _isReady = true;
       notifyListeners();
+      _pendingInitialize = null;
       return false;
     }
 
@@ -116,6 +127,7 @@ class WalletProvider extends ChangeNotifier {
 
       _isReady = true;
       notifyListeners();
+      _pendingInitialize = null;
       return true;
     } catch (e) {
       // Wallet exists in storage; don't clear it. Use safe defaults so user can resume onboarding.
@@ -123,6 +135,7 @@ class WalletProvider extends ChangeNotifier {
       _userTokenAccount ??= await _programAccountFromStoredAta();
       _isReady = true;
       notifyListeners();
+      _pendingInitialize = null;
       return true;
     }
   }

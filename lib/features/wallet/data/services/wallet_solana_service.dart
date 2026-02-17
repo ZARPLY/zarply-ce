@@ -301,7 +301,7 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 25,
+    int limit = 5,
     String? until,
     String? before,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
