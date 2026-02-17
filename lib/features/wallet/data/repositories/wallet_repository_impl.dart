@@ -74,7 +74,7 @@ class WalletRepositoryImpl implements WalletRepository {
     required String walletAddress,
     required String oldestSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
-    int limit = 100,
+    int limit = 5,
   }) async {
     final WalletSolanaService service = await _service;
     return service.getAccountTransactions(
