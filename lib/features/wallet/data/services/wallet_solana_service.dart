@@ -10,6 +10,7 @@ import 'package:solana/dto.dart' hide Instruction;
 import 'package:solana/encoder.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/models/wallet_balances.dart';
 import '../../../../core/services/rpc_service.dart';
 import '../../../../core/services/transaction_storage_service.dart';
 import '../../../../core/utils/formatters.dart';
@@ -207,9 +208,10 @@ class WalletSolanaService {
   }) async {
     try {
       final double solBalance = await getSolBalance(senderWallet.address);
-      if (solBalance < 0.001) {
+      if (solBalance < WalletBalances.minSolForFees) {
         throw WalletSolanaServiceException(
-          'Insufficient SOL balance for transaction fees. Need at least 0.001 SOL',
+          'Insufficient SOL balance for transaction fees. '
+          'Need at least ${WalletBalances.minSolForFees} SOL',
         );
       }
 
