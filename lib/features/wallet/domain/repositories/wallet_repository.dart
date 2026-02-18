@@ -23,7 +23,7 @@ abstract class WalletRepository {
     required String walletAddress,
     required String oldestSignature,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
-    int limit = 5,
+    int limit = 10,
   });
 
   /// Get the first [limit] (newest) transactions for an account. Used for initial load.

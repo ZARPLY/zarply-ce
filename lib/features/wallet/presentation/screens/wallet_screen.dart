@@ -522,7 +522,11 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
               height: 60,
               child: FloatingActionButton(
                 onPressed: () {
-                  context.go('/pay_request');
+                  context.push('/pay_request').then((_) {
+                    if (mounted && !_viewModel.isRefreshing) {
+                      _viewModel.refreshTransactions();
+                    }
+                  });
                 },
                 shape: const CircleBorder(),
                 backgroundColor: Colors.blue,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 
@@ -64,10 +63,8 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
         amount: widget.amount,
         context: context,
       );
-
-      if (!mounted) return;
-      Navigator.pop(context); // Close the modal
-      context.go('/wallet'); // Navigate to wallet screen
+      // PaymentSuccess is now shown inside the sheet via ListenableBuilder
+      // and handles its own navigation via the Done button.
     } catch (e, _) {
       if (!mounted) return;
       // Parse error message for better user feedback
@@ -122,7 +119,10 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       listenable: _viewModel,
       builder: (BuildContext context, _) {
         if (_viewModel.hasPaymentBeenMade) {
-          return PaymentSuccess(amount: widget.amount);
+          return PaymentSuccess(
+            amount: widget.amount,
+            recipientAddress: widget.recipientAddress,
+          );
         }
 
         return Padding(

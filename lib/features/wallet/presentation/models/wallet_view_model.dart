@@ -194,7 +194,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<Map<String, List<TransactionDetails?>>> _fetchInitialMainAndLegacy({
     Future<void> Function(Map<String, List<TransactionDetails?>>)? onMainFetched,
   }) async {
-    const int initialPageSize = 10;
+    const int initialPageSize = 20;
     Map<String, List<TransactionDetails?>> merged = await _walletRepository.getStoredTransactions(
       walletAddress: tokenAccount!.pubkey,
     );
@@ -404,7 +404,7 @@ class WalletViewModel extends ChangeNotifier {
     _newerPollTimer?.cancel();
     if (_disposed || tokenAccount == null) return;
     _newerPollTimer = Timer.periodic(
-      const Duration(seconds: 5),
+      const Duration(seconds: 3),
       (_) => _pollNewerTransactions(),
     );
   }

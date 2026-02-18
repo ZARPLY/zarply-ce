@@ -30,6 +30,7 @@ class PaymentAmountScreen extends StatefulWidget {
 
 class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   final FocusNode _amountFocus = FocusNode();
+  bool _isShowingModal = false;
 
   @override
   void dispose() {
@@ -38,6 +39,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   }
 
   Future<void> _showPaymentReviewModal(String amount) async {
+    // Prevent opening multiple modals from rapid taps
+    if (_isShowingModal) return;
+    _isShowingModal = true;
     // Refresh balance before showing modal to ensure accuracy
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     double walletBalance = AppInitializer.of(context).walletBalance;
@@ -82,6 +86,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         );
       },
     );
+    _isShowingModal = false;
   }
 
   @override
