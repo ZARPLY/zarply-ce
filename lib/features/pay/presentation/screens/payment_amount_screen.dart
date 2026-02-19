@@ -85,6 +85,10 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
       },
     );
     _isShowingModal = false;
+    if (mounted) {
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      await walletProvider.refreshTransactions();
+    }
   }
 
   @override
