@@ -194,7 +194,7 @@ class WalletViewModel extends ChangeNotifier {
   Future<Map<String, List<TransactionDetails?>>> _fetchInitialMainAndLegacy({
     Future<void> Function(Map<String, List<TransactionDetails?>>)? onMainFetched,
   }) async {
-    const int initialPageSize = 10;
+    const int initialPageSize = 20;
     Map<String, List<TransactionDetails?>> merged = await _walletRepository.getStoredTransactions(
       walletAddress: tokenAccount!.pubkey,
     );
@@ -323,7 +323,7 @@ class WalletViewModel extends ChangeNotifier {
     return true;
   }
 
-  /// Loads transactions: show from storage first, then quick path (new transactions), then initial 10+10 or refresh as needed.
+  /// Loads transactions: show from storage first, then quick path (new transactions)
   Future<void> loadTransactions() async {
     final Future<void>? pending = _pendingLoadTransactions;
     if (pending != null) return pending;
@@ -404,7 +404,7 @@ class WalletViewModel extends ChangeNotifier {
     _newerPollTimer?.cancel();
     if (_disposed || tokenAccount == null) return;
     _newerPollTimer = Timer.periodic(
-      const Duration(seconds: 5),
+      const Duration(seconds: 3),
       (_) => _pollNewerTransactions(),
     );
   }

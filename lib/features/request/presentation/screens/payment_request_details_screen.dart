@@ -102,6 +102,15 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
   }
 
   Future<void> _showSuccessBottomSheet() {
+    // int counter = 6;
+    // Auto-navigate after 3 seconds — no Done button needed
+    Future<void>.delayed(const Duration(seconds: 6), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+        context.go('/wallet');
+      }
+    });
+
     return showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -129,15 +138,53 @@ class _PaymentRequestDetailsScreenState extends State<PaymentRequestDetailsScree
               'Your payment has been processed successfully',
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // Recipient address
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Sent to',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.recipientAddress,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    softWrap: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Auto-dismiss countdown hint
+            const Text(
+              'Returning to wallet in 6 seconds...',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the bottom sheet
-                  if (mounted) {
-                    context.go('/wallet'); // Navigate to home/wallet screen
-                  }
+                  Navigator.of(context).pop();
+                  context.go('/wallet');
                 },
                 child: const Text('Done'),
               ),

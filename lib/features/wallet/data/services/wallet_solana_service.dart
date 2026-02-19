@@ -162,6 +162,26 @@ class WalletSolanaService {
     }
   }
 
+  // // ADD after line 163
+  // Future<bool> isFaucetHealthy() async {
+  //   try {
+  //     final http.Response response = await http.post(
+  //       Uri.parse('https://faucet.zarply.co.za/api/faucet/health'),
+  //       headers: <String, String>{
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
+  //       return body['status'] == 'okay';
+  //     }
+  //   } catch (e) {
+  //     throw WalletSolanaServiceException('Failed to check faucet health: $e');
+  //   }
+  //   return false;
+  // }
+
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
     try {
       if (!isValidMnemonic(mnemonic)) {
@@ -301,7 +321,7 @@ class WalletSolanaService {
 
   Future<Map<String, List<TransactionDetails?>>> getAccountTransactions({
     required String walletAddress,
-    int limit = 5,
+    int limit = 10,
     String? until,
     String? before,
     Future<void> Function(List<TransactionDetails?>)? onBatchLoaded,
@@ -337,43 +357,22 @@ class WalletSolanaService {
         signatures.map((TransactionSignatureInformation s) => s.signature),
       ).toList();
 
-      final StreamController<List<TransactionDetails?>> transactionStreamController =
-          StreamController<List<TransactionDetails?>>();
       final List<TransactionDetails?> allTransactions = <TransactionDetails?>[];
-      late final Future<void> streamProcessing;
 
-      try {
-        streamProcessing = transactionStreamController.stream.listen(
-          (List<TransactionDetails?> batch) {
-            if (isCancelled != null && isCancelled()) {
-              return;
-            }
-            allTransactions.addAll(batch);
-          },
-        ).asFuture<void>();
+      await _fetchTransactionsWithCircuitBreaker(
+        uniqueSignatures,
+        onBatchLoaded: (List<TransactionDetails?> batch) async {
+          if (isCancelled != null && isCancelled()) return;
+          allTransactions.addAll(batch);
+          if (onBatchLoaded != null) {
+            await onBatchLoaded(batch); // UI gets each chunk of 5 immediately
+          }
+        },
+        isCancelled: isCancelled,
+      );
 
-        await _fetchTransactionsWithCircuitBreaker(
-          uniqueSignatures,
-          onBatchLoaded: (List<TransactionDetails?> batch) async {
-            if (isCancelled != null && isCancelled()) {
-              return;
-            }
-
-            transactionStreamController.add(batch);
-            if (onBatchLoaded != null) {
-              await onBatchLoaded(batch);
-            }
-          },
-          isCancelled: isCancelled,
-        );
-
-        await transactionStreamController.close();
-
-        await streamProcessing;
-      } catch (e) {
-        rethrow;
-      } finally {
-        await transactionStreamController.close();
+      if (isCancelled != null && isCancelled()) {
+        return <String, List<TransactionDetails?>>{};
       }
 
       if (isCancelled != null && isCancelled()) {
@@ -470,53 +469,42 @@ class WalletSolanaService {
     bool Function()? isCancelled,
   }) async {
     try {
-      const int maxRetries = 3;
-      const Duration throttleDelay = Duration(milliseconds: 200);
-      const Duration initialWaitTime = Duration(seconds: 2);
-      const Duration maxWaitTime = Duration(seconds: 60);
+      const int parallelChunkSize = 10; // fetch 5 at once
+      const int maxRetries = 2; // was 3 — fewer retries = less blocking
+      const Duration retryDelay = Duration(milliseconds: 400); // was 2s initial
 
-      final List<TransactionDetails?> currentBatch = <TransactionDetails?>[];
-
-      for (int i = 0; i < signatures.length; i++) {
+      for (int i = 0; i < signatures.length; i += parallelChunkSize) {
         if (isCancelled != null && isCancelled()) return;
 
-        // Throttle between calls to avoid RPC rate limits
-        if (i > 0) await Future<void>.delayed(throttleDelay);
+        final List<String> chunk = signatures.sublist(
+          i,
+          math.min(i + parallelChunkSize, signatures.length),
+        );
 
-        final String signature = signatures[i];
-        TransactionDetails? transactionDetails;
-        int retryCount = 0;
-
-        while (retryCount < maxRetries && transactionDetails == null) {
-          if (isCancelled != null && isCancelled()) break;
-
-          try {
-            transactionDetails = await _client.rpcClient.getTransaction(
-              signature,
-              commitment: Commitment.confirmed,
-            );
-          } catch (e) {
-            retryCount++;
-            final Duration delay = retryCount < maxRetries
-                ? Duration(
-                    seconds: initialWaitTime.inSeconds * (1 << (retryCount - 1)),
-                  )
-                : maxWaitTime;
-            if (retryCount < maxRetries) {
-              await Future<void>.delayed(
-                delay > maxWaitTime ? maxWaitTime : delay,
-              );
+        // Fire all requests in this chunk simultaneously
+        final List<TransactionDetails?> results = await Future.wait(
+          chunk.map((String sig) async {
+            for (int attempt = 0; attempt <= maxRetries; attempt++) {
+              if (isCancelled != null && isCancelled()) return null;
+              try {
+                return await _client.rpcClient.getTransaction(
+                  sig,
+                  commitment: Commitment.confirmed,
+                );
+              } catch (_) {
+                if (attempt < maxRetries) {
+                  await Future<void>.delayed(retryDelay);
+                }
+              }
             }
-          }
-        }
+            return null; // failed after retries
+          }),
+        );
 
-        currentBatch.add(transactionDetails);
+        if (isCancelled != null && isCancelled()) return;
 
-        if (currentBatch.length == 10 || i == signatures.length - 1) {
-          if (isCancelled != null && isCancelled()) return;
-          await onBatchLoaded(List<TransactionDetails?>.from(currentBatch));
-          currentBatch.clear();
-        }
+        // Stream this chunk to UI immediately — don't wait for the rest
+        await onBatchLoaded(results);
       }
     } catch (e) {
       throw WalletSolanaServiceException('Error in transaction processing: $e');

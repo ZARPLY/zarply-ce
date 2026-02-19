@@ -30,6 +30,7 @@ class PaymentAmountScreen extends StatefulWidget {
 
 class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   final FocusNode _amountFocus = FocusNode();
+  bool _isShowingModal = false;
 
   @override
   void dispose() {
@@ -38,11 +39,12 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
   }
 
   Future<void> _showPaymentReviewModal(String amount) async {
-    // Refresh balance before showing modal to ensure accuracy
+    if (_isShowingModal) return;
+    _isShowingModal = true;
+
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
     double walletBalance = AppInitializer.of(context).walletBalance;
 
-    // Try to get fresh balance if token account exists
     if (walletProvider.userTokenAccount != null) {
       try {
         final WalletRepository walletRepository = WalletRepositoryImpl();
@@ -60,6 +62,8 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -82,12 +86,16 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
         );
       },
     );
+    _isShowingModal = false;
+    if (mounted) {
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      await walletProvider.refreshTransactions();
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    // Ensure PaymentProvider has the recipient address set when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final PaymentProvider paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
       if (paymentProvider.recipientAddress != widget.recipientAddress) {
@@ -113,7 +121,7 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
           return Scaffold(
             appBar: AppBar(
               leading: Padding(
-                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 8),
+                padding: const EdgeInsets.all(8),
                 child: InkWell(
                   onTap: () => context.go(widget.source),
                   child: DecoratedBox(
@@ -123,76 +131,88 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                     ),
                     child: const Padding(
                       padding: EdgeInsets.only(left: 8),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        size: 18,
-                      ),
+                      child: Icon(Icons.arrow_back_ios, size: 18),
                     ),
                   ),
                 ),
               ),
               title: const Text('Pay'),
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  const SizedBox(height: 40),
-                  AmountInput(
-                    controller: viewModel.paymentAmountController,
-                    readOnly: false,
-                  ),
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      const Text('Minimum amount is R5'),
-                      const SizedBox(height: 24),
-                      Container(
-                        constraints: const BoxConstraints(minWidth: 250, maxWidth: 350),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEBECEF),
-                          borderRadius: BorderRadius.circular(40),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: <Widget>[
+                    // This Expanded section takes all available space and makes it scrollable
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            const SizedBox(height: 40),
+                            AmountInput(
+                              controller: viewModel.paymentAmountController,
+                              readOnly: false,
+                            ),
+                            const SizedBox(height: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                const Text('Minimum amount is R5'),
+                                const SizedBox(height: 24),
+                                Container(
+                                  constraints: const BoxConstraints(minWidth: 250, maxWidth: 350),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEBECEF),
+                                    borderRadius: BorderRadius.circular(40),
+                                  ),
+                                  child: Text(
+                                    widget.recipientAddress,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+                                const Text('Previously paid'),
+                                const SizedBox(height: 12),
+                                PreviouslyPaidInfo(
+                                  viewModel: viewModel,
+                                  recipientAddress: widget.recipientAddress,
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          widget.recipientAddress,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 40,
-                      ),
-                      const Text('Previously paid'),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      PreviouslyPaidInfo(
-                        viewModel: viewModel,
-                        recipientAddress: widget.recipientAddress,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: viewModel.isFormValid
-                        ? () async {
-                            await _showPaymentReviewModal(
-                              viewModel.paymentAmountController.text,
-                            );
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Continue'),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+
+                    // This section sits outside the scroll view,
+                    // so it is pushed UP by the keyboard.
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10, top: 10),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: viewModel.isFormValid
+                              ? () async {
+                                  await _showPaymentReviewModal(
+                                    viewModel.paymentAmountController.text,
+                                  );
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          child: const Text('Continue'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
