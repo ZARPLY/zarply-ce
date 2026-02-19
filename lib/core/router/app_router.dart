@@ -209,7 +209,7 @@ GoRouter createRouter(
           GoRoute(
             path: '/transaction_details',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, String?> extra = state.extra as Map<String, String?>;
+              final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
               final String sender = extra['sender'] ?? '';
               final String receiver = extra['receiver'] ?? '';
               final String timestamp = extra['timestamp'] ?? '';
@@ -233,7 +233,7 @@ GoRouter createRouter(
           GoRoute(
             path: '/payment_amount',
             builder: (BuildContext context, GoRouterState state) {
-              final Map<String, String> extra = state.extra as Map<String, String>;
+              final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
               final String publicKey = extra['recipientAddress'] ?? '';
               final String? amount = extra['amount'];
               final String source = extra['source'] ?? '/pay_request';

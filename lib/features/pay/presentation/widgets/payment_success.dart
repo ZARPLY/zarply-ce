@@ -13,12 +13,6 @@ class PaymentSuccess extends StatelessWidget {
   final String amount;
   final String? recipientAddress;
 
-  void _done(BuildContext context) {
-    // Pop the bottom sheet first, then navigate to wallet
-    Navigator.of(context).pop();
-    GoRouter.of(context).go('/wallet');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -32,10 +26,6 @@ class PaymentSuccess extends StatelessWidget {
               Text(
                 'Payment Complete',
                 style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => _done(context),
               ),
             ],
           ),
@@ -104,7 +94,7 @@ class PaymentSuccess extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => _done(context),
+              onPressed: () => context.go('/wallet'),
               style: ElevatedButton.styleFrom(
                 textStyle: const TextStyle(
                   fontSize: 18,
