@@ -162,6 +162,26 @@ class WalletSolanaService {
     }
   }
 
+  // // ADD after line 163
+  // Future<bool> isFaucetHealthy() async {
+  //   try {
+  //     final http.Response response = await http.post(
+  //       Uri.parse('https://faucet.zarply.co.za/api/faucet/health'),
+  //       headers: <String, String>{
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
+  //       return body['status'] == 'okay';
+  //     }
+  //   } catch (e) {
+  //     throw WalletSolanaServiceException('Failed to check faucet health: $e');
+  //   }
+  //   return false;
+  // }
+
   Future<Wallet> restoreWalletFromMnemonic(String mnemonic) async {
     try {
       if (!isValidMnemonic(mnemonic)) {

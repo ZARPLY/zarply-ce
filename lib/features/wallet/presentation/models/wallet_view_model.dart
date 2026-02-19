@@ -323,7 +323,7 @@ class WalletViewModel extends ChangeNotifier {
     return true;
   }
 
-  /// Loads transactions: show from storage first, then quick path (new transactions), then initial 10+10 or refresh as needed.
+  /// Loads transactions: show from storage first, then quick path (new transactions)
   Future<void> loadTransactions() async {
     final Future<void>? pending = _pendingLoadTransactions;
     if (pending != null) return pending;

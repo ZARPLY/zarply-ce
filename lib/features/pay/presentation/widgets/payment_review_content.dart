@@ -29,6 +29,7 @@ class PaymentReviewContent extends StatefulWidget {
 
 class _PaymentReviewContentState extends State<PaymentReviewContent> {
   late final PaymentReviewContentViewModel _viewModel;
+  bool _transactionFailed = false;
 
   @override
   void initState() {
@@ -43,16 +44,17 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
   }
 
   Future<void> _makeTransaction() async {
+    // Reset error state on each attempt
+    setState(() {
+      _transactionFailed = false;
+    });
+
     final Wallet? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
 
     if (wallet == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Wallet not found. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _transactionFailed = true;
+      });
       return;
     }
 
@@ -96,13 +98,37 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
             .split('\n')[0];
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      setState(() {
+        _transactionFailed = true;
+      });
+
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (BuildContext ctx) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('Payment Failed'),
+            content: Text(errorMessage),
+            actions: <Widget>[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: const Text('OK'),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -138,7 +164,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   TextButton(
-                    onPressed: widget.onCancel,
+                    onPressed: _viewModel.isLoading ? null : widget.onCancel,
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.blue,
                     ),
@@ -212,7 +238,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Confirm Payment'),
+                  child: Text(_transactionFailed ? 'Retry' : 'Confirm Payment'),
                 ),
               ),
               const SizedBox(height: 20),
