@@ -7,7 +7,7 @@ jobs:
     name: Static Code Analysis
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:3.41.2
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
