@@ -33,8 +33,8 @@ class PaymentSuccess extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Container(
-            width: 200,
-            height: 200,
+            width: 140,
+            height: 140,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.blue,
@@ -42,7 +42,7 @@ class PaymentSuccess extends StatelessWidget {
             child: const Icon(
               Icons.check,
               color: Colors.white,
-              size: 100,
+              size: 64,
             ),
           ),
           const SizedBox(height: 48),
