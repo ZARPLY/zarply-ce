@@ -3,11 +3,27 @@ run-name: ${{ github.actor }} is testing out Gitea Actions 🚀
 on: [ push ]
 
 jobs:
+  flutter_version:
+    name: Resolve Flutter version from pubspec
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Get Flutter version from pubspec
+        id: flutter
+        run: |
+          v=$(sed -n '/^environment:/,/^[a-z]/p' pubspec.yaml | grep -E '^\s*flutter:\s*' | head -1 | sed -E 's/.*flutter:\s*\^?([0-9.]+).*/\1/')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Using Flutter image tag: $v"
+    outputs:
+      version: ${{ steps.flutter.outputs.version }}
+
   dart_analyze:
     name: Static Code Analysis
     runs-on: workstation.ubuntu.lts
+    needs: flutter_version
     container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.41.2
+      image: gitea.cyber-mint.com/zarply/za-flutter:${{ needs.flutter_version.outputs.version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -20,9 +36,11 @@ jobs:
   flutter_test:
     name: Unit Tests
     runs-on: workstation.ubuntu.lts
-    needs: dart_analyze
+    needs:
+      - flutter_version
+      - dart_analyze
     container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:${{ needs.flutter_version.outputs.version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
