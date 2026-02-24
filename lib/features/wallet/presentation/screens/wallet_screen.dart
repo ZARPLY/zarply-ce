@@ -82,8 +82,10 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading wallet data: $e'),
+          const SnackBar(
+            content: Text(
+              'Unable to load wallet data. Please check your internet connection and try again.',
+            ),
           ),
         );
       }
@@ -97,8 +99,10 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading transactions: $e'),
+          const SnackBar(
+            content: Text(
+              'Unable to load transactions. Please check your internet connection and try again.',
+            ),
           ),
         );
       }
@@ -255,6 +259,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                         absorbing: viewModel.isRefreshing,
                                         child: GestureDetector(
                                           onTap: () {
+                                            if (viewModel.isRefreshing) return;
                                             _refreshIndicatorKey.currentState?.show();
                                           },
                                           child: Container(

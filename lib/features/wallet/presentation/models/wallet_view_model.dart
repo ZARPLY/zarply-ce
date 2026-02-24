@@ -507,16 +507,33 @@ class WalletViewModel extends ChangeNotifier {
     return _oldestSignatureFromList(flat);
   }
 
-  /// Refreshes balances and transactions.
+  /// Manual refresh entry-point: forces a fresh fetch of latest on-chain transactions
+  /// (main + legacy) and updates balances, so we don't miss any transactions even if
+  /// earlier incremental polls skipped them.
   Future<void> refreshTransactions() async {
-    if (isRefreshing) return;
+    if (isRefreshing || tokenAccount == null) return;
 
     isRefreshing = true;
     notifyListeners();
 
     try {
-      await refreshBalances();
-      await loadTransactions();
+      // Always hit the network for up-to-date balances.
+      await forceRefreshBalances();
+
+      // Ensure accounts are resolved before fetching history.
+      await _ensureUserLegacyAta();
+      await _ensureMigrationLegacyAta();
+
+      // Re-fetch the latest page of main + legacy history directly from chain,
+      // merge into storage with de-dup, and push to UI.
+      final Map<String, List<TransactionDetails?>> merged = await _fetchInitialMainAndLegacy(
+        onMainFetched: null,
+      );
+      await _applyMergedToUi(merged);
+
+      // Restart background polling from the refreshed state.
+      _startNewerPollTimer();
+      await updateTransactionCount();
     } catch (e) {
       throw Exception('Error in refreshTransactions: $e');
     } finally {

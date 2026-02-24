@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';
@@ -158,7 +160,9 @@ class _PaymentAmountScreenState extends State<PaymentAmountScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                                const Text('Minimum amount is R5'),
+                                Text(
+                                  'Minimum amount is R${PaymentConstants.minZarpPaymentRands.toStringAsFixed(0)}',
+                                ),
                                 const SizedBox(height: 24),
                                 Container(
                                   constraints: const BoxConstraints(minWidth: 250, maxWidth: 350),

@@ -8,12 +8,28 @@ on:
 
 jobs:
 
+  flutter_version:
+    name: Resolve Flutter version from pubspec
+    runs-on: workstation.ubuntu.lts
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Get Flutter version from pubspec
+        id: flutter
+        run: |
+          v=$(sed -n '/^environment:/,/^[a-z]/p' pubspec.yaml | grep -E '^\s*flutter:\s*' | head -1 | sed -E 's/.*flutter:\s*\^?([0-9.]+).*/\1/')
+          echo "version=$v" >> $GITHUB_OUTPUT
+          echo "Using Flutter image tag: $v"
+    outputs:
+      version: ${{ steps.flutter.outputs.version }}
+
   android_qa_build:
+    needs: flutter_version
     if: endsWith(github.ref_name, '-qa')
     name: Android QA App Bundle Build & Upload
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:${{ needs.flutter_version.outputs.version }}
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
@@ -82,11 +98,12 @@ jobs:
           debugSymbols: artifacts/appbundle_symbols.zip
   
   android_prod_build:
+    needs: flutter_version
     if: endsWith(github.ref_name, '-prod')
     name: Android Prod App Bundle Build & Upload
     runs-on: workstation.ubuntu.lts
     container:
-      image: gitea.cyber-mint.com/zarply/za-flutter:3.38.4
+      image: gitea.cyber-mint.com/zarply/za-flutter:${{ needs.flutter_version.outputs.version }}
     env:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}

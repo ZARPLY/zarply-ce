@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/models/wallet_balances.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/loading_button.dart';
+import '../../../wallet/presentation/models/wallet_view_model.dart';
 import '../models/payment_review_content_view_model.dart';
 import 'payment_success.dart';
 
@@ -50,8 +51,38 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     });
 
     final Wallet? wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
+    final WalletViewModel walletViewModel = Provider.of<WalletViewModel>(context, listen: false);
 
     if (wallet == null) {
+      setState(() {
+        _transactionFailed = true;
+      });
+      await _showErrorDialog('Wallet not found. Please try again.');
+      return;
+    }
+
+    // Run balance checks at confirm time so the user always gets a clear, human-readable reason.
+    final double zarpAmount = Formatters.centsToRands(widget.amount);
+    if (zarpAmount > widget.walletBalance) {
+      await _showErrorDialog(
+        'Insufficient ZARP balance ${Formatters.formatBalanceLabel(widget.walletBalance)}. '
+        'Please top up your ZARP before trying again.',
+      );
+      setState(() {
+        _transactionFailed = true;
+      });
+      return;
+    }
+
+    const double minSolNeeded = WalletBalances.minSolForFees;
+    final double solBalance = walletViewModel.solBalance;
+    if (solBalance < minSolNeeded) {
+      await _showErrorDialog(
+        'Insufficient SOL for network fees.\n\n'
+        'You need at least ${minSolNeeded.toStringAsFixed(3)} SOL but currently have '
+        '${solBalance.toStringAsPrecision(3)} SOL.\n\n'
+        'Please fund your wallet with a small amount of SOL and try again.',
+      );
       setState(() {
         _transactionFailed = true;
       });
@@ -69,33 +100,28 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       // and handles its own navigation via the Done button.
     } catch (e, _) {
       if (!mounted) return;
-      // Parse error message for better user feedback
-      String errorMessage = 'Payment failed';
+
+      // Map low-level errors to friendly, human-readable messages.
+      String errorMessage = 'Payment failed. Please try again.';
       final String errorString = e.toString().toLowerCase();
 
       if (errorString.contains('insufficient funds') ||
           errorString.contains('insufficient') ||
           errorString.contains('custom program error: 0x1')) {
-        // Check if we have a specific balance error message
-        if (e.toString().contains('Insufficient ZARP balance')) {
-          errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('SolanaConnectionException: ', '');
-        } else {
-          errorMessage = 'Insufficient funds. Please check your ZARP balance and try again.';
-        }
+        errorMessage = 'Insufficient funds. Please check your ZARP balance and try again.';
       } else if (errorString.contains('recipient does not have a token account')) {
         errorMessage = 'Recipient does not have a ZARP token account. They need to receive ZARP first.';
       } else if (errorString.contains('wallet not found')) {
         errorMessage = 'Wallet not found. Please try again.';
       } else if (errorString.contains('transaction not confirmed')) {
-        errorMessage = 'Transaction was sent but not confirmed. Please check your wallet.';
-      } else {
-        // Clean up the error message
-        errorMessage = e
-            .toString()
-            .replaceAll('Exception: ', '')
-            .replaceAll('SolanaConnectionException: ', '')
-            .replaceAll('WalletSolanaServiceException: ', '')
-            .split('\n')[0];
+        errorMessage = 'Transaction was sent but not confirmed. Please check your wallet history.';
+      } else if (errorString.contains('failed host lookup') ||
+          errorString.contains('network is unreachable') ||
+          errorString.contains('connection refused') ||
+          errorString.contains('socketexception') ||
+          errorString.contains('network')) {
+        errorMessage =
+            'Network connection is not available right now.\n\nPlease check your internet connection and try again.';
       }
 
       setState(() {
@@ -103,33 +129,38 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       });
 
       if (mounted) {
-        await showDialog<void>(
-          context: context,
-          builder: (BuildContext ctx) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('Payment Failed'),
-            content: Text(errorMessage),
-            actions: <Widget>[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: const Text('OK'),
-                ),
-              ),
-            ],
-          ),
-        );
+        await _showErrorDialog(errorMessage);
       }
     }
+  }
+
+  Future<void> _showErrorDialog(String message) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Payment Failed'),
+        content: Text(message),
+        actions: <Widget>[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('OK'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -137,8 +168,11 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     final double zarpAmount = Formatters.centsToRands(widget.amount);
     final bool insufficientTokens = zarpAmount > widget.walletBalance;
 
-    const double minSolNeeded = 0.001;
-    final double solBalance = AppInitializer.of(context).solBalance;
+    const double minSolNeeded = WalletBalances.minSolForFees;
+    // Use live SOL balance from the wallet view model so connectivity changes
+    // and manual refreshes are reflected immediately.
+    final WalletViewModel walletViewModel = Provider.of<WalletViewModel>(context);
+    final double solBalance = walletViewModel.solBalance;
     final bool insufficientSol = solBalance < minSolNeeded;
 
     return ListenableBuilder(
@@ -231,7 +265,9 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
                 width: double.infinity,
                 child: LoadingButton(
                   isLoading: _viewModel.isLoading,
-                  onPressed: (_viewModel.isLoading || insufficientTokens || insufficientSol) ? null : _makeTransaction,
+                  // Always run checks on confirm; the button itself stays enabled
+                  // unless a transaction is currently in progress.
+                  onPressed: _viewModel.isLoading ? null : _makeTransaction,
                   style: ElevatedButton.styleFrom(
                     textStyle: const TextStyle(
                       fontSize: 18,

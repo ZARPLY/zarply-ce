@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/provider/wallet_provider.dart';
+
 import '../../../../core/utils/formatters.dart';
+import '../../../wallet/presentation/models/wallet_view_model.dart';
 
 class PaymentSuccess extends StatelessWidget {
   const PaymentSuccess({
@@ -32,8 +33,8 @@ class PaymentSuccess extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Container(
-            width: 200,
-            height: 200,
+            width: 140,
+            height: 140,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.blue,
@@ -41,7 +42,7 @@ class PaymentSuccess extends StatelessWidget {
             child: const Icon(
               Icons.check,
               color: Colors.white,
-              size: 100,
+              size: 64,
             ),
           ),
           const SizedBox(height: 48),
@@ -91,12 +92,13 @@ class PaymentSuccess extends StatelessWidget {
               ),
             ),
           ],
-          const Spacer(),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Provider.of<WalletProvider>(context, listen: false).refreshTransactions();
+                // Fire-and-forget refresh; WalletScreen will rebuild via provider.
+                Provider.of<WalletViewModel>(context, listen: false).refreshTransactions();
                 context.go('/wallet');
               },
               style: ElevatedButton.styleFrom(
