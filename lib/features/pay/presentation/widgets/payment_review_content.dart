@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/models/wallet_balances.dart';
 import '../../../../core/provider/wallet_provider.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/loading_button.dart';
@@ -73,7 +74,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
       return;
     }
 
-    const double minSolNeeded = 0.003;
+    const double minSolNeeded = WalletBalances.minSolForFees;
     final double solBalance = walletViewModel.solBalance;
     if (solBalance < minSolNeeded) {
       await _showErrorDialog(
@@ -167,7 +168,7 @@ class _PaymentReviewContentState extends State<PaymentReviewContent> {
     final double zarpAmount = Formatters.centsToRands(widget.amount);
     final bool insufficientTokens = zarpAmount > widget.walletBalance;
 
-    const double minSolNeeded = 0.003;
+    const double minSolNeeded = WalletBalances.minSolForFees;
     // Use live SOL balance from the wallet view model so connectivity changes
     // and manual refreshes are reflected immediately.
     final WalletViewModel walletViewModel = Provider.of<WalletViewModel>(context);
