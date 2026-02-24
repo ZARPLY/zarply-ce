@@ -13,7 +13,7 @@ version: 1.0.2+20
 
 environment:
   sdk: ^3.9.2
-  flutter: ^3.41.2
+  flutter: ^3.38.4
 
 dependencies:
   bip39: ^1.0.6
