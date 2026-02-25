@@ -61,8 +61,3 @@ class Formatters {
     return '${monthNames[month - 1]} $year';
   }
 }
-
-class PaymentConstants {
-  /// Minimum ZARP payment amount in Rands.
-  static const double minZarpPaymentRands = 5;
-}

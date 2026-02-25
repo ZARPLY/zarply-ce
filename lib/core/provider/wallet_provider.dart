@@ -140,6 +140,7 @@ class WalletProvider extends ChangeNotifier {
     }
   }
 
+
   Future<void> refreshTransactions() async {
     if (_wallet == null || _userTokenAccount == null) return;
 

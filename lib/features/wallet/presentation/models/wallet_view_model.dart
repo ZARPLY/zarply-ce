@@ -670,15 +670,9 @@ class WalletViewModel extends ChangeNotifier {
   }
 
   /// Flattens month-keyed map to list (oldest month first, then by blockTime within month).
-  List<TransactionDetails?> _flattenMapToList(
-    Map<String, List<TransactionDetails?>> map,
-  ) {
-    final List<TransactionDetails?> result = <TransactionDetails?>[];
+  List<TransactionDetails?> _flattenMapToList(Map<String, List<TransactionDetails?>> map) {
     final List<String> keys = map.keys.toList()..sort();
-    for (final String key in keys) {
-      result.addAll(map[key]!);
-    }
-    return result;
+    return keys.expand((String key) => map[key]!).toList();
   }
 
   /// Fetches older transactions for one account (main or legacy), with one retry if empty. Returns merged map, new oldest signature, and whether more are available.

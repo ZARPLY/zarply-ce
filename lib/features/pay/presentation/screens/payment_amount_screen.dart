@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/provider/payment_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
 
-import '../../../../core/utils/formatters.dart';
+import '../../../../core/utils/utility.dart';
 import '../../../../core/widgets/initializer/app_initializer.dart';
 import '../../../../core/widgets/previously_paid_info.dart';
 import '../../../../core/widgets/shared/amount_input.dart';

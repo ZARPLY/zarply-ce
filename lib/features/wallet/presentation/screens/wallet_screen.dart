@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/models/wallet_balances.dart';
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
+import '../../../../core/utils/utility.dart';
 import '../../data/services/wallet_storage_service.dart';
 import '../models/wallet_view_model.dart';
 import '../widgets/balance_amount.dart';
@@ -38,60 +38,106 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     _initializeData();
   }
 
-  bool get _isMainnet {
-    final String? rpcUrl = dotenv.env['solana_wallet_rpc_url'];
-    if (rpcUrl == null) {
-      return false;
-    }
-    return rpcUrl.contains('mainnet');
-  }
+ bool get _isMainnet => EnvironmentUtils.isMainnet;
 
-  Future<void> _initializeData() async {
-    try {
-      // Ensure wallet and token account are set
+Future<void> _initializeData() async {
+  try {
+    // Ensure wallet and token account are set with retry
+    if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
+      final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      _viewModel.wallet = walletProvider.wallet;
+      _viewModel.tokenAccount = walletProvider.userTokenAccount;
+
       if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
-        final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+        await Future<void>.delayed(const Duration(milliseconds: 500));
         _viewModel.wallet = walletProvider.wallet;
         _viewModel.tokenAccount = walletProvider.userTokenAccount;
-
-        // If still null, wait a bit for initialization to complete
-        if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
-          await Future<void>.delayed(const Duration(milliseconds: 500));
-          _viewModel.wallet = walletProvider.wallet;
-          _viewModel.tokenAccount = walletProvider.userTokenAccount;
-        }
-      }
-
-      // Load cached data first for immediate display
-      await _viewModel.loadCachedBalances();
-
-      // Check if wallet needs funding on mainnet (before refreshing, using cached balance)
-      await _checkAndShowFundingDialog();
-
-      // Then load fresh data in background
-      await Future.wait(<Future<void>>[
-        _loadTransactionsFromRepository(),
-        _refreshBalances(),
-      ]);
-
-      // Check again after refreshing balances to catch any changes
-      await _checkAndShowFundingDialog();
-
-      // Check for legacy account and drain if needed
-      await _viewModel.checkLegacyMigrationIfNeeded();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Unable to load wallet data. Please check your internet connection and try again.',
-            ),
-          ),
-        );
       }
     }
-  }
 
+    // DEBUG: Check if we have wallet
+    debugPrint('Wallet: ${_viewModel.wallet?.address}');
+    debugPrint('TokenAccount: ${_viewModel.tokenAccount?.pubkey}');
+    debugPrint('isMainnet check: $_isMainnet');
+
+    // Load cached data for immediate display
+    await _viewModel.loadCachedBalances();
+    debugPrint('Cached balance loaded. SOL: ${_viewModel.solBalance}');
+
+    // Load fresh data in background
+    await Future.wait(<Future<void>>[
+      _loadTransactionsFromRepository(),
+      _refreshBalances(),
+    ]);
+    
+    debugPrint('Fresh balance loaded. SOL: ${_viewModel.solBalance}');
+    debugPrint('Min required: ${WalletBalances.minSolForFees}');
+    debugPrint('Should show dialog: ${_isMainnet && _viewModel.solBalance < WalletBalances.minSolForFees}');
+
+    // Check funding once with fresh on-chain balance only
+    if (_isMainnet && _viewModel.solBalance < WalletBalances.minSolForFees) {
+      debugPrint('SHOWING FUNDING DIALOG');
+      final DateTime now = DateTime.now();
+      if (_lastDialogShownTime == null || 
+          now.difference(_lastDialogShownTime!).inSeconds >= 30) {
+        
+        if (!mounted) {
+          debugPrint('Not mounted, skipping dialog');
+          return;
+        }
+        
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              'Fund your account',
+              style: TextStyle(color: Colors.black),
+            ),
+            content: const Text(
+              'Your SOL account requires at least 0.003 SOL for rent exemption and transaction fees. '
+              'Please transfer SOL to your wallet address to continue.',
+              style: TextStyle(color: Colors.black),
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all<Color>(Colors.blue),
+                  overlayColor: WidgetStateProperty.all<Color?>(
+                    Colors.grey.withValues(alpha: 0.1),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  _walletStorageService.clearFirstTimeUserFlag();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        _lastDialogShownTime = now;
+      }
+    }
+
+    await _viewModel.checkLegacyMigrationIfNeeded();
+  } catch (e, stackTrace) {
+    debugPrint('ERROR in _initializeData: $e');
+    debugPrint('STACK: $stackTrace');
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to load wallet data. Please check your internet connection and try again.',
+          ),
+        ),
+      );
+    }
+  }
+}
+ 
   Future<void> _loadTransactionsFromRepository() async {
     try {
       // Load transactions from network and store them locally
@@ -113,6 +159,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     await _viewModel.refreshBalances();
   }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Future<void> _checkAndShowFundingDialog() async {
     // Check if wallet needs funding on mainnet
     if (_isMainnet && _viewModel.wallet != null && mounted) {
@@ -161,7 +208,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
       }
     }
   }
-
+  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);

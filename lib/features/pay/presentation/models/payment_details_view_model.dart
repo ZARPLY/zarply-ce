@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:solana/solana.dart';
 
+import '../../../../core/services/rpc_rate_limiter.dart';
+
 class PaymentDetailsViewModel extends ChangeNotifier {
   PaymentDetailsViewModel({required this.ownPublicKey})
     : _solanaClient = SolanaClient(
@@ -55,7 +57,9 @@ class PaymentDetailsViewModel extends ChangeNotifier {
     isCheckingAccount = true;
     notifyListeners();
     try {
-      await _solanaClient.rpcClient.getAccountInfo(publicKey);
+      await RpcRateLimiter.instance.run(
+        () => _solanaClient.rpcClient.getAccountInfo(publicKey),
+      );
       accountExists = true;
     } catch (_) {
       accountExists = false;
