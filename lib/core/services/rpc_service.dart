@@ -8,7 +8,7 @@ class RpcService {
 
   /// Get RPC configuration with user preference priority
   Future<({String rpcUrl, String websocketUrl})> getRpcConfiguration() async {
-    try {
+    
       // Try to get user-configured RPC settings first
       final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
 
@@ -18,19 +18,11 @@ class RpcService {
           websocketUrl: config.websocketUrl!,
         );
       }
-
-      // Fallback to environment variables
       return (
-        rpcUrl: dotenv.env['solana_wallet_rpc_url'] ?? 'https://api.devnet.solana.com',
-        websocketUrl: dotenv.env['solana_wallet_websocket_url'] ?? 'wss://api.devnet.solana.com',
+        rpcUrl: dotenv.env['solana_wallet_rpc_url']!,
+        websocketUrl: dotenv.env['solana_wallet_websocket_url']!,
       );
-    } catch (e) {
-      // Final fallback to default Solana endpoints
-      return (
-        rpcUrl: 'https://api.devnet.solana.com',
-        websocketUrl: 'wss://api.devnet.solana.com',
-      );
-    }
+   
   }
 
   Future<bool> validateRpcEndpoint(String rpcUrl) async {

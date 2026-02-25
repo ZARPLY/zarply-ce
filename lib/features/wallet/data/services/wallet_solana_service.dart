@@ -375,10 +375,6 @@ class WalletSolanaService {
         return <String, List<TransactionDetails?>>{};
       }
 
-      if (isCancelled != null && isCancelled()) {
-        return <String, List<TransactionDetails?>>{};
-      }
-
       final Map<String, List<TransactionDetails?>> groupedTransactions = <String, List<TransactionDetails?>>{};
 
       for (final TransactionDetails? transaction in allTransactions) {
