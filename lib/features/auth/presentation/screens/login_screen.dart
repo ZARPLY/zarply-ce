@@ -45,44 +45,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Runs [future] with a 30s timeout and ignores errors (e.g. account not funded yet).
-  Future<void> _runWithTimeout(Future<void> future) async {
-    await future.timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => null,
-    );
-  }
 
   Future<void> _performLogin() async {
     _viewModel.setIsLoading(value: true);
     final bool success = await _viewModel.validatePassword();
     try {
       if (success && mounted) {
-        final WalletProvider walletProvider = Provider.of<WalletProvider>(
-          context,
-          listen: false,
-        );
+        final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
         if (!walletProvider.hasWallet) {
           await walletProvider.initialize();
         }
 
-        // Refresh transactions and balances; do not block login on failure.
-        await _runWithTimeout(walletProvider.refreshTransactions());
-        await _runWithTimeout(walletProvider.fetchAndCacheBalances());
-
         if (!mounted) return;
-        await Provider.of<AuthProvider>(
-          context,
-          listen: false,
-        ).login();
+        await Provider.of<AuthProvider>(context, listen: false).login();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error logging in: $e'),
-          ),
+          SnackBar(content: Text('Error logging in: $e')),
         );
       }
     } finally {

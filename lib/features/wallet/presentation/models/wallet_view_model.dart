@@ -404,7 +404,7 @@ class WalletViewModel extends ChangeNotifier {
     _newerPollTimer?.cancel();
     if (_disposed || tokenAccount == null) return;
     _newerPollTimer = Timer.periodic(
-      const Duration(seconds: 3),
+      const Duration(seconds: 30),
       (_) => _pollNewerTransactions(),
     );
   }
@@ -672,14 +672,7 @@ class WalletViewModel extends ChangeNotifier {
   /// Flattens month-keyed map to list (oldest month first, then by blockTime within month).
   List<TransactionDetails?> _flattenMapToList(
     Map<String, List<TransactionDetails?>> map,
-  ) {
-    final List<TransactionDetails?> result = <TransactionDetails?>[];
-    final List<String> keys = map.keys.toList()..sort();
-    for (final String key in keys) {
-      result.addAll(map[key]!);
-    }
-    return result;
-  }
+  ) => (map.keys.toList()..sort()).expand((String key) => map[key]!).toList();
 
   /// Fetches older transactions for one account (main or legacy), with one retry if empty. Returns merged map, new oldest signature, and whether more are available.
   Future<({Map<String, List<TransactionDetails?>> merged, String? currentOldest, bool hasMore})> _fetchOlderForAccount(

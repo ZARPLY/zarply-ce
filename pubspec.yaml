@@ -37,6 +37,7 @@ dependencies:
   solana: ^0.32.0
   url_launcher: ^6.2.4
 
+
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^6.0.0

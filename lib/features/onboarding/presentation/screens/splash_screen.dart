@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/provider/wallet_provider.dart';
@@ -34,7 +36,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkAndNavigate() async {
+    // Capture providers before any async gaps to avoid use_build_context_synchronously warnings
     final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
+
+    // Clear stale iOS keychain data on fresh install.
+    // iOS persists Keychain entries across uninstalls unlike Android.
+    // We use SharedPreferences (wiped on uninstall) as a sentinel to detect a fresh install.
+    await _clearKeychainIfFreshInstall();
 
     // Load wallet from storage first so hasWallet reflects actual state (e.g. after closing mid-onboarding).
     await walletProvider.initialize();
@@ -95,6 +103,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (mounted) {
       _viewModel.playAnimation();
       await _navigateToNextScreen();
+    }
+  }
+
+  /// Detects a fresh install by checking a sentinel key in SharedPreferences.
+  /// SharedPreferences is wiped on uninstall (unlike iOS Keychain), so if the
+  /// sentinel is missing we know this is a fresh install and clear the keychain.
+  Future<void> _clearKeychainIfFreshInstall() async {
+    const String sentinelKey = 'app_installed';
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final bool alreadyInstalled = prefs.getBool(sentinelKey) ?? false;
+
+    if (!alreadyInstalled) {
+      // Fresh install — wipe any leftover keychain data from a previous install
+      const FlutterSecureStorage secureStorage = FlutterSecureStorage();
+      await secureStorage.deleteAll();
+      await prefs.setBool(sentinelKey, true);
     }
   }
 
