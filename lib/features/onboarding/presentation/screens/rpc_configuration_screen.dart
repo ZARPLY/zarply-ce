@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -24,8 +25,8 @@ class _RpcConfigurationScreenState extends State<RpcConfigurationScreen> {
   bool _isCreatingWallet = false;
   String? _errorMessage;
 
-  final String _defaultRpcUrl = 'https://api.devnet.solana.com';
-  final String _defaultWebsocketUrl = 'wss://api.devnet.solana.com';
+  final String _defaultRpcUrl = dotenv.env['solana_wallet_rpc_url']!;
+  final String _defaultWebsocketUrl = dotenv.env['solana_wallet_websocket_url']!;
 
   @override
   void initState() {

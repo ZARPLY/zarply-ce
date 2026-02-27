@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   final WalletStorageService _walletStorageService = WalletStorageService();
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   DateTime? _lastDialogShownTime;
+  bool _hasShownFundingDialog = false;
 
   @override
   void initState() {
@@ -34,7 +36,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     _viewModel.wallet = Provider.of<WalletProvider>(context, listen: false).wallet;
     _viewModel.tokenAccount = Provider.of<WalletProvider>(context, listen: false).userTokenAccount;
 
-    // Load fresh data on initialization (single load; user can pull-to-refresh for more).
     _initializeData();
   }
 
@@ -48,13 +49,11 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
   Future<void> _initializeData() async {
     try {
-      // Ensure wallet and token account are set
       if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
         final WalletProvider walletProvider = Provider.of<WalletProvider>(context, listen: false);
         _viewModel.wallet = walletProvider.wallet;
         _viewModel.tokenAccount = walletProvider.userTokenAccount;
 
-        // If still null, wait a bit for initialization to complete
         if (_viewModel.wallet == null || _viewModel.tokenAccount == null) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
           _viewModel.wallet = walletProvider.wallet;
@@ -62,24 +61,18 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
         }
       }
 
-      // Load cached data first for immediate display
       await _viewModel.loadCachedBalances();
-
-      // Check if wallet needs funding on mainnet (before refreshing, using cached balance)
       await _checkAndShowFundingDialog();
 
-      // Then load fresh data in background
       await Future.wait(<Future<void>>[
         _loadTransactionsFromRepository(),
         _refreshBalances(),
       ]);
 
-      // Check again after refreshing balances to catch any changes
       await _checkAndShowFundingDialog();
-
-      // Check for legacy account and drain if needed
       await _viewModel.checkLegacyMigrationIfNeeded();
     } catch (e) {
+      _logError('ERROR in _initializeData', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -92,11 +85,20 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     }
   }
 
+  void _logError(String context, dynamic error) {
+    debugPrint('=== $context ===');
+    debugPrint('Error: $error');
+    if (error.toString().contains('403')) {
+      debugPrint(' 403 FORBIDDEN DETECTED - Check RPC endpoint or rate limits');
+    }
+    debugPrint('==================');
+  }
+
   Future<void> _loadTransactionsFromRepository() async {
     try {
-      // Load transactions from network and store them locally
       await _viewModel.loadTransactions();
     } catch (e) {
+      _logError('ERROR in _loadTransactionsFromRepository', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -110,56 +112,200 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   }
 
   Future<void> _refreshBalances() async {
-    await _viewModel.refreshBalances();
+    try {
+      await _viewModel.refreshBalances();
+    } catch (e) {
+      _logError('ERROR in _refreshBalances', e);
+      rethrow;
+    }
   }
 
   Future<void> _checkAndShowFundingDialog() async {
-    // Check if wallet needs funding on mainnet
-    if (_isMainnet && _viewModel.wallet != null && mounted) {
-      // Check if SOL balance is insufficient (less than min needed for fees)
-      if (_viewModel.solBalance < WalletBalances.minSolForFees) {
-        final DateTime now = DateTime.now();
-        if (_lastDialogShownTime != null && now.difference(_lastDialogShownTime!).inSeconds < 30) {
-          return;
-        }
+    if (!_isMainnet) return;
+    if (_hasShownFundingDialog) return;
+    if (_viewModel.solBalance >= WalletBalances.minSolForFees) return;
+    
+    final DateTime now = DateTime.now();
+    if (_lastDialogShownTime != null && 
+        now.difference(_lastDialogShownTime!).inSeconds < 30) {
+      return;
+    }
 
-        // Show dialog if account needs funding
-        // ignore: use_build_context_synchronously
-        await showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext dialogContext) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text(
-              'Fund your account',
-              style: TextStyle(color: Colors.black),
+    if (!mounted) return;
+
+    _hasShownFundingDialog = true;
+    _lastDialogShownTime = now;
+    
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Fund your account',
+          style: TextStyle(color: Colors.black),
+        ),
+        content: const Text(
+          'Your SOL account requires at least 0.003 SOL for rent exemption and transaction fees. '
+          'Please transfer SOL to your wallet address to continue.',
+          style: TextStyle(color: Colors.black),
+        ),
+        actions: <Widget>[
+          TextButton(
+            style: ButtonStyle(
+              foregroundColor: WidgetStateProperty.all<Color>(Colors.blue),
+              overlayColor: WidgetStateProperty.all<Color?>(
+                Colors.grey.withValues(alpha: 0.1),
+              ),
             ),
-            content: const Text(
-              'Your SOL account requires at least 0.003 SOL for rent exemption and transaction fees. '
-              'Please transfer SOL to your wallet address to continue.',
-              style: TextStyle(color: Colors.black),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _walletStorageService.clearFirstTimeUserFlag();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWalletInfoDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Center(
+            child: Text(
+              'Solana details',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black,
+              ),
             ),
-            actions: <Widget>[
-              TextButton(
-                style: ButtonStyle(
-                  foregroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-                  overlayColor: WidgetStateProperty.all<Color?>(
-                    Colors.grey.withValues(alpha: 0.1),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _buildInfoRow('Network:', _isMainnet ? 'Mainnet' : 'Devnet'),
+                const SizedBox(height: 16),
+                _buildCopyableRow(
+                  label: 'Address:',
+                  value: _viewModel.wallet?.address ?? 'N/A',
+                  onCopy: () {
+                    if (_viewModel.wallet?.address != null) {
+                      Clipboard.setData(ClipboardData(text: _viewModel.wallet!.address));
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildInfoRow('Balance:', '${_viewModel.solBalance} SOL'),
+                const SizedBox(height: 16),
+                _buildCopyableRow(
+                  label: 'Token Account:',
+                  value: _viewModel.tokenAccount?.pubkey ?? 'N/A',
+                  onCopy: () {
+                    if (_viewModel.tokenAccount?.pubkey != null) {
+                      Clipboard.setData(ClipboardData(text: _viewModel.tokenAccount!.pubkey));
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCopyableRow({
+    required String label,
+    required String value,
+    required VoidCallback onCopy,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: onCopy,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  // Clear the first-time flag if it was set (for first-time users)
-                  _walletStorageService.clearFirstTimeUserFlag();
-                },
-                child: const Text('OK'),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.copy,
+                  color: Colors.grey[600],
+                  size: 18,
+                ),
+              ],
+            ),
           ),
-        );
-        _lastDialogShownTime = DateTime.now();
-      }
-    }
+        ),
+      ],
+    );
   }
 
   @override
@@ -172,11 +318,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // Avoid overlapping startup/resume refreshes.
       if (_viewModel.isRefreshing) return;
       _viewModel.refreshTransactions();
-      // Check funding status when app resumes (after balances refresh)
-      Future<void>.delayed(const Duration(milliseconds: 500), _checkAndShowFundingDialog);
     }
   }
 
@@ -300,7 +443,13 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                                   key: _refreshIndicatorKey,
                                   color: Colors.blue,
                                   backgroundColor: Colors.white,
-                                  onRefresh: () => viewModel.refreshTransactions(),
+                                  onRefresh: () async {
+                                    try {
+                                      await viewModel.refreshTransactions();
+                                    } catch (e) {
+                                      _logError('ERROR in refreshTransactions', e);
+                                    }
+                                  },
                                   child: TransactionsList(viewModel: viewModel),
                                 ),
                               ),
@@ -341,106 +490,8 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Tooltip(
-                    richMessage: TextSpan(
-                      children: <InlineSpan>[
-                        WidgetSpan(
-                          child: SizedBox(
-                            width: 250,
-                            child: Center(
-                              child: RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  children: <InlineSpan>[
-                                    const TextSpan(
-                                      text: 'Solana details\n\n',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: 'Network: ${_isMainnet ? 'Mainnet' : 'Devnet'}\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text: '\n',
-                                      style: TextStyle(fontSize: 8),
-                                    ),
-                                    const TextSpan(
-                                      text: 'Address:\n',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: '${viewModel.wallet?.address}\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text: '\nBalance:\n',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: '${viewModel.solBalance} SOL\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text: '\nToken Account:\n',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: '${viewModel.tokenAccount?.pubkey}\n',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    preferBelow: true,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(12),
+                  GestureDetector(
+                    onTap: _showWalletInfoDialog,
                     child: Container(
                       width: 40,
                       height: 40,
@@ -498,7 +549,6 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
                     await authProvider.logout();
 
                     if (!mounted) return;
-                    // Use replace to avoid navigation stack issues
                     await router.replace('/login');
                   },
                   child: Container(

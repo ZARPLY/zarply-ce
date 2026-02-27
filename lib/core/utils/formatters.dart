@@ -18,7 +18,7 @@ class Formatters {
     final NumberFormat currencyFormat = NumberFormat.currency(
       symbol: 'R',
       decimalDigits: 2,
-      locale: 'en_US',
+      locale: 'en_ZA',
     );
     return currencyFormat.format(amount);
   }
