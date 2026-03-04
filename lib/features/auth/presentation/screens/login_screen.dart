@@ -45,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-
   Future<void> _performLogin() async {
     _viewModel.setIsLoading(value: true);
     final bool success = await _viewModel.validatePassword();

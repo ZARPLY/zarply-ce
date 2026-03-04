@@ -23,7 +23,6 @@ class WalletSolanaServiceException implements Exception {
   String toString() => 'SolanaConnectionException: $message';
 }
 
-
 class WalletSolanaService {
   // Keep the old constructor for backward compatibility in tests
   WalletSolanaService({
@@ -69,9 +68,6 @@ class WalletSolanaService {
 
     return !rpcUrl.contains('mainnet');
   }
-
-
-  
 
   /// True when RPC is mainnet (no faucet, no on-chain ATA creation at wallet creation).
   bool get isMainnet => !_isFaucetEnabled;

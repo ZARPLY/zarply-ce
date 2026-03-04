@@ -124,10 +124,9 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
     if (!_isMainnet) return;
     if (_hasShownFundingDialog) return;
     if (_viewModel.solBalance >= WalletBalances.minSolForFees) return;
-    
+
     final DateTime now = DateTime.now();
-    if (_lastDialogShownTime != null && 
-        now.difference(_lastDialogShownTime!).inSeconds < 30) {
+    if (_lastDialogShownTime != null && now.difference(_lastDialogShownTime!).inSeconds < 30) {
       return;
     }
 
@@ -135,7 +134,7 @@ class _WalletScreenState extends State<WalletScreen> with WidgetsBindingObserver
 
     _hasShownFundingDialog = true;
     _lastDialogShownTime = now;
-    
+
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
