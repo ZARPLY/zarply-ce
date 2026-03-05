@@ -31,6 +31,12 @@ jobs:
         run: flutter doctor -v
       - name: Get Project Dependencies
         run: flutter pub get --no-precompile --enforce-lockfile
+      - name: Check Dart Formatting
+        run: |
+          find lib integration_test test test_driver \
+            -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart" ! -name "*.config.dart" \
+            -print0 | xargs -0 \
+            dart format --output none --set-exit-if-changed
       - name: Analyze Project Source
         run: dart analyze --fatal-infos
   flutter_test:
