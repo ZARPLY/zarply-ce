@@ -8,21 +8,19 @@ class RpcService {
 
   /// Get RPC configuration with user preference priority
   Future<({String rpcUrl, String websocketUrl})> getRpcConfiguration() async {
-    
-      // Try to get user-configured RPC settings first
-      final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
+    // Try to get user-configured RPC settings first
+    final ({String? rpcUrl, String? websocketUrl}) config = await _storageService.getRpcConfiguration();
 
-      if (config.rpcUrl != null && config.websocketUrl != null) {
-        return (
-          rpcUrl: config.rpcUrl!,
-          websocketUrl: config.websocketUrl!,
-        );
-      }
+    if (config.rpcUrl != null && config.websocketUrl != null) {
       return (
-        rpcUrl: dotenv.env['solana_wallet_rpc_url']!,
-        websocketUrl: dotenv.env['solana_wallet_websocket_url']!,
+        rpcUrl: config.rpcUrl!,
+        websocketUrl: config.websocketUrl!,
       );
-   
+    }
+    return (
+      rpcUrl: dotenv.env['solana_wallet_rpc_url']!,
+      websocketUrl: dotenv.env['solana_wallet_websocket_url']!,
+    );
   }
 
   Future<bool> validateRpcEndpoint(String rpcUrl) async {
